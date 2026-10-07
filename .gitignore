@@ -1,7 +1,7 @@
 # =============================================================================
 # .gitignore — skill-create-gitignore
 # Detected: POSIX shell (src/tn5250-cli, shebang /bin/sh). No CMake or package manifest in this tree.
-# Docs: track docs/requirements/** and docs/reviews/** (the test plan and review records are cited by product law).
+# Docs: track docs/requirements/** and docs/reviews/** (product law cites the test plan). Nested docs/.gitignore re-includes those two trees.
 #        Ignore skills, incidents, terminologies, policies, templates, checklists, human-intro, and the docs map.
 # Artifacts: compiled, caches, temp, secrets ignored.
 # =============================================================================

@@ -1,6 +1,8 @@
 # Nested SSOT aligned with root .gitignore (skill-create-gitignore)
-# Track requirements only under docs/; keep other docs trees local.
+# Track requirements and the review records. Keep other docs trees local.
 *
 !.gitignore
 !requirements/
 !requirements/**
+!reviews/
+!reviews/**
