@@ -1,0 +1,83 @@
+# =============================================================================
+# .gitignore — skill-create-gitignore
+# Detected: POSIX shell (src/tn5250-cli, shebang /bin/sh). No CMake or package manifest in this tree.
+# Docs: track docs/requirements/** and docs/reviews/** (the test plan and review records are cited by product law).
+#        Ignore skills, incidents, terminologies, policies, templates, checklists, human-intro, and the docs map.
+# Artifacts: compiled, caches, temp, secrets ignored.
+# =============================================================================
+
+# --- universal: secrets / local env ---
+.env
+.env.*
+!.env.example
+!.env.sample
+*.pem
+*.key
+!*.key.example
+
+# --- universal: OS ---
+.DS_Store
+.DS_Store?
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+
+# --- universal: editors ---
+*.swp
+*.swo
+*~
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.code-workspace
+
+# --- universal: temp / scratch ---
+tmp/
+temp/
+temps/
+*.tmp
+*.temp
+*.bak
+*.orig
+*.rej
+*.log
+logs/
+*.pid
+*.seed
+
+# --- universal: build / compile / caches ---
+build/
+dist/
+out/
+output/
+bin/
+obj/
+*.o
+*.a
+*.so
+*.dylib
+*.dll
+*.exe
+*.class
+*.jar
+.cache/
+*.cache
+
+# --- shell debris ---
+*.YYYYMMDD-*.bak
+
+# --- agent harness (root) ---
+AGENTS.md
+CLAUDE.md
+.claude/
+.cursor/
+.codex/
+
+# --- docs layer ---
+# Requirements and the review records stay tracked. The rest of docs/ is local harness.
+docs/**
+!docs/requirements/
+!docs/requirements/**
+!docs/reviews/
+!docs/reviews/**
