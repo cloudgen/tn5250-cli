@@ -5,6 +5,14 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.0.2] - 2026-10-07
+
+### Fixed
+
+- `menu` and `main` open the numbered list. They are not passed to the terminal client as a host name.
+- Setup applies a connect fix to upstream `lib5250/telnetstr.c` and `lib5250/sslstream.c` before configure. A failed `getaddrinfo` no longer calls `freeaddrinfo` on an undefined pointer, so a host name that does not resolve prints the client's session error instead of a segmentation fault.
+- A payload that does not have `CONNECT-FIX` is rebuilt. The stamp is `addrinfo-1`. `HEAD` stays the upstream commit.
+
 ## [1.0.1] - 2026-10-07
 
 ### Added

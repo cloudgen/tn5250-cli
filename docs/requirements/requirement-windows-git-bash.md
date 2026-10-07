@@ -1,6 +1,6 @@
 **file**: docs/requirements/requirement-windows-git-bash.md
 **ID**: RQ-WINDOWS-GIT-BASH
-**Status**: Active (Version 1.3.1)
+**Status**: Active (Version 1.3.2)
 **Project**: tn5250-cli
 **Philosophy**: CIAO **v2.10.2** / CIAO-Lite (Caution • Intentional • Anti-fragile • Over-engineered / Over-protect)
 
@@ -78,7 +78,7 @@ A person in Git Bash runs `tn5250-cli setup`. The supported result is three Wind
 24. The build tree **MUST** be configured and compiled in a cache directory that belongs to the user. A rebuild **MUST** remove that build directory before configure.
 25. After a successful compile, setup **MUST** copy `tn5250.exe`, `lp5250d.exe`, and `dftmap.exe` from the build tree into the application directory, skipping anything under a `CMakeFiles` directory.
 26. If `tn5250.exe` is missing after the build, setup **MUST** stop with a non-zero status. Copying the other two programs does not make up for a missing `tn5250.exe`.
-27. Setup **MUST** write the requested ref and the checkout’s `HEAD` revision next to the programs so `version` can print them.
+27. Setup **MUST** write the requested ref and the checkout’s `HEAD` revision next to the programs so `version` can print them. Setup **MUST** also write `CONNECT-FIX` containing `addrinfo-1`. When `--force` is off, setup **MUST** skip the compile only if `tn5250.exe` is present and `REF`, `REVISION`, and `CONNECT-FIX` all match. A payload without `CONNECT-FIX` **MUST** rebuild.
 28. Setup **MUST** copy the direct runtime DLLs of each copied executable from the compiler’s `bin` directory, using `objdump -p` and the `DLL Name` lines. One level of DLL names is the rule. Transitive dependencies of those DLLs are not walked.
 29. The application directory **MUST** be `${PREFIX}/opt/tn5250`. The default prefix **MUST** be `${HOME}/.local`, overridable by `--prefix` or `TN5250_PREFIX`. The prefix **MUST** be converted with `cygpath -u` and **MUST NOT** be empty.
 30. Setup **MUST** copy the installer itself to `${PREFIX}/bin/tn5250-cli` when that destination is not already the same file, and **MUST** mark it executable. The installer name stays `tn5250-cli` so it does not shadow `tn5250.exe`.
@@ -183,6 +183,10 @@ Not produced by this Windows build: the curses `tn5250`, `xt5250`, `scs2ascii`, 
 
 The patch is embedded in `apply_win32_fixes` and applied with `git apply --whitespace=nowarn`. `git rev-parse HEAD` still reports the upstream commit, because the patch is not a new commit.
 
+**Connect fix applied before the GCC 14 patch**
+
+`tn5250_apply_connect_fix` runs after the fetch and before the GCC 14 patch. It edits `lib5250/telnetstr.c` and `lib5250/sslstream.c` only. The uninitialized `struct addrinfo *result` becomes `NULL`. A failed `getaddrinfo` does not call `freeaddrinfo`. `HEAD` stays the upstream commit. This edit is not the GCC 14 type change. `int ioctlarg` is still changed to `u_long` by the GCC 14 patch after this one.
+
 **UCRT64 packages**
 
 | Package |
@@ -199,7 +203,7 @@ Package install, when needed: `pacman -Syu --noconfirm` twice, then `pacman -S -
 
 | Path | Role |
 |------|------|
-| `${PREFIX}/opt/tn5250` | `tn5250.exe`, `lp5250d.exe`, `dftmap.exe`, copied DLLs, `REF`, `REVISION` |
+| `${PREFIX}/opt/tn5250` | `tn5250.exe`, `lp5250d.exe`, `dftmap.exe`, copied DLLs, `REF`, `REVISION`, `CONNECT-FIX` |
 | `${PREFIX}/bin/tn5250-cli` | copy of the installer when it differs from the running file |
 | `${XDG_CACHE_HOME:-${HOME}/.cache}/tn5250/src` | shallow source checkout |
 | `${XDG_CACHE_HOME:-${HOME}/.cache}/tn5250/build` | CMake build tree, removed before a rebuild |
@@ -230,7 +234,7 @@ These are facts about `src/tn5250-cli` today. They are not extra obligations, an
 | PATH compiler fallback | If no MSYS2 tree exists and `gcc` and `cmake` are on `PATH`, `TOOL_BIN` stays empty, Ninja or `mingw32-make` is required, and `-DCMAKE_PREFIX_PATH` is omitted. OpenSSL is then not installed by setup and may be absent from the link. That is not the supported link in §2.3 |
 | `pacman -Syu` errors | Each of the two updates ignores its own exit status. The later check still stops if gcc, cmake, or ninja is missing |
 | MSYS2 archive | Newest `msys2-base-x86_64-YYYYMMDD.sfx.exe` named in the HTML index at `https://repo.msys2.org/distrib/x86_64/`. No checksum. Re-download when the cache file is missing, empty, or smaller than 1000000 bytes. Cache path is `${HOME}/.cache/tn5250/`, which does not read `XDG_CACHE_HOME`. Extract with `MSYS_NO_PATHCONV=1` and `-y -o<parent>` |
-| Rebuild skip | Skip the compile when `--force` is off and the application directory already has `tn5250.exe`, a `REF` equal to the requested ref, and a `REVISION` equal to current `HEAD`. The patch contents are not part of that key. A second setup checks out the same commit (the checkout drops the previous patch), reapplies the patch, and can still skip the compile. A patch edit at the same commit rebuilds only with `--force` |
+| Rebuild skip | Skip the compile when `--force` is off and the application directory already has `tn5250.exe`, a `REF` equal to the requested ref, a `REVISION` equal to current `HEAD`, and `CONNECT-FIX` equal to `addrinfo-1`. The GCC 14 patch text is not a separate key. A payload without `CONNECT-FIX` rebuilds. A second setup checks out the same commit (the checkout drops the previous patches), reapplies both patches, and can still skip the compile when the stamp matches |
 | `objdump` missing | Setup logs `objdump is unavailable; runtime DLLs were not copied` and continues |
 | DLL not in the compiler bin | That DLL is skipped. Setup does not fail for it |
 | OpenSSL on the PATH fallback | CMake’s optional `find_package(OpenSSL)` can leave `HAVE_LIBSSL` undefined while setup still succeeds |
@@ -348,6 +352,7 @@ Must not confuse Git Bash with Termux, Windows cmd, Cygwin, WSL, a Git object st
 | 2026-10-07 | Active 1.2.0 | Version’s CLI line points at the CLI requirement. Setup and launch still refuse a shell that is not Git Bash. The refusal text names Git Bash or Debian. Empty argv is no longer help. Compile, link, build, and the §2.8 softer paths are unchanged. The Windows compile was not run on the authoring host. |
 | 2026-10-07 | Active 1.3.0 | Ubuntu and other Linux point at RQ-UBUNTU and RQ-OTHER-LINUX. This file still owns only the Windows situation. The ship unit’s refusal text on the authoring host is unchanged. |
 | 2026-10-07 | Active 1.3.1 | The authoring-host setup follows the Ubuntu requirement. This file still does not call sudo. |
+| 2026-10-07 | Active 1.3.2 | The connect fix is applied before the GCC 14 patch. `CONNECT-FIX` is part of the rebuild skip. |
 
 **Last Updated**: 2026-10-07
 **Owner**: unassigned

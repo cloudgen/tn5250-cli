@@ -1,6 +1,6 @@
 **file**: docs/requirements/requirement-other-linux.md
 **ID**: RQ-OTHER-LINUX
-**Status**: Active (Version 1.3.1)
+**Status**: Active (Version 1.3.2)
 **Project**: tn5250-cli
 **Philosophy**: CIAO **v2.10.2** / CIAO-Lite (Caution • Intentional • Anti-fragile • Over-engineered / Over-protect)
 
@@ -65,7 +65,7 @@ A person on such a Linux system runs `tn5250-cli setup`. The supported result is
 17. `<jobs>` **MUST** be a positive integer. The default is `nproc` when that command works, otherwise 4.
 18. Configure **MUST NOT** pass a Windows `CMAKE_PREFIX_PATH`, **MUST NOT** call `cygpath`, and **MUST NOT** set `MSYS_NO_PATHCONV`. System include and library paths are the distribution defaults.
 19. Setup **MUST NOT** run `autogen.sh`, `./configure`, or `cmake --install`. Setup **MUST NOT** build the `win32/` programs (`tn5250.exe`, `lp5250d.exe`, `dftmap.exe`).
-20. Setup **MUST NOT** apply the Windows GCC 14 source fixes. On this Linux the upstream C sources stay as tagged.
+20. Setup **MUST NOT** apply the Windows GCC 14 source fixes. `sslstream.c` **MUST** still have `int ioctlarg`. Setup **MUST** apply the connect fix to `lib5250/telnetstr.c` and `lib5250/sslstream.c` before configure. That fix initializes the `addrinfo` pointer and does not call `freeaddrinfo` when `getaddrinfo` fails. `git rev-parse HEAD` stays the upstream commit. The fix is not a second commit.
 
 ### 2.3 Supported link
 
@@ -85,7 +85,7 @@ A person on such a Linux system runs `tn5250-cli setup`. The supported result is
 31. The build tree **MUST** live in the user cache. A rebuild **MUST** remove that build directory before configure.
 32. After a successful compile, setup **MUST** copy `tn5250` from the build tree into `${PREFIX}/opt/tn5250`, and **MUST** copy `lp5250d`, `scs2ascii`, `scs2pdf`, and `scs2ps` when those programs were produced, skipping anything under a `CMakeFiles` directory. The names have no `.exe` suffix.
 33. If `tn5250` is missing after the build, setup **MUST** stop with a non-zero status.
-34. Setup **MUST** write the requested ref and the checkout’s `HEAD` revision next to the programs.
+34. Setup **MUST** write the requested ref, the checkout’s `HEAD` revision, and `CONNECT-FIX` next to the programs. `CONNECT-FIX` contains `addrinfo-1`. When `--force` is off, setup **MUST** skip the compile only if the programs are present and `REF`, `REVISION`, and `CONNECT-FIX` all match. A payload without `CONNECT-FIX` **MUST** rebuild.
 35. Setup **MUST NOT** copy Windows runtime DLLs and **MUST NOT** vendor `libncurses` or `libssl` into the prefix. Those shared libraries come from the distribution already installed.
 36. The default prefix **MUST** be `${HOME}/.local`, overridable by `--prefix` or `TN5250_PREFIX`. The prefix **MUST NOT** be empty. Setup **MUST NOT** install into `/usr` or `/etc`.
 37. Setup **MUST** copy the installer to `${PREFIX}/bin/tn5250-cli` when that destination is not already the same file, and **MUST** mark it executable. The installer name stays `tn5250-cli` so it does not shadow the curses `tn5250`.
@@ -185,7 +185,7 @@ On this Linux the person runs setup as a normal user.
 - **Caution**: Termux and an identity mismatch do not become a generic Linux build.
 - **Intentional**: one other-Linux file, one Unix CMake invocation, one link set.
 - **Anti-fragile**: Ninja is preferred and Unix Makefiles remain available. The tool check survives a distribution whose package names differ.
-- **Over-protect**: the Windows source patch and the Windows libraries stay off this build.
+- **Over-protect**: the Windows source patch and the Windows libraries stay off this build. The connect fix is the only edit to the upstream C sources on this Linux.
 
 ## 4. Protection Rule (Sacred)
 
@@ -271,6 +271,7 @@ This Linux host can have an administrator. Setup borrows that role only for a mi
 | 2026-10-07 | Active 1.2.0 | The setup command must be started without sudo. A root setup stops before git and the compile. |
 | 2026-10-07 | Active 1.3.0 | One setup verb for a normal user and a sudo launch. Git and the compile return to that person. |
 | 2026-10-07 | Active 1.3.1 | The setup arrangement is named the mixed elevated sudo model. Help does not recommend a sudo prefix. |
+| 2026-10-07 | Active 1.3.2 | The connect fix is applied before configure. A payload without `CONNECT-FIX` rebuilds. The Windows GCC 14 patch stays off. |
 
 **Last Updated**: 2026-10-07
 **Owner**: unassigned

@@ -1,6 +1,6 @@
 # tn5250-cli
 
-[![Version](https://img.shields.io/badge/Version-1.0.1-blue?style=flat-square)](https://github.com/cloudgen/tn5250-cli)
+[![Version](https://img.shields.io/badge/Version-1.0.2-blue?style=flat-square)](https://github.com/cloudgen/tn5250-cli)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](./LICENSE.md)
 [![CIAO](https://img.shields.io/badge/Philosophy-CIAO%20(Caution%20%E2%80%A2%20Intentional%20%E2%80%A2%20Anti--fragile%20%E2%80%A2%20Over--engineered)-purple.svg)](https://github.com/cloudgen/ciao)
 [![Stars](https://img.shields.io/github/stars/cloudgen/tn5250-cli?style=flat-square)](https://github.com/cloudgen/tn5250-cli)
@@ -60,7 +60,7 @@ Setup asks for the administrator password only when compiler packages are missin
 At a terminal, `tn5250-cli` with no command opens the numbered list. A pipe, `--quiet`, or `--json` places this CLI instead and does not wait.
 
 ```text
-[INFO] **tn5250-cli**(*1.0.1*) — numbered list of live commands
+[INFO] **tn5250-cli**(*1.0.2*) — numbered list of live commands
 This program has no server commands.
 Build and open stay on the command line. Next: tn5250-cli setup, then tn5250-cli HOST.
 8. **self-management**: *Place, check, update, or remove this CLI*
@@ -68,7 +68,7 @@ Build and open stay on the command line. Next: tn5250-cli setup, then tn5250-cli
 ```
 
 ```text
-[INFO] **tn5250-cli**(*1.0.1*) — self-management
+[INFO] **tn5250-cli**(*1.0.2*) — self-management
 This list does not place a payload. Next: tn5250-cli setup.
 82. **version**: *Show current version*
 83. **about**: *Show detailed diagnostics*
@@ -87,7 +87,10 @@ tn5250-cli setup --prefix ~/.local --ref v0.18.0
 tn5250-cli help
 tn5250-cli version
 tn5250-cli myibmi.example.com
+tn5250-cli menu
 ```
+
+`menu` and `main` open the numbered list. They are not host names. A host name that does not resolve prints the client's session error. It does not end in a segmentation fault.
 
 `tn5250-cli setup -h` prints the setup options and does not compile.
 
@@ -95,7 +98,7 @@ After a successful setup, the installer is copied to `~/.local/bin/tn5250-cli` u
 
 ## Version
 
-Product version **1.0.1** is the `VERSION` line in `src/tn5250-cli`.
+Product version **1.0.2** is the `VERSION` line in `src/tn5250-cli`.
 
 ## License
 

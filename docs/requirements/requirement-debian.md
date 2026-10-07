@@ -1,6 +1,6 @@
 **file**: docs/requirements/requirement-debian.md
 **ID**: RQ-DEBIAN
-**Status**: Active (Version 1.5.1)
+**Status**: Active (Version 1.5.2)
 **Project**: tn5250-cli
 **Philosophy**: CIAO **v2.10.2** / CIAO-Lite (Caution • Intentional • Anti-fragile • Over-engineered / Over-protect)
 
@@ -64,7 +64,7 @@ A person on Debian runs `tn5250-cli setup`. The supported result is the curses t
 16. `<jobs>` **MUST** be a positive integer. The default is `nproc` when that command works, otherwise 4.
 17. Configure **MUST NOT** pass a Windows `CMAKE_PREFIX_PATH`, **MUST NOT** call `cygpath`, and **MUST NOT** set `MSYS_NO_PATHCONV`. System include and library paths are the Debian defaults.
 18. Setup **MUST NOT** run `autogen.sh`, `./configure`, or `cmake --install`. Setup **MUST NOT** build the `win32/` programs (`tn5250.exe`, `lp5250d.exe`, `dftmap.exe`).
-19. Setup **MUST NOT** apply the Windows GCC 14 source fixes. Those edits change Windows API types (`u_long`, `INT_PTR`, `GetDefaultPrinter`). On Debian the upstream C sources stay as tagged.
+19. Setup **MUST NOT** apply the Windows GCC 14 source fixes. Those edits change Windows API types (`u_long`, `INT_PTR`, `GetDefaultPrinter`). `sslstream.c` **MUST** still have `int ioctlarg`. Setup **MUST** apply the connect fix to `lib5250/telnetstr.c` and `lib5250/sslstream.c` before configure. That fix initializes the `addrinfo` pointer and does not call `freeaddrinfo` when `getaddrinfo` fails. `git rev-parse HEAD` stays the upstream commit. The fix is not a second commit.
 
 ### 2.3 Supported link
 
@@ -84,7 +84,7 @@ A person on Debian runs `tn5250-cli setup`. The supported result is the curses t
 30. The build tree **MUST** live in the user cache. A rebuild **MUST** remove that build directory before configure.
 31. After a successful compile, setup **MUST** copy `tn5250`, `lp5250d`, `scs2ascii`, `scs2pdf`, and `scs2ps` from the build tree into `${PREFIX}/opt/tn5250`, skipping anything under a `CMakeFiles` directory. The names have no `.exe` suffix.
 32. If `tn5250` is missing after the build, setup **MUST** stop with a non-zero status.
-33. Setup **MUST** write the requested ref and the checkout’s `HEAD` revision next to the programs.
+33. Setup **MUST** write the requested ref, the checkout’s `HEAD` revision, and `CONNECT-FIX` next to the programs. `CONNECT-FIX` contains `addrinfo-1`. When `--force` is off, setup **MUST** skip the compile only if the programs are present and `REF`, `REVISION`, and `CONNECT-FIX` all match. A payload without `CONNECT-FIX` **MUST** rebuild.
 34. Setup **MUST NOT** copy Windows runtime DLLs and **MUST NOT** vendor `libncurses` or `libssl` into the prefix. Those shared libraries come from the Debian packages already installed (`libncurses6`, and `libssl3` on bookworm or `libssl3t64` on trixie).
 35. The default prefix **MUST** be `${HOME}/.local`, overridable by `--prefix` or `TN5250_PREFIX`. The prefix **MUST NOT** be empty. Setup **MUST NOT** install into `/usr` or `/etc`.
 36. Setup **MUST** copy the installer to `${PREFIX}/bin/tn5250-cli` when that destination is not already the same file, and **MUST** mark it executable. The installer name stays `tn5250-cli` so it does not shadow the curses `tn5250`.
@@ -185,7 +185,7 @@ On Debian the person runs setup as a normal user.
 - **Caution**: a derivative that only says `ID_LIKE=debian` is not treated as Debian.
 - **Intentional**: one Debian file, one Unix CMake invocation, one link set.
 - **Anti-fragile**: Ninja is preferred and Unix Makefiles remain available. Bookworm and trixie share the package names.
-- **Over-protect**: the Windows source patch and the Windows libraries stay off this build.
+- **Over-protect**: the Windows source patch and the Windows libraries stay off this build. The connect fix is the only Debian edit to the upstream C sources.
 
 ## 4. Protection Rule (Sacred)
 
@@ -268,6 +268,7 @@ Debian itself can have an administrator. Setup borrows that role only for a miss
 | 2026-10-07 | Active 1.4.0 | The setup command must be started without sudo. A root setup stops before git and the compile. |
 | 2026-10-07 | Active 1.5.0 | One setup verb for a normal user and a sudo launch. Git and the compile return to that person. |
 | 2026-10-07 | Active 1.5.1 | The setup arrangement is named the mixed elevated sudo model. Help does not recommend a sudo prefix. |
+| 2026-10-07 | Active 1.5.2 | The connect fix is applied before configure. A payload without `CONNECT-FIX` rebuilds. The Windows GCC 14 patch stays off. |
 
 **Last Updated**: 2026-10-07
 **Owner**: unassigned

@@ -6,6 +6,8 @@ On 2026-10-07, `tn5250-cli setup` exited 0 on that host. The log did not contain
 
 The missing-package sudo path was not run. Debian, other Linux, jammy, resolute, and Windows compiles were not run.
 
+On 2026-10-07, version 1.0.2 setup on this Ubuntu host applied the connect fix, kept `HEAD` at `cd5980177b9468763bcaa669bf5cacbe7de5ec63`, and wrote `CONNECT-FIX` as `addrinfo-1`. `sslstream.c` still has `int ioctlarg`. A second setup skipped the compile. `menu` on a terminal drew the numbered list. A host token that does not resolve printed `Could not start session:` and did not receive signal 11.
+
 Rows that say “prior smoke” were shown in the specialize run that copied the binary under a temporary home and printed about, help, and an already-installed empty argv. This alignment repeated the rows that say “repeated”.
 
 | TP-ID | Requirement | What would prove it | Status |
@@ -34,7 +36,8 @@ Rows that say “prior smoke” were shown in the specialize run that copied the
 | TP-UBU-02 | RQ-UBUNTU | Configure uses Ninja or Unix Makefiles, Release, and no Windows prefix or MSYS_NO_PATHCONV | ran on the authoring host. Ninja and Release. MSYS_NO_PATHCONV was not set |
 | TP-UBU-03 | RQ-UBUNTU | Static 5250 links OpenSSL::SSL and OpenSSL::Crypto and does not link Ws2_32 or Winmm | ran on the authoring host. lib5250.a plus libssl and libcrypto on the curses link line. Ws2_32 and Winmm are absent |
 | TP-UBU-04 | RQ-UBUNTU | The curses tn5250 links 5250 and ncurses. lp5250d, scs2ascii, scs2pdf, and scs2ps are produced | ran on the authoring host. ldd shows libncurses.so.6. All five programs were copied |
-| TP-UBU-05 | RQ-UBUNTU | The Windows GCC 14 patch is not applied on Ubuntu | ran on the authoring host. sslstream.c still has int ioctlarg. The checkout is clean |
+| TP-UBU-05 | RQ-UBUNTU | The Windows GCC 14 patch is not applied on Ubuntu | ran on the authoring host. sslstream.c still has int ioctlarg. The 1.0.2 setup still has int ioctlarg after the connect fix |
+| TP-UBU-09 | RQ-UBUNTU and RQ-DOMAIN-TN5250 | The connect fix is applied, `CONNECT-FIX` is `addrinfo-1`, and a host name that does not resolve is not signal 11 | ran on the authoring host. Stamp `addrinfo-1`. `menu` drew the list. The client printed `Could not start session:` |
 | TP-UBU-06 | RQ-UBUNTU | A missing compiler package is installed with the sudo wrap. Git and the compile stay with the invoking person. A present toolchain does not call sudo | ran for the present toolchain. The log did not contain `Installing missing compiler packages`. The missing-package path was not run |
 | TP-UBU-07 | RQ-UBUNTU | A build without the curses tn5250 fails | todo |
 | TP-UBU-08 | RQ-UBUNTU | A VERSION_ID / VERSION_CODENAME mismatch stops setup and does not fall through to other Linux | todo |

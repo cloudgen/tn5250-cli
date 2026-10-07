@@ -1,6 +1,6 @@
 **file**: docs/requirements/requirement-domain-tn5250.md
 **ID**: RQ-DOMAIN-TN5250
-**Status**: Active (Version 1.4.2)
+**Status**: Active (Version 1.4.3)
 **Project**: tn5250-cli
 **Philosophy**: CIAO **v2.10.2** / CIAO-Lite (Caution • Intentional • Anti-fragile • Over-engineered / Over-protect)
 
@@ -43,7 +43,7 @@ Windows compilation, link, and build stay on `docs/requirements/requirement-wind
 3. `setup -h` and `setup --help` **MUST** show setup usage and exit 0 before any platform check.
 4. Setup options are `--prefix` / `TN5250_PREFIX` (default `${HOME}/.local`), `--ref` / `TN5250_REF` (default `v0.18.0`), `--jobs` / `TN5250_JOBS` (positive integer, default `nproc` or 4), and `--force`. Equals forms are accepted. `--msys2-root` / `TN5250_MSYS2_ROOT` is legal only on Git Bash. Debian, Ubuntu, and other Linux **MUST** reject it.
 5. An unknown token after `setup` **MUST** fail non-zero and mention `tn5250-cli setup --help`.
-6. A first token that is not a global flag and not a named verb **MUST** be the host. Git Bash **MUST** execute `tn5250.exe`. Debian, Ubuntu, and other Linux **MUST** execute the curses `tn5250`. A missing program **MUST** fail non-zero and mention `tn5250-cli setup`.
+6. A first token that is not a global flag and not a named verb **MUST** be the host. Git Bash **MUST** execute `tn5250.exe`. Debian, Ubuntu, and other Linux **MUST** execute the curses `tn5250`. A missing program **MUST** fail non-zero and mention `tn5250-cli setup`. A host name that does not resolve **MUST NOT** end as a segmentation fault. The client prints its session error. The connect fix that makes that true is owned by the platform requirements. `menu` and `main` are named verbs. They are not host names.
 7. The installer name **MUST** stay `tn5250-cli` so it does not shadow the payload program.
 8. Domain work **MUST** send person-facing text through the `out_*` family.
 
@@ -163,6 +163,7 @@ Proof home: `docs/reviews/test-plan.md`. The Ubuntu compile was run on the autho
 | 2026-10-07 | Active 1.4.0 | One setup verb for a normal user and a sudo launch. Git and the compile return to that person. |
 | 2026-10-07 | Active 1.4.1 | The setup arrangement is named the mixed elevated sudo model. Help does not recommend a sudo prefix. |
 | 2026-10-07 | Active 1.4.2 | The numbered list is not this file. This file still forbids a path-and-clock screen and a setup question walk. |
+| 2026-10-07 | Active 1.4.3 | A host name that does not resolve must not be a segmentation fault. `menu` and `main` stay named verbs. |
 
 **Last Updated**: 2026-10-07
 **Owner**: unassigned

@@ -41,8 +41,8 @@ APP_NAME="tn5250-cli"
 : "${SHORT_DESCRIPTION:=${APP_DESC}}"
 : "${DESCRIPTION:=POSIX /bin/sh program: install, version-check, self-update, self-uninstall, and about, plus setup and host launch for the TN5250 client. A terminal with no command opens the numbered list. A pipe, --quiet, or --json places this CLI.}"
 # Product version SSOT (semver). Extractors use: grep '^VERSION="'
-VERSION="1.0.1"
-: "${VERSION:=1.0.1}"
+VERSION="1.0.2"
+: "${VERSION:=1.0.2}"
 
 # Runtime flags (safe defaults)
 : "${QUIET:=0}"
@@ -376,7 +376,7 @@ out_empty_line() { out_text plain ""; }
 
 util_app_ident() {
     : "${APP_NAME:=tn5250-cli}"
-    : "${VERSION:=1.0.1}"
+    : "${VERSION:=1.0.2}"
     : "${TTY:=0}"
     if [ "${TTY}" -eq 1 ]; then
         printf '\033[1m%s\033[0m(\033[3m%s\033[0m)' "${APP_NAME}" "${VERSION}"
@@ -2687,6 +2687,142 @@ EOF
     rm -f "${_patch}"
 }
 
+# =============================================================================
+# tn5250_connect_fix_stamp() - Identity of the connect fix
+# =============================================================================
+#
+# GENERAL PURPOSE:
+# Returns the stamp written next to a client built with the connect fix.
+# A payload without this stamp is rebuilt. The stamp is not a git commit.
+#
+# Last updated: 2026-10-07
+# =============================================================================
+
+tn5250_connect_fix_stamp() {
+    printf '%s\n' "addrinfo-1"
+}
+
+# =============================================================================
+# tn5250_payload_has_connect_fix() - Whether the installed client has the fix
+# =============================================================================
+#
+# GENERAL PURPOSE:
+# Returns 0 when CONNECT-FIX in the application directory matches the stamp.
+#
+# Last updated: 2026-10-07
+# =============================================================================
+
+tn5250_payload_has_connect_fix() {
+    local _dir=$(tn5250_app_dir)
+    local _have=""
+    [ -f "${_dir}/CONNECT-FIX" ] || return 1
+    IFS= read -r _have < "${_dir}/CONNECT-FIX" || return 1
+    [ "${_have}" = "$(tn5250_connect_fix_stamp)" ]
+}
+
+# =============================================================================
+# tn5250_write_connect_fix() - Record the connect fix next to the programs
+# =============================================================================
+#
+# GENERAL PURPOSE:
+# Writes CONNECT-FIX so a later setup can skip the compile.
+#
+# Last updated: 2026-10-07
+# =============================================================================
+
+tn5250_write_connect_fix() {
+    local _dir=$1
+    printf '%s\n' "$(tn5250_connect_fix_stamp)" > "${_dir}/CONNECT-FIX" \
+        || out_die "Cannot record the connect fix."
+}
+
+# =============================================================================
+# tn5250_apply_connect_fix() - Do not free an undefined addrinfo
+# =============================================================================
+#
+# GENERAL PURPOSE:
+# Upstream v0.18.0 leaves struct addrinfo *result uninitialized. When
+# getaddrinfo fails, POSIX leaves that pointer undefined, and the client
+# calls freeaddrinfo on it. That is the segmentation fault on a host token.
+# The same block exists in telnetstr.c and sslstream.c. This patch
+# initializes the pointer and does not free it on failure. HEAD stays the
+# upstream commit. This is not the Windows GCC 14 patch.
+#
+# Last updated: 2026-10-07
+# =============================================================================
+
+tn5250_apply_connect_fix() {
+    local _src=$1
+    local _patch=$(mktemp) || out_die "Cannot create a patch file."
+    cat > "${_patch}" <<'EOF'
+diff --git a/lib5250/telnetstr.c b/lib5250/telnetstr.c
+--- a/lib5250/telnetstr.c
++++ b/lib5250/telnetstr.c
+@@ -351,19 +351,23 @@ static int telnet_stream_connect(Tn5250Stream* This, const char* to) {
+         port = "telnet";
+     }
+ 
+-    struct addrinfo* result;
++    struct addrinfo* result = NULL;
+     struct addrinfo hints = { .ai_family = AF_UNSPEC,
+                               .ai_socktype = SOCK_STREAM };
+ 
+     r = getaddrinfo(host, port, &hints, &result);
++    if (r != 0) {
++        result = NULL;
++    }
+     if (r == EAI_NONAME && strcmp(port, "telnet") == 0) {
+         hints.ai_flags |= AI_NUMERICSERV;
+-        freeaddrinfo(result);
+         r = getaddrinfo(host, "23", &hints, &result);
++        if (r != 0) {
++            result = NULL;
++        }
+     }
+ 
+     if (r != 0) {
+-        freeaddrinfo(result);
+         _tn5250_set_error(TN5250_ERROR_GAI, r);
+         return r;
+     }
+diff --git a/lib5250/sslstream.c b/lib5250/sslstream.c
+--- a/lib5250/sslstream.c
++++ b/lib5250/sslstream.c
+@@ -486,19 +486,23 @@ static int ssl_stream_connect(Tn5250Stream* This, const char* to) {
+         port = "telnets";
+     }
+ 
+-    struct addrinfo* result;
++    struct addrinfo* result = NULL;
+     struct addrinfo hints = { .ai_family = AF_UNSPEC,
+                               .ai_socktype = SOCK_STREAM };
+ 
+     r = getaddrinfo(host, port, &hints, &result);
++    if (r != 0) {
++        result = NULL;
++    }
+     if (r == EAI_NONAME && strcmp(port, "telnets") == 0) {
+         hints.ai_flags |= AI_NUMERICSERV;
+-        freeaddrinfo(result);
+         r = getaddrinfo(host, "992", &hints, &result);
++        if (r != 0) {
++            result = NULL;
++        }
+     }
+ 
+     if (r != 0) {
+-        freeaddrinfo(result);
+         _tn5250_set_error(TN5250_ERROR_GAI, r);
+         return r;
+     }
+EOF
+    if ! git -C "${_src}" apply --whitespace=nowarn "${_patch}"; then
+        rm -f "${_patch}"
+        out_die "The connect fix did not apply."
+    fi
+    rm -f "${_patch}"
+}
+
 tn5250_msys2_bash() {
     local _root=$1
     local _body=$2
@@ -2879,6 +3015,7 @@ tn5250_build_windows() {
     done
     git -C "${_src}" rev-parse HEAD > "${_dest}/REVISION"
     printf '%s\n' "${TN5250_REF}" > "${_dest}/REF"
+    tn5250_write_connect_fix "${_dest}"
 }
 
 tn5250_setup_windows() {
@@ -2894,10 +3031,12 @@ tn5250_setup_windows() {
     out_info "Prefix: ${TN5250_PREFIX}"
     tn5250_ensure_toolchain
     tn5250_fetch_source "${_src}"
+    out_info "Applying the connect fix"
+    tn5250_apply_connect_fix "${_src}"
     out_info "Applying Win32 fixes for GCC 14+"
     tn5250_apply_win32_fixes "${_src}"
     local _sha=$(git -C "${_src}" rev-parse HEAD)
-    if [ "${TN5250_FORCE}" -eq 0 ] && [ -f "${TN5250_APP_DIR}/tn5250.exe" ] && [ -f "${TN5250_APP_DIR}/REF" ] && [ -f "${TN5250_APP_DIR}/REVISION" ]; then
+    if [ "${TN5250_FORCE}" -eq 0 ] && [ -f "${TN5250_APP_DIR}/tn5250.exe" ] && [ -f "${TN5250_APP_DIR}/REF" ] && [ -f "${TN5250_APP_DIR}/REVISION" ] && tn5250_payload_has_connect_fix; then
         local _have_ref=$(tn5250_payload_ref)
         local _have_rev=$(tn5250_payload_rev)
         if [ "${_have_ref}" = "${TN5250_REF}" ] && [ "${_have_rev}" = "${_sha}" ]; then
@@ -3419,6 +3558,7 @@ tn5250_build_debian() {
     done
     git -C "${_src}" rev-parse HEAD > "${_dest}/REVISION"
     printf '%s\n' "${TN5250_REF}" > "${_dest}/REF"
+    tn5250_write_connect_fix "${_dest}"
 }
 
 # =============================================================================
@@ -3466,8 +3606,10 @@ tn5250_setup_unix() {
     out_info "Installing tn5250 ${TN5250_REF} for ${_label}"
     out_info "Prefix: ${TN5250_PREFIX}"
     tn5250_fetch_source "${_src}"
+    out_info "Applying the connect fix"
+    tn5250_apply_connect_fix "${_src}"
     local _sha=$(git -C "${_src}" rev-parse HEAD)
-    if [ "${TN5250_FORCE}" -eq 0 ] && [ -f "${TN5250_APP_DIR}/tn5250" ] && [ -f "${TN5250_APP_DIR}/REF" ] && [ -f "${TN5250_APP_DIR}/REVISION" ]; then
+    if [ "${TN5250_FORCE}" -eq 0 ] && [ -f "${TN5250_APP_DIR}/tn5250" ] && [ -f "${TN5250_APP_DIR}/REF" ] && [ -f "${TN5250_APP_DIR}/REVISION" ] && tn5250_payload_has_connect_fix; then
         local _have_ref=$(tn5250_payload_ref)
         local _have_rev=$(tn5250_payload_rev)
         if [ "${_have_ref}" = "${TN5250_REF}" ] && [ "${_have_rev}" = "${_sha}" ]; then
@@ -3641,7 +3783,7 @@ app_about() {
     : "${QUIET:=0}"
     : "${APP_NAME:=tn5250-cli}"
     # Version comes from global SSOT (VERSION="…" hard-assign near top); default only if unset
-    : "${VERSION:=1.0.1}"
+    : "${VERSION:=1.0.2}"
     : "${GLOBAL_BIN:=/usr/local/bin}"
     : "${USER_BIN:=${HOME}/.local/bin}"
     : "${SCRIPT_URL:=}"
@@ -3777,7 +3919,7 @@ app_about() {
 
 app_version() {
     : "${APP_NAME:=tn5250-cli}"
-    : "${VERSION:=1.0.1}"
+    : "${VERSION:=1.0.2}"
     : "${JSON:=0}"
     if [ "${JSON}" -eq 1 ]; then
         # Same machine contract as historical app_main inline path
