@@ -1,6 +1,6 @@
 **file**: docs/requirements/requirement-shell-cli-interface.md
 **ID**: RQ-SHELL-CLI-INTERFACE
-**Status**: Active (Version 1.6.1)
+**Status**: Active (Version 1.7.0)
 **Project**: tn5250-cli
 **Philosophy**: CIAO **v2.10.2** / CIAO-Lite (Caution • Intentional • Anti-fragile • Over-engineered / Over-protect)
 
@@ -12,7 +12,7 @@ Empty argv is owned by `docs/requirements/requirement-shell-cli-zero-arguments.m
 
 ### 1.1 Human-facing
 
-**In one sentence:** A person runs the Type 0 verbs, `tn5250-cli setup`, `tn5250-cli help`, `tn5250-cli version`, or `tn5250-cli HOST`. On Git Bash the Windows build is in the Git Bash requirement. On Debian, Ubuntu, or other Linux the Unix build is in that platform’s requirement.
+**In one sentence:** A person runs the Type 0 verbs, `tn5250-cli setup`, `tn5250-cli help`, `tn5250-cli version`, `tn5250-cli menu`, or `tn5250-cli HOST`. With no command, a terminal opens the numbered list and a pipe places the CLI. On Git Bash the Windows build is in the Git Bash requirement. On Debian, Ubuntu, or other Linux the Unix build is in that platform’s requirement.
 
 | Box | Meaning | Example |
 |-----|---------|---------|
@@ -22,7 +22,7 @@ Empty argv is owned by `docs/requirements/requirement-shell-cli-zero-arguments.m
 
 | Includes | Excludes |
 |----------|----------|
-| The command map, empty-argv’s pointer, and the rule that setup’s flags are flags | The CMake arguments, the link line, a text-screen menu, and a field-by-field question walk |
+| The command map, empty-argv’s pointer, and the rule that setup’s flags are flags | The CMake arguments, the link line, the numbered list’s rows, and a field-by-field question walk |
 
 | Surface | What you open | What for |
 |---------|---------------|----------|
@@ -39,7 +39,7 @@ Empty argv is owned by `docs/requirements/requirement-shell-cli-zero-arguments.m
 1. The ship unit **MUST** expose one dispatcher. The first token selects the command. `app_main` **MUST** run even when the script is read on a pipe.
 2. `setup`, `help`, `version`, and the host launch **MUST** also be named, with a full sample, on the platform requirement that owns that run: `docs/requirements/requirement-windows-git-bash.md` for Git Bash, `docs/requirements/requirement-debian.md` for Debian, `docs/requirements/requirement-ubuntu.md` for Ubuntu 22.04, 24.04, and 26.04, and `docs/requirements/requirement-other-linux.md` for other Linux. The Type 0 verbs **MUST** also be named on `docs/requirements/requirement-shell-self-management.md`. Empty argv **MUST** also be named on `docs/requirements/requirement-shell-cli-zero-arguments.md`. Help text in the script is not that second mention.
 3. There are **no** test-purpose commands. Every command below is a command that runs the product.
-4. Empty arguments (`tn5250-cli` with no token) are the Type O install-ensure of the CLI binary. That behavior is owned by `docs/requirements/requirement-shell-cli-zero-arguments.md`. Empty arguments **MUST NOT** start `setup` or CMake.
+4. No command after the program name is empty argv. A switch such as `--debug` is still no command. Non-interactive empty argv places the CLI binary. Interactive empty argv opens the numbered list. `--json` or `--quiet` with no command is the non-interactive place, not the list and not help. That behavior is owned by `docs/requirements/requirement-shell-cli-zero-arguments.md` and, for the list, by `docs/requirements/requirement-shell-cli-default-interaction.md`. Empty argv **MUST NOT** start `setup` or CMake.
 5. `help`, `-h`, and `--help` as the first token **MUST** show usage and exit 0. They do not require a platform check.
 6. `setup -h` and `setup --help` **MUST** show usage and exit 0 before any platform check.
 7. `setup` with any other arguments **MUST** perform the build for the detected platform. Git Bash uses the Git Bash requirement. Debian 12 and Debian 13 use the Debian requirement. Ubuntu 22.04, 24.04, and 26.04 use the Ubuntu requirement. Other Linux uses the other-Linux requirement. A machine that matches none of those **MUST** stop with a non-zero status. This file **MUST NOT** define the compiler, the generator, the link libraries, or the package list.
@@ -47,16 +47,17 @@ Empty argv is owned by `docs/requirements/requirement-shell-cli-zero-arguments.m
 9. `version`, `--version`, and `-V` **MUST** print the CLI version from `VERSION`, then the payload line when the `REF` and `REVISION` files exist. A missing payload **MUST** warn and **MUST NOT** be a fatal error by itself. Version **MUST NOT** require a platform detect. The payload line is `tn5250 <ref> (<revision>)`.
 10. A first token that is not a known flag and not a named verb **MUST** be treated as the host name and **MUST** launch the built `tn5250` program for that platform. On Git Bash that program is `tn5250.exe`. On Debian, Ubuntu, and other Linux it is the curses `tn5250`. That token is not an unknown-command error. A leading `-` or `--` that is not a known flag **MUST** fail with a non-zero status.
 11. An unknown token after `setup` **MUST** fail with a non-zero status and mention `tn5250-cli setup --help`.
-12. There is **no** text screen inside this installer. On Git Bash the upstream program opens its own window. On Debian, Ubuntu, and other Linux the curses program runs in the current terminal. There is no path-and-clock menu, no status line of name and version, and no bottom input box.
+12. There is **no** path-and-clock screen inside this installer. The numbered list, when a terminal has no command, is owned by `docs/requirements/requirement-shell-cli-default-interaction.md`. On Git Bash the upstream program opens its own window. On Debian, Ubuntu, and other Linux the curses program runs in the current terminal. There is no path-and-clock menu and no bottom input box.
 13. The global flags `--quiet`, `--json`, `--force`, and `--debug` exist. A leading flag is not a host name. The output contract, including JSON, is owned by `docs/requirements/requirement-shell-output-requirements.md`. This file **MUST NOT** define the JSON grammar. `tn5250-cli --quiet HOST` is global quiet, then launch. `tn5250-cli HOST --quiet` passes `--quiet` to the emulator.
-14. Help **MUST** list `install`, `version-check`, `self-update`, `self-uninstall`, `about`, `help`, `version`, `setup`, and the host launch. Help **MUST** say that this installer remains `tn5250-cli`. Help **MUST NOT** list `CHECKSUM`. Help **MUST NOT** name another product’s channel.
+14. Help **MUST** list `install`, `self-install`, `menu`, `main`, `version-check`, `self-update`, `self-uninstall`, `about`, `help`, `version`, `setup`, and the host launch. Help **MUST** say that a terminal with no command opens the numbered list and that a pipe, `--quiet`, or `--json` places this CLI. Help **MUST** say that this installer remains `tn5250-cli`. Help **MUST NOT** list `CHECKSUM`. Help **MUST NOT** name another product’s channel.
 
 ### 2.1 Implementation Notes (this project)
 
 | First token | Kind | Sample | Behavior owner |
 |-------------|------|--------|----------------|
-| (none) | runs the product | `tn5250-cli` | `docs/requirements/requirement-shell-cli-zero-arguments.md`. CLI binary only. Not `setup` |
-| `install`, `version-check`, `self-update`, `self-uninstall`, `about` | runs the product | `tn5250-cli about` | `docs/requirements/requirement-shell-self-management.md` |
+| (none) | runs the product | `tn5250-cli` | `docs/requirements/requirement-shell-cli-zero-arguments.md`. A pipe places the CLI. A terminal opens the list. Not `setup` |
+| `install`, `self-install`, `version-check`, `self-update`, `self-uninstall`, `about` | runs the product | `tn5250-cli about` | `docs/requirements/requirement-shell-self-management.md`. `self-install` places the CLI the same way as `install` |
+| `menu`, `main` | runs the product | `tn5250-cli menu` | `docs/requirements/requirement-shell-cli-default-interaction.md`. Needs a terminal |
 | `setup` | runs the product | `tn5250-cli setup` | Catalog: `docs/requirements/requirement-domain-tn5250.md`. Git Bash build: `docs/requirements/requirement-windows-git-bash.md`. Debian build: `docs/requirements/requirement-debian.md`. Ubuntu build: `docs/requirements/requirement-ubuntu.md`. Other Linux build: `docs/requirements/requirement-other-linux.md` |
 | `help`, `-h`, `--help` | runs the product | `tn5250-cli help` | This file for the usage list. Each platform file names the same sample. Help does not require a platform check |
 | `version`, `--version`, `-V` | runs the product | `tn5250-cli version` | This file for the CLI line. Payload line `tn5250 <ref> (<revision>)` when both files exist. A missing payload warns |
@@ -85,7 +86,7 @@ The person runs these commands with normal user privilege.
 
 - **Caution**: a token that is not a flag and not a named verb is a host name, and the requirement says so.
 - **Intentional**: setup’s build is pointed at the requirement for the machine that was detected.
-- **Anti-fragile**: empty arguments install or confirm the CLI binary, and they do not start CMake.
+- **Anti-fragile**: a pipe with no command places or confirms the CLI binary, and it does not start CMake.
 - **Over-protect**: this file refuses to grow a second copy of the link line.
 
 ## 4. Protection Rule (Sacred)
@@ -94,8 +95,9 @@ The person runs these commands with normal user privilege.
 
 - Leave `setup`, `help`, `version`, or the host launch named only in this file.
 - Paste the CMake generator, the link libraries, the package names, or the GCC fixes into this file.
-- Add a text screen, a field-by-field setup interview, or a test-purpose command.
+- Add a path-and-clock screen, a field-by-field setup interview, or a test-purpose command.
 - Treat `tn5250-cli` with no arguments as help, or as `setup`.
+- Treat a pipe with no command as the numbered list.
 - Drop `install`, `version-check`, `self-update`, `self-uninstall`, or `about`.
 - Add sudo outside the package wrap, or pass git or the compile through sudo.
 - List `CHECKSUM` in help, or point help at another product’s channel.
@@ -111,6 +113,7 @@ The person runs these commands with normal user privilege.
 | `docs/requirements/requirement-other-linux.md` | Other Linux detect, compilation, link, build, and the second naming of every command (RQ-OTHER-LINUX) |
 | `docs/requirements/requirement-shell-script-coding.md` | POSIX /bin/sh writing style (RQ-SHELL-SCRIPT-CODING) |
 | `docs/requirements/requirement-shell-cli-zero-arguments.md` | Empty argv (RQ-SHELL-CLI-ZERO-ARGUMENTS) |
+| `docs/requirements/requirement-shell-cli-default-interaction.md` | Numbered list (RQ-SHELL-CLI-DEFAULT-INTERACTION) |
 | `docs/requirements/requirement-shell-self-management.md` | Type 0 lifecycle (RQ-SHELL-SELF-MANAGEMENT) |
 | `docs/requirements/requirement-shell-output-requirements.md` | Output and JSON (RQ-SHELL-OUTPUT-REQUIREMENTS) |
 | `docs/requirements/requirement-domain-tn5250.md` | Domain catalog (RQ-DOMAIN-TN5250) |
@@ -171,6 +174,7 @@ Proof home: `docs/reviews/test-plan.md`. The Ubuntu compile was run on the autho
 | 2026-10-07 | Active 1.5.0 | The person starts setup without sudo. A root setup stops before git and the compile. |
 | 2026-10-07 | Active 1.6.0 | One setup verb for a normal user and a sudo launch. Git and the compile return to that person. |
 | 2026-10-07 | Active 1.6.1 | The setup arrangement is named the mixed elevated sudo model. Help does not recommend a sudo prefix. |
+| 2026-10-07 | Active 1.7.0 | No command splits by mode. A pipe places the CLI. A terminal opens the numbered list. `menu`, `main`, and `self-install` are named. |
 
 **Last Updated**: 2026-10-07
 **Owner**: unassigned

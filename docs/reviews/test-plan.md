@@ -46,7 +46,7 @@ Rows that say “prior smoke” were shown in the specialize run that copied the
 | TP-LNX-06 | RQ-OTHER-LINUX | A missing compiler package is installed with the sudo wrap when the package family is known. Git and the compile stay with the invoking person. A present toolchain does not call sudo. An unknown package manager stops and names the missing tools | todo |
 | TP-LNX-07 | RQ-OTHER-LINUX | A build without the curses tn5250 fails | todo |
 | TP-LNX-08 | RQ-OTHER-LINUX | A Debian or Ubuntu identity mismatch does not fall through to other Linux | todo |
-| TP-CLI-02 | RQ-SHELL-CLI-INTERFACE and RQ-SHELL-CLI-ZERO-ARGUMENTS | Empty argv does not configure CMake. When the binary is absent and `SCRIPT_URL` is empty, the status is non-zero | ran, repeated. Exit 1. stderr: `SCRIPT_URL is not set. There is no published install channel.` curl was not started |
+| TP-CLI-02 | RQ-SHELL-CLI-INTERFACE and RQ-SHELL-CLI-ZERO-ARGUMENTS | Non-interactive empty argv does not configure CMake. When the binary is absent and `SCRIPT_URL` is explicitly empty, the status is non-zero | ran 2026-10-07. Exit 1. stderr: `SCRIPT_URL is empty. Refusing to download.` curl was not started |
 | TP-CLI-03 | RQ-SHELL-CLI-INTERFACE | `setup -h` exits 0 without a platform check | ran, repeated. Exit 0 |
 | TP-CLI-04 | RQ-SHELL-CLI-INTERFACE | An unknown setup option exits non-zero and mentions `tn5250-cli setup --help` | ran, repeated. `setup --bogus` exits 1 |
 | TP-SH-01 | RQ-SHELL-SCRIPT-CODING | Ship unit shebang is `#!/bin/sh`. The script sets `-u` and does not set `-e` globally | ran. `sh -n` and `dash -n` exit 0. That is a syntax check, not a dash runtime run |
@@ -58,19 +58,26 @@ Rows that say “prior smoke” were shown in the specialize run that copied the
 | TP-SUDO-05 | RQ-SHELL-SUDO-COMMAND | One setup verb. A normal user continues. Root with nobody to return to stops before git. A sudo launch returns to that person before git | ran for the normal user, including a leftover `SUDO_USER` while not root: exit 0, existing install. `fakeroot` with no person: exit 1 before git. `fakeroot` with an unknown person: exit 1 before git. The `runuser` return was not executed |
 | TP-SUDO-06 | RQ-SHELL-SUDO-COMMAND | Setup help names one command and does not tell the person to prefix setup with sudo. That text is the mixed elevated sudo model | source read of `tn5250_setup_help` after the 1.0.0 alignment. The three plain lines name one command, in-tool sudo for missing packages, and git and the compile staying with the user |
 | TP-SH-03 | RQ-SHELL-SCRIPT-CODING | The coding-style requirement does not restate the CMake generator or the link libraries | ran as a document check |
-| TP-ZERO-01 | RQ-SHELL-CLI-ZERO-ARGUMENTS | Already installed empty argv exits 0 and does not configure CMake | ran, prior smoke |
-| TP-ZERO-02 | RQ-SHELL-CLI-ZERO-ARGUMENTS | Not installed, empty `SCRIPT_URL`, non-interactive empty argv exits non-zero and does not call curl | ran, repeated. Same command as TP-CLI-02 |
-| TP-IDEM-01 | RQ-SHELL-IDEMPOTENCY | Second empty argv on an installed binary exits 0 | ran, prior smoke |
+| TP-ZERO-01 | RQ-SHELL-CLI-ZERO-ARGUMENTS | Already installed non-interactive empty argv exits 0 and does not configure CMake | ran on the authoring host. Temporary home, installed copy, exit 0, `already installed`. curl was not started |
+| TP-ZERO-02 | RQ-SHELL-CLI-ZERO-ARGUMENTS | Not installed, explicit empty `SCRIPT_URL`, non-interactive empty argv exits non-zero and does not call curl | ran 2026-10-07. Same command as TP-CLI-02 |
+| TP-ZERO-03 | RQ-SHELL-CLI-ZERO-ARGUMENTS and RQ-SHELL-CLI-DEFAULT-INTERACTION | Interactive empty argv opens the numbered list and does not place the CLI | ran on the authoring host. A pty sent `9`. Exit 0. The list was shown. `SCRIPT_URL is not set` was not printed |
+| TP-ZERO-04 | RQ-SHELL-CLI-ZERO-ARGUMENTS | `--json` with no command on a terminal is self-install, not the list and not help | ran on the authoring host. A pty ran `--json`. Exit 1. No choose prompt. The JSON error names the empty channel |
+| TP-IDEM-01 | RQ-SHELL-IDEMPOTENCY | Second non-interactive empty argv on an installed binary exits 0 | ran on the authoring host. Same run as TP-ZERO-01 |
 | TP-IDEM-02 | RQ-SHELL-IDEMPOTENCY | Setup skip when ref and revision match | todo |
 | TP-OUT-01 | RQ-SHELL-OUTPUT-REQUIREMENTS | `--json version` prints one JSON object and no `[INFO]` line | ran, repeated |
 | TP-SM-01 | RQ-SHELL-SELF-MANAGEMENT | `about` exits 0 and includes payload fields | ran, prior smoke |
 | TP-SM-02 | RQ-SHELL-SELF-MANAGEMENT | `self-update` with an empty `SCRIPT_URL` is non-zero | todo |
 | TP-SM-03 | RQ-SHELL-SELF-MANAGEMENT | `self-uninstall` does not remove a payload directory | todo |
-| TP-SUM-01 | RQ-SHELL-AUTOMATIC-CHECKSUM | Install with an empty `SCRIPT_URL` exits non-zero before curl | ran, repeated. Same command as TP-CLI-02 |
+| TP-SUM-01 | RQ-SHELL-AUTOMATIC-CHECKSUM | Install with an explicit empty `SCRIPT_URL` exits non-zero before curl | ran 2026-10-07. Same command as TP-CLI-02 |
 | TP-SUM-02 | RQ-SHELL-AUTOMATIC-CHECKSUM | A mismatched companion aborts install | todo |
 | TP-STO-01 | RQ-SHELL-CLI-STORAGE | `about` prints an effective storage line | ran, prior smoke |
 | TP-MOD-01 | RQ-SHELL-MODULAR-FUNCTION-DESIGN | `tn5250_setup` exists and `inst_perform_install` does not configure CMake | ran as a source read. `cmake` calls are in `tn5250_build_windows` and `tn5250_build_debian` |
-| TP-INT-01 | RQ-SHELL-INTERACTIVE-VS-NONINTERACTIVE | Non-interactive empty argv does not wait for input | ran, repeated |
+| TP-INT-01 | RQ-SHELL-INTERACTIVE-VS-NONINTERACTIVE | Non-interactive empty argv does not wait for input | ran, repeated. Exit 1 before any choose prompt |
+| TP-MENU-01 | RQ-SHELL-CLI-DEFAULT-INTERACTION | `menu` off a terminal exits 1 and names help | ran on the authoring host. stderr: `menu needs a terminal. Next: tn5250-cli help`. `--json menu` on a pipe exits 1 with that sentence in a JSON error and no stdout |
+| TP-MENU-02 | RQ-SHELL-CLI-DEFAULT-INTERACTION | A wrong number reprints the list and does not exit | ran on the authoring host. A pty sent `3` then `9`. Exit 0. `3 is not on this list.` The list was printed twice |
+| TP-MENU-03 | RQ-SHELL-CLI-DEFAULT-INTERACTION | Row 8 opens self-management, 0 returns to the front, and 9 exits 0 | ran on the authoring host. A pty sent `8`, `0`, `9`. Exit 0. Front title twice. Self-management title once |
+| TP-MENU-04 | RQ-SHELL-CLI-DEFAULT-INTERACTION | Row 82 runs about, then the front list is shown again | ran on the authoring host. A pty sent `8`, `82`, `9`. Exit 0. About text appeared. Front title twice |
+| TP-MENU-05 | RQ-SHELL-CLI-DEFAULT-INTERACTION | `menu --json` on a terminal still draws the list | ran on the authoring host. A pty sent `9`. Exit 0. The list was shown. JSON help was not printed |
 | TP-INT-02 | RQ-SHELL-INTERACTIVE-VS-NONINTERACTIVE | `setup -h` prints flags and does not prompt | ran, repeated |
 | TP-DOM-01 | RQ-DOMAIN-TN5250 | Help lists setup and host launch after the Type 0 rows | ran, prior smoke |
 | TP-DOM-02 | RQ-DOMAIN-TN5250 | `setup -h` exits 0 on a machine that is not Git Bash and not Debian 12 or 13 | ran, repeated |

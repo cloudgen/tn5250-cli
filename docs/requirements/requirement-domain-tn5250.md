@@ -1,6 +1,6 @@
 **file**: docs/requirements/requirement-domain-tn5250.md
 **ID**: RQ-DOMAIN-TN5250
-**Status**: Active (Version 1.4.1)
+**Status**: Active (Version 1.4.2)
 **Project**: tn5250-cli
 **Philosophy**: CIAO **v2.10.2** / CIAO-Lite (Caution • Intentional • Anti-fragile • Over-engineered / Over-protect)
 
@@ -22,7 +22,7 @@ Windows compilation, link, and build stay on `docs/requirements/requirement-wind
 
 | Includes | Excludes |
 |----------|----------|
-| The setup verb, the host launch, domain help lines, and domain about fields | The CMake invocation, the link libraries, a text-screen menu, and CLI self-install |
+| The setup verb, the host launch, domain help lines, and domain about fields | The CMake invocation, the link libraries, the numbered CLI list, and CLI self-install |
 
 | Surface | What you open | What for |
 |---------|---------------|----------|
@@ -52,7 +52,7 @@ Windows compilation, link, and build stay on `docs/requirements/requirement-wind
 9. The payload is upstream `https://github.com/tn5250/tn5250.git` tag `v0.18.0`. `--ref` is a tag or branch. A raw commit SHA is outside the shallow clone this setup uses.
 10. Outputs live under `${PREFIX}/opt/tn5250`. The CLI copy for the prefix lives at `${PREFIX}/bin/tn5250-cli`. Source and build caches live under `${XDG_CACHE_HOME:-${HOME}/.cache}/tn5250`.
 11. Missing compiler packages **MUST** be installed only through the sudo wrap in `docs/requirements/requirement-shell-sudo-command.md`. The setup verb is the mixed elevated sudo model: the same command for a normal user and for a sudo launch. Help does not tell the person to prefix that verb with sudo. When that launch is root, git and the compile return to the person who started it. A root login with no such person stops before git. Git, cmake, make, ninja, and the payload copy **MUST** stay with the person who started setup. Git Bash **MUST NOT** use that wrap. Termux `pkg` stays unused. Setup **MUST NOT** ask for prefix, ref, or jobs one field at a time.
-12. There is **no** text screen inside this installer. Git Bash opens the upstream window. Debian, Ubuntu, and other Linux run the curses program in the current terminal.
+12. There is **no** path-and-clock screen inside this installer. The numbered list is owned by `docs/requirements/requirement-shell-cli-default-interaction.md`. Git Bash opens the upstream window. Debian, Ubuntu, and other Linux run the curses program in the current terminal.
 13. There is **no** command that removes the payload. `self-uninstall` removes the CLI binary only, and that verb is owned by the self-management requirement.
 14. On Git Bash the Windows GCC 14 patch and the UCRT64 link stay owned by the Git Bash requirement, including the recorded softer paths in that file. On Debian, Ubuntu, and other Linux those Windows steps **MUST NOT** run.
 
@@ -103,7 +103,7 @@ Setup and launch run as this login.
 - Open a second Active domain file.
 - Paste a platform compile, link, or package table into this file.
 - Route empty argv into `setup`.
-- Add a text screen, a field-by-field setup interview, or a test-purpose verb.
+- Add a path-and-clock screen, a field-by-field setup interview, or a test-purpose verb.
 - Rename the installer to `tn5250`.
 
 ## 5. Related artifacts (versioned surface only)
@@ -162,6 +162,7 @@ Proof home: `docs/reviews/test-plan.md`. The Ubuntu compile was run on the autho
 | 2026-10-07 | Active 1.3.0 | The setup verb must be started without sudo. A root setup stops before git and the compile. |
 | 2026-10-07 | Active 1.4.0 | One setup verb for a normal user and a sudo launch. Git and the compile return to that person. |
 | 2026-10-07 | Active 1.4.1 | The setup arrangement is named the mixed elevated sudo model. Help does not recommend a sudo prefix. |
+| 2026-10-07 | Active 1.4.2 | The numbered list is not this file. This file still forbids a path-and-clock screen and a setup question walk. |
 
 **Last Updated**: 2026-10-07
 **Owner**: unassigned

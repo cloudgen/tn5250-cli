@@ -1,16 +1,16 @@
 **file**: docs/requirements/requirement-shell-automatic-checksum.md
 **ID**: RQ-SHELL-AUTOMATIC-CHECKSUM
-**Status**: Active (Version 1.0.0)
+**Status**: Active (Version 1.1.0)
 **Project**: tn5250-cli
 **Philosophy**: CIAO **v2.10.2** / CIAO-Lite (Caution • Intentional • Anti-fragile • Over-engineered / Over-protect)
 
 ## 1. Purpose
 
-This file owns integrity for a download of the tn5250-cli script. When a channel exists, install and self-update verify a SHA-256 companion. This product has no published channel yet.
+This file owns integrity for a download of the tn5250-cli script. The published channel is `https://raw.githubusercontent.com/cloudgen/tn5250-cli/main/src/tn5250-cli`. Install and self-update verify the SHA-256 companion `src/tn5250-cli.sha256`.
 
 ### 1.1 Human-facing
 
-**In one sentence:** If you later publish tn5250-cli, an install checks the sibling `.sha256` file and stops on a mismatch.
+**In one sentence:** An install of tn5250-cli checks the sibling `.sha256` file and stops on a mismatch.
 
 | Box | Meaning | Example |
 |-----|---------|---------|
@@ -39,15 +39,15 @@ This file owns integrity for a download of the tn5250-cli script. When a channel
 3. When `SCRIPT_URL` is empty, install and self-update **MUST** fail before any download. They **MUST NOT** invent a companion URL.
 4. The script **MUST NOT** embed its own SHA-256 as the verify target.
 5. `help` and `about` **MUST NOT** list `CHECKSUM`.
-6. No in-repo `tn5250-cli.sha256` is claimed. There is no published channel to accompany. A later published channel **MUST** add that file in the same release.
+6. The companion file **MUST** be `src/tn5250-cli.sha256`, the digest of `src/tn5250-cli`. A published channel **MUST** ship that file in the same release. The script **MUST NOT** embed that digest.
 
 ### 2.1 Implementation Notes (this product)
 
 | Item | Value |
 |------|--------|
 | Algorithm | SHA-256 |
-| Channel | Unset |
-| Companion | Not published |
+| Channel | `https://raw.githubusercontent.com/cloudgen/tn5250-cli/main/src/tn5250-cli` |
+| Companion | `src/tn5250-cli.sha256` |
 | MSYS2 archive | No checksum. That fact stays on the Git Bash requirement. This file does not own it |
 
 ## Under command line for normal user only
@@ -86,7 +86,7 @@ Checksum checks do not raise privilege.
 
 | TP-ID | Proves | Status |
 |-------|--------|--------|
-| TP-SUM-01 | Install with an empty `SCRIPT_URL` exits non-zero before curl | ran on the authoring host. Exit 1. curl was not started |
+| TP-SUM-01 | Install with an explicit empty `SCRIPT_URL` exits non-zero before curl | ran 2026-10-07. Exit 1. stderr: `SCRIPT_URL is empty. Refusing to download.` curl was not started |
 | TP-SUM-02 | A mismatched companion aborts install | todo |
 
 Proof home: `docs/reviews/test-plan.md`.
@@ -114,6 +114,7 @@ Proof home: `docs/reviews/test-plan.md`.
 | Date | Status | Notes |
 |------|--------|-------|
 | 2026-10-07 | Active 1.0.0 | Companion verify is the mechanism. No digest is published because no channel is published. |
+| 2026-10-07 | Active 1.1.0 | The published channel ships `src/tn5250-cli.sha256` beside `src/tn5250-cli`. |
 
 **Last Updated**: 2026-10-07
 **Owner**: unassigned

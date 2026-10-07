@@ -1,12 +1,12 @@
 **file**: docs/requirements/requirement-shell-self-management.md
 **ID**: RQ-SHELL-SELF-MANAGEMENT
-**Status**: Active (Version 1.0.1)
+**Status**: Active (Version 1.2.0)
 **Project**: tn5250-cli
 **Philosophy**: CIAO **v2.10.2** / CIAO-Lite (Caution • Intentional • Anti-fragile • Over-engineered / Over-protect)
 
 ## 1. Purpose
 
-This file owns the Type 0 lifecycle of the tn5250-cli binary: install, version-check, self-update, self-uninstall, and about. It does not build the TN5250 client.
+This file owns the Type 0 lifecycle of the tn5250-cli binary: install, self-install, version-check, self-update, self-uninstall, and about. It does not build the TN5250 client.
 
 ### 1.1 Human-facing
 
@@ -34,9 +34,9 @@ This file owns the Type 0 lifecycle of the tn5250-cli binary: install, version-c
 
 ## 2. Core Rules / Requirements (Mandatory)
 
-1. The lifecycle verbs **MUST** be `install`, `version-check`, `self-update`, `self-uninstall`, and `about`. `help` and `version` are named on the command map.
-2. `install` **MUST** place the CLI binary for this privilege: root to `/usr/local/bin`, otherwise `${HOME}/.local/bin`. An existing install without `--force` **MUST** succeed without a second download.
-3. `version-check` and `self-update` **MUST** use `SCRIPT_URL`. An empty `SCRIPT_URL` **MUST** fail those network steps with a non-zero status. They **MUST NOT** invent a repository.
+1. The lifecycle verbs **MUST** be `install`, `self-install`, `version-check`, `self-update`, `self-uninstall`, and `about`. `help` and `version` are named on the command map.
+2. `install` and `self-install` **MUST** place the CLI binary for this privilege: root to `/usr/local/bin`, otherwise `${HOME}/.local/bin`. They **MUST** be the same place. An existing install without `--force` **MUST** succeed without a second download.
+3. `version-check` and `self-update` **MUST** use `SCRIPT_URL`. An unset `SCRIPT_URL` **MUST** use the default channel in `docs/requirements/requirement-shell-cli-zero-arguments.md`. An explicit empty `SCRIPT_URL` **MUST** fail those network steps with a non-zero status. They **MUST NOT** substitute another repository.
 4. `self-update` **MUST NOT** downgrade unless `--force` is set.
 5. `self-uninstall` **MUST** remove the managed CLI binary only. It **MUST NOT** delete `${PREFIX}/opt/tn5250`.
 6. Interactive uninstall **MUST** confirm unless `--force` is set. A pipe **MUST NOT** block on stdin.
@@ -47,15 +47,15 @@ This file owns the Type 0 lifecycle of the tn5250-cli binary: install, version-c
 
 | Item | Value |
 |------|--------|
-| Handlers | `inst_perform_install`, `ver_check`, `inst_self_update`, `inst_self_uninstall`, `app_about` |
-| Channel | No published URL. `SCRIPT_URL` is empty unless exported |
+| Handlers | `inst_perform_install` (`install` and `self-install`), `ver_check`, `inst_self_update`, `inst_self_uninstall`, `app_about` |
+| Channel | `https://raw.githubusercontent.com/cloudgen/tn5250-cli/main/src/tn5250-cli` |
 | Payload uninstall | Not implemented |
 
 ## Under command line for normal user only
 
 These verbs run as this login.
 
-**This requirement:** install, version-check, self-update, self-uninstall, and about do not install compiler packages and do not call the sudo wrap. That wrap belongs to `setup` and to `docs/requirements/requirement-shell-sudo-command.md`. Git Bash is not told to use a sudo one-liner. A global install found at uninstall time may warn that removal can need admin privilege.
+**This requirement:** install, self-install, version-check, self-update, self-uninstall, and about do not install compiler packages and do not call the sudo wrap. That wrap belongs to `setup` and to `docs/requirements/requirement-shell-sudo-command.md`. Git Bash is not told to use a sudo one-liner. A global install found at uninstall time may warn that removal can need admin privilege.
 
 ## 3. Design Principles (CIAO / CIAO-Lite)
 
@@ -68,7 +68,7 @@ These verbs run as this login.
 
 **Future AI assistants or maintainers MUST NOT**:
 
-- Drop install, version-check, self-update, self-uninstall, or about.
+- Drop install, self-install, version-check, self-update, self-uninstall, or about.
 - Make self-uninstall delete the built client.
 - Advertise another product’s raw URL as this channel.
 - Bypass `out_*` for these messages.
@@ -128,6 +128,8 @@ Proof home: `docs/reviews/test-plan.md`.
 |------|--------|-------|
 | 2026-10-07 | Active 1.0.0 | Type 0 lifecycle inherited for tn5250-cli. No published channel. Payload uninstall is not a verb. |
 | 2026-10-07 | Active 1.0.1 | These verbs do not install compiler packages. That install belongs to setup and to RQ-SHELL-SUDO-COMMAND. |
+| 2026-10-07 | Active 1.1.0 | `self-install` places the CLI the same way as `install`. |
+| 2026-10-07 | Active 1.2.0 | The default channel is the raw URL of `src/tn5250-cli`. |
 
 **Last Updated**: 2026-10-07
 **Owner**: unassigned

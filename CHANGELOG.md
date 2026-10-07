@@ -5,6 +5,20 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.0.1] - 2026-10-07
+
+### Added
+
+- Published install channel: `curl -fsSL https://raw.githubusercontent.com/cloudgen/tn5250-cli/main/src/tn5250-cli | sh`.
+- Default `REPO_USER` is `cloudgen` and default `REPO_NAME` is `tn5250-cli`. Unset `SCRIPT_URL` composes the raw URL of `src/tn5250-cli`.
+- SHA-256 companion `src/tn5250-cli.sha256` is fetched as `${SCRIPT_URL}.sha256`. A match continues, a mismatch stops, and a missing companion warns and continues.
+- A terminal with no command opens the numbered list (8 self-management, 9 Exit). A pipe, `--quiet`, or `--json` places this CLI.
+
+### Changed
+
+- Linux root install text is `sudo curl -fsSL … | sudo sh`. Git Bash stays on the command without sudo.
+- An explicit empty `SCRIPT_URL` still refuses the download before curl.
+
 ## [1.0.0] - 2026-10-07
 
 ### Added

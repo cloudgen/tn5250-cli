@@ -1,46 +1,48 @@
 **file**: docs/requirements/requirement-shell-cli-zero-arguments.md
 **ID**: RQ-SHELL-CLI-ZERO-ARGUMENTS
-**Status**: Active (Version 1.0.1)
+**Status**: Active (Version 1.2.0)
 **Project**: tn5250-cli
 **Philosophy**: CIAO **v2.10.2** / CIAO-Lite (Caution • Intentional • Anti-fragile • Over-engineered / Over-protect)
 
 ## 1. Purpose
 
-This file owns empty argv for tn5250-cli. Empty argv installs or confirms the CLI binary. It does not build the TN5250 client.
+This file owns empty argv for tn5250-cli. No command after the program name is empty argv. A switch such as `--debug` is still no command. A pipe, `--quiet`, or `--json` places the CLI binary. A terminal opens the numbered list. Empty argv does not build the TN5250 client.
 
 ### 1.1 Human-facing
 
-**In one sentence:** Running `tn5250-cli` with no words places this program for the current login, or says it is already installed, and does not compile the terminal client.
+**In one sentence:** Running `tn5250-cli` with no command places this program when nobody is there to answer, and opens the numbered list when a person is at the terminal. It does not compile the terminal client.
 
 | Box | Meaning | Example |
 |-----|---------|---------|
-| You / this login | The person who starts the program with no extra words | `tn5250-cli` |
-| The other role | Explicit help, and the payload build | `tn5250-cli help` · `tn5250-cli setup` |
-| Not this file | The compiler and the link line | `docs/requirements/requirement-domain-tn5250.md` |
+| You / this login | The person who starts the program with no command | `tn5250-cli` |
+| The other role | A pipe, explicit help, and the payload build | `sh src/tn5250-cli </dev/null` · `tn5250-cli help` · `tn5250-cli setup` |
+| Not this file | The numbered list’s rows, and the compiler | `docs/requirements/requirement-shell-cli-default-interaction.md` |
 
 | Includes | Excludes |
 |----------|----------|
-| Not installed, already installed locally, and already installed globally | Payload compile, a text-screen menu, and help as the empty-argv result |
+| A pipe, `--quiet`, or `--json` with no command places or confirms the CLI | The numbered list’s rows, payload compile, and help as the empty-argv result |
 
 | Surface | What you open | What for |
 |---------|---------------|----------|
 | `src/tn5250-cli` | ship unit | `app_main` empty-argv block |
-| `tn5250-cli` | command | install-ensure |
+| `tn5250-cli` | command | pipe places the CLI; a terminal opens the list |
 | `tn5250-cli help` | command | usage, only when help is typed |
 
 | You do… | What it means | What you type |
 |---------|---------------|---------------|
-| Start it with no words | The CLI binary is ensured. The TN5250 sources are not fetched | `tn5250-cli` |
+| Start it at a terminal with no command | The numbered list opens. The CLI is not placed until you choose that row | `tn5250-cli` |
+| Pipe it with no command | The CLI binary is placed or confirmed. The list does not open | `sh src/tn5250-cli </dev/null` |
 
 ## 2. Core Rules / Requirements (Mandatory)
 
-1. Empty argv **MUST** mean install-ensure of `${APP_NAME}`. It **MUST NOT** print help as its success path. It **MUST NOT** call `setup`.
-2. Not installed, a terminal on stdin and stdout, and neither quiet nor JSON: the program may ask once, then install or skip. A pipe, quiet, or JSON **MUST NOT** wait for an answer.
-3. Already installed under `${HOME}/.local/bin` or `/usr/local/bin` **MUST** be a success no-op. `--force` is not required for that second run.
-4. Root (`id -u` 0) targets `/usr/local/bin/${APP_NAME}`. Any other login targets `${HOME}/.local/bin/${APP_NAME}`.
-5. When `SCRIPT_URL` is empty and the binary is not installed, install **MUST** fail non-zero and **MUST NOT** call curl with an empty URL. It **MUST NOT** invent a GitHub owner.
-6. A failed download or checksum **MUST** be non-zero.
-7. `app_main` **MUST** run even when the script is read on a pipe. A basename gate on `$0` is forbidden.
+1. Empty argv **MUST** mean no command token after global flags are parsed. `--debug`, `--quiet`, `--json`, and `--force` with no command are still empty argv. A host name is not empty argv.
+2. Non-interactive empty argv **MUST** run self-install (`inst_perform_install`). Non-interactive means stdin or stdout is not a terminal, or `--quiet` is set, or `--json` is set. It **MUST NOT** print help. It **MUST NOT** open the numbered list. It **MUST NOT** call `setup`. It **MUST NOT** wait for an answer.
+3. Interactive empty argv **MUST** open the numbered list. Interactive means stdin and stdout are both terminals, and neither quiet nor JSON is set. That list is owned by `docs/requirements/requirement-shell-cli-default-interaction.md`. Interactive empty argv **MUST NOT** place the CLI by itself and **MUST NOT** print help as its result.
+4. Already installed under `${HOME}/.local/bin` or `/usr/local/bin`, with `--force` off, **MUST** be a success no-op on self-install. `--force` is not required for that second run.
+5. Root (`id -u` 0) targets `/usr/local/bin/${APP_NAME}`. Any other login targets `${HOME}/.local/bin/${APP_NAME}`.
+6. `REPO_USER` defaults to `cloudgen` and `REPO_NAME` defaults to `tn5250-cli`. An unset `SCRIPT_URL` **MUST** be `https://raw.githubusercontent.com/cloudgen/tn5250-cli/main/src/tn5250-cli`. The `src/` segment is required because the ship unit is `src/tn5250-cli`. An explicit empty `SCRIPT_URL`, when the binary is not installed, **MUST** fail non-zero and **MUST NOT** call curl. It **MUST NOT** substitute another GitHub owner.
+7. A failed download or checksum **MUST** be non-zero.
+8. `app_main` **MUST** run even when the script is read on a pipe. A basename gate on `$0` is forbidden.
 
 ### 2.1 Implementation Notes (this project)
 
@@ -48,19 +50,21 @@ This file owns empty argv for tn5250-cli. Empty argv installs or confirms the CL
 |------|--------|
 | Product | tn5250-cli |
 | Ship unit | `src/tn5250-cli` |
-| Channel | `SCRIPT_URL` empty unless the operator exports it, or exports both `REPO_USER` and `REPO_NAME` |
+| Channel | Unset `SCRIPT_URL` is `https://raw.githubusercontent.com/cloudgen/tn5250-cli/main/src/tn5250-cli`. An explicit empty `SCRIPT_URL` fails before curl |
 | Payload build | Not this path. `setup` is explicit |
+| Interactive empty argv | Numbered list. Not this file’s rows |
+| Non-interactive empty argv | `self-install`, same handler as `install` |
 
 ## Under command line for normal user only
 
 Empty argv stays on this login.
 
-**This requirement:** empty argv does not install compiler packages. That install belongs to `setup` and to `docs/requirements/requirement-shell-sudo-command.md`. Git Bash **MUST NOT** be shown a `sudo curl` one-liner. A Linux root login may still be shown the root one-liner. Empty argv does not switch to a dedicated system user.
+**This requirement:** empty argv does not install compiler packages. That install belongs to `setup` and to `docs/requirements/requirement-shell-sudo-command.md`. Git Bash **MUST NOT** be shown a `sudo curl` one-liner. A Linux root login may still be shown the root one-liner on the self-install path. Empty argv does not switch to a dedicated system user.
 
 ## 3. Design Principles (CIAO / CIAO-Lite)
 
 - **Caution**: a second run does not download again.
-- **Intentional**: empty argv has one meaning.
+- **Intentional**: a pipe places the CLI. A terminal opens the list.
 - **Anti-fragile**: a missing channel fails closed.
 - **Over-protect**: payload setup cannot hide inside the empty path.
 
@@ -70,6 +74,8 @@ Empty argv stays on this login.
 
 - Return help from empty argv.
 - Start `setup` from empty argv.
+- Open the numbered list for a pipe, for `--quiet`, or for `--json` with no command.
+- Place the CLI from an interactive empty argv before the person chooses that row.
 - Point the default channel at another product.
 - Require `--force` for an already-installed success.
 
@@ -79,7 +85,8 @@ Empty argv stays on this login.
 |----------|------|
 | `docs/requirements/index.md` | Registry |
 | `docs/requirements/requirement-shell-cli-interface.md` | Command map (RQ-SHELL-CLI-INTERFACE) |
-| `docs/requirements/requirement-shell-self-management.md` | Install verb (RQ-SHELL-SELF-MANAGEMENT) |
+| `docs/requirements/requirement-shell-self-management.md` | Install and self-install (RQ-SHELL-SELF-MANAGEMENT) |
+| `docs/requirements/requirement-shell-cli-default-interaction.md` | Numbered list for a terminal with no command (RQ-SHELL-CLI-DEFAULT-INTERACTION) |
 | `docs/requirements/requirement-shell-automatic-checksum.md` | Companion digest (RQ-SHELL-AUTOMATIC-CHECKSUM) |
 | `docs/requirements/requirement-shell-sudo-command.md` | Package install on `setup`, not on empty argv (RQ-SHELL-SUDO-COMMAND) |
 | `src/tn5250-cli` | Ship unit |
@@ -89,8 +96,9 @@ Empty argv stays on this login.
 
 | TP-ID | Proves | Status |
 |-------|--------|--------|
-| TP-ZERO-01 | Already installed empty argv exits 0 and does not configure CMake | ran on the authoring host |
-| TP-ZERO-02 | Not installed, empty `SCRIPT_URL`, non-interactive empty argv exits non-zero and does not configure CMake | ran on the authoring host. Exit 1. curl was not started |
+| TP-ZERO-01 | Already installed non-interactive empty argv exits 0 and does not configure CMake | ran on the authoring host |
+| TP-ZERO-02 | Not installed, explicit empty `SCRIPT_URL`, non-interactive empty argv exits non-zero and does not configure CMake | ran 2026-10-07. Exit 1. stderr: `SCRIPT_URL is empty. Refusing to download.` curl was not started |
+| TP-ZERO-03 | Interactive empty argv opens the numbered list and does not place the CLI | ran on the authoring host |
 
 Proof home: `docs/reviews/test-plan.md`.
 
@@ -118,6 +126,8 @@ Proof home: `docs/reviews/test-plan.md`.
 |------|--------|-------|
 | 2026-10-07 | Active 1.0.0 | Empty argv is Type O install-ensure of the CLI binary. Payload setup stays explicit. No published channel. |
 | 2026-10-07 | Active 1.0.1 | Empty argv does not install compiler packages. That install belongs to setup and to RQ-SHELL-SUDO-COMMAND. |
+| 2026-10-07 | Active 1.1.0 | Non-interactive empty argv is self-install. Interactive empty argv opens the numbered list. `--json` and `--quiet` with no command stay on self-install. |
+| 2026-10-07 | Active 1.2.0 | Default channel is the raw URL of `src/tn5250-cli`. An explicit empty `SCRIPT_URL` still fails before curl. |
 
 **Last Updated**: 2026-10-07
 **Owner**: unassigned

@@ -1,6 +1,6 @@
 **file**: docs/requirements/requirement-class-software-dev.md
 **ID**: RQ-CLASS-SOFTWARE-DEV
-**Status**: Active (Version 1.4.0)
+**Status**: Active (Version 1.4.1)
 **Project**: tn5250-cli
 **Philosophy**: CIAO **v2.10.2** / CIAO-Lite (Caution • Intentional • Anti-fragile • Over-engineered / Over-protect)
 
@@ -141,7 +141,8 @@ The Windows Git Bash compile, link, and build belong to `docs/requirements/requi
 | Compiler, linker, CMake, and Ubuntu packages for the Unix client | `docs/requirements/requirement-ubuntu.md` | This file points. Ubuntu 22.04, 24.04, and 26.04 |
 | Compiler, linker, and CMake for other Linux | `docs/requirements/requirement-other-linux.md` | This file points. Tool checks, not one distribution’s package names |
 | Routed command names | `docs/requirements/requirement-shell-cli-interface.md` | Points each platform’s build at that platform requirement |
-| Empty argv | `docs/requirements/requirement-shell-cli-zero-arguments.md` | CLI binary only. This file points |
+| Empty argv | `docs/requirements/requirement-shell-cli-zero-arguments.md` | A pipe places the CLI. A terminal opens the list. This file points |
+| Numbered list | `docs/requirements/requirement-shell-cli-default-interaction.md` | Rows and the terminal entry. This file points |
 | Type 0 lifecycle | `docs/requirements/requirement-shell-self-management.md` | This file points |
 | Output | `docs/requirements/requirement-shell-output-requirements.md` | This file points |
 | Companion digest | `docs/requirements/requirement-shell-automatic-checksum.md` | This file points. No channel is published |
@@ -222,6 +223,7 @@ Domain setup and host launch: owned by requirement-domain-tn5250. This class fil
 | `docs/requirements/requirement-shell-cli-interface.md` | Command names (RQ-SHELL-CLI-INTERFACE) |
 | `docs/requirements/requirement-domain-tn5250.md` | Domain setup and host launch (RQ-DOMAIN-TN5250) |
 | `docs/requirements/requirement-shell-cli-zero-arguments.md` | Empty argv (RQ-SHELL-CLI-ZERO-ARGUMENTS) |
+| `docs/requirements/requirement-shell-cli-default-interaction.md` | Numbered list (RQ-SHELL-CLI-DEFAULT-INTERACTION) |
 | `docs/requirements/requirement-shell-self-management.md` | Type 0 lifecycle (RQ-SHELL-SELF-MANAGEMENT) |
 | `src/tn5250-cli` | Ship unit |
 | `docs/reviews/test-plan.md` | Todo proof rows |
@@ -261,6 +263,7 @@ Domain setup and host launch: owned by requirement-domain-tn5250. This class fil
 | 2026-10-07 | Active 1.2.0 | Ship unit language is POSIX `/bin/sh`. Residual points at the Type 0 files and at RQ-DOMAIN-TN5250. No approver. No dest fence. Platform builds stay on their owners. |
 | 2026-10-07 | Active 1.3.0 | Ubuntu points at RQ-UBUNTU. Other Linux points at RQ-OTHER-LINUX. This file still does not restate the CMake invocation. |
 | 2026-10-07 | Active 1.4.0 | In-tool sudo points at RQ-SHELL-SUDO-COMMAND. This file does not restate the package list or the allow table. The Ubuntu and other-Linux branches are in the ship unit. |
+| 2026-10-07 | Active 1.4.1 | Empty argv and the numbered list point at their requirements. This file does not draw the list. |
 
 **Last Updated**: 2026-10-07
 **Owner**: unassigned

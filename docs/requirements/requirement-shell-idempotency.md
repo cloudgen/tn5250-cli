@@ -1,6 +1,6 @@
 **file**: docs/requirements/requirement-shell-idempotency.md
 **ID**: RQ-SHELL-IDEMPOTENCY
-**Status**: Active (Version 1.0.0)
+**Status**: Active (Version 1.1.0)
 **Project**: tn5250-cli
 **Philosophy**: CIAO **v2.10.2** / CIAO-Lite (Caution • Intentional • Anti-fragile • Over-engineered / Over-protect)
 
@@ -30,11 +30,11 @@ This file owns re-run safety. A second successful install of the CLI binary is a
 
 | You do… | What it means | What you type |
 |---------|---------------|---------------|
-| Run it again | Already installed, success | `tn5250-cli` |
+| Pipe it again | Already installed, success, no download | `sh src/tn5250-cli </dev/null` |
 
 ## 2. Core Rules / Requirements (Mandatory)
 
-1. A second `install` or empty argv, when the CLI binary is already present and `--force` is off, **MUST** succeed and **MUST NOT** download.
+1. A second `install` or `self-install`, or a non-interactive empty argv, when the CLI binary is already present and `--force` is off, **MUST** succeed and **MUST NOT** download. An interactive empty argv opens the numbered list and **MUST NOT** download.
 2. `setup` with `--force` off **MUST** skip the compile when the payload directory already has the requested ref and the current checkout revision. The Windows file records that this skip does not include the patch text in the key. This file points there. It does not add a new fail-closed rule.
 3. `--force` **MUST** be the switch for a deliberate CLI reinstall and for a deliberate payload rebuild.
 4. A real failure **MUST** stay non-zero. “Already installed” is not a failure.
@@ -82,7 +82,7 @@ Re-runs stay on this login.
 
 | TP-ID | Proves | Status |
 |-------|--------|--------|
-| TP-IDEM-01 | Second empty argv on an installed binary exits 0 | ran on the authoring host |
+| TP-IDEM-01 | Second non-interactive empty argv on an installed binary exits 0 | ran on the authoring host |
 | TP-IDEM-02 | Setup skip when ref and revision match | todo |
 
 Proof home: `docs/reviews/test-plan.md`.
@@ -110,6 +110,7 @@ Proof home: `docs/reviews/test-plan.md`.
 | Date | Status | Notes |
 |------|--------|-------|
 | 2026-10-07 | Active 1.0.0 | CLI re-run is a no-op. Payload skip points at the Windows note. |
+| 2026-10-07 | Active 1.1.0 | The no-download repeat is `install`, `self-install`, and non-interactive empty argv. A terminal with no command opens the list and does not download. |
 
 **Last Updated**: 2026-10-07
 **Owner**: unassigned

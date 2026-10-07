@@ -4,7 +4,8 @@
 # =============================================================================
 #
 # Specialized from the bootstrap ship unit. That product's channel is not this one.
-# Type 0: install, version-check, self-update, self-uninstall, about, help, version.
+# Type 0: install, self-install, version-check, self-update, self-uninstall, about, help, version, menu.
+# No command: a terminal opens the numbered list. A pipe, --quiet, or --json places the CLI.
 # Domain: setup, and a host token that launches the built tn5250 program.
 # Project requirements (docs/requirements/ only — never cite templates here):
 # - requirement-shell-cli-interface.md
@@ -15,14 +16,15 @@
 # - requirement-shell-modular-function-design.md
 # - requirement-shell-output-requirements.md
 # - requirement-shell-interactive-vs-noninteractive.md
+# - requirement-shell-cli-default-interaction.md
 # - requirement-shell-automatic-checksum.md
 # - requirement-domain-tn5250.md
 # - requirement-windows-git-bash.md
 # - requirement-debian.md
 #
 # APP NAME: hard-assign APP_NAME="tn5250-cli"
-# REPO_USER / REPO_NAME: empty unless the operator exports them. No origin is invented.
-# SCRIPT_URL: empty unless exported, or composed only when both REPO_USER and REPO_NAME are set.
+# REPO_USER / REPO_NAME: cloudgen / tn5250-cli. An operator may export another pair.
+# SCRIPT_URL: unset composes the raw URL of src/tn5250-cli. An explicit empty value stays empty.
 #
 # =============================================================================
 
@@ -37,10 +39,10 @@ APP_NAME="tn5250-cli"
 : "${APP_NAME:=tn5250-cli}"
 : "${APP_DESC:=Installer and launcher for the upstream TN5250 client}"
 : "${SHORT_DESCRIPTION:=${APP_DESC}}"
-: "${DESCRIPTION:=POSIX /bin/sh program: install, version-check, self-update, self-uninstall, and about, plus setup and host launch for the TN5250 client.}"
+: "${DESCRIPTION:=POSIX /bin/sh program: install, version-check, self-update, self-uninstall, and about, plus setup and host launch for the TN5250 client. A terminal with no command opens the numbered list. A pipe, --quiet, or --json places this CLI.}"
 # Product version SSOT (semver). Extractors use: grep '^VERSION="'
-VERSION="1.0.0"
-: "${VERSION:=1.0.0}"
+VERSION="1.0.1"
+: "${VERSION:=1.0.1}"
 
 # Runtime flags (safe defaults)
 : "${QUIET:=0}"
@@ -79,13 +81,14 @@ fi
 : "${HOME:=/tmp}"
 : "${USER_BIN:=${HOME}/.local/bin}"
 : "${INSTALL_PATH:=${GLOBAL_BIN}/${APP_NAME}}"
-# Repository identity → install channel (Option B: raw.githubusercontent.com)
-: "${REPO_USER:=}"
-: "${REPO_NAME:=}"
-# No published install channel. Do not borrow the bootstrap product's URL.
-# An operator may export SCRIPT_URL, or export both REPO_USER and REPO_NAME.
-if [ -z "${SCRIPT_URL:-}" ] && [ -n "${REPO_USER:-}" ] && [ -n "${REPO_NAME:-}" ]; then
-    SCRIPT_URL="https://raw.githubusercontent.com/${REPO_USER}/${REPO_NAME}/main/${APP_NAME}"
+# Repository identity → install channel (raw.githubusercontent.com).
+# The ship unit is src/tn5250-cli, so the raw path includes src/.
+: "${REPO_USER:=cloudgen}"
+: "${REPO_NAME:=tn5250-cli}"
+# Unset SCRIPT_URL composes this product's channel. Do not borrow another product's URL.
+# An explicit empty SCRIPT_URL stays empty so install fails before curl.
+if [ -z "${SCRIPT_URL+x}" ]; then
+    SCRIPT_URL="https://raw.githubusercontent.com/${REPO_USER}/${REPO_NAME}/main/src/${APP_NAME}"
 fi
 : "${SCRIPT_URL:=}"
 : "${CHECKSUM:=}"
@@ -355,6 +358,56 @@ out_msg_n() { out_text plain_n "$*"; }
 # =============================================================================
 out_empty_line() { out_text plain ""; }
 
+# =============================================================================
+# util_app_ident() - Header nametag APP_NAME(VERSION)
+# =============================================================================
+#
+# GENERAL PURPOSE:
+# Returns the menu header nametag for capture by out_info.
+# On a terminal the name is bold and the version is italic.
+# Off a terminal the same nametag is markdown, with no CSI.
+#
+# PRINTF EXCEPTION (class B – function return-via-stdout):
+# printf returns the nametag for $(util_app_ident). It is not a banner.
+# This function does not read. Callers pass the string to out_*.
+#
+# Last updated: 2026-10-07
+# =============================================================================
+
+util_app_ident() {
+    : "${APP_NAME:=tn5250-cli}"
+    : "${VERSION:=1.0.1}"
+    : "${TTY:=0}"
+    if [ "${TTY}" -eq 1 ]; then
+        printf '\033[1m%s\033[0m(\033[3m%s\033[0m)' "${APP_NAME}" "${VERSION}"
+    else
+        printf '**%s**(*%s*)' "${APP_NAME}" "${VERSION}"
+    fi
+}
+
+# =============================================================================
+# out_menu_choice() - One numbered menu row
+# =============================================================================
+#
+# GENERAL PURPOSE:
+# Prints number, bold short description, and italic long description.
+# On a terminal the long description is italic and light gray.
+# Off a terminal the row is markdown, with no CSI.
+#
+# Arguments: number, short description, long description.
+#
+# Last updated: 2026-10-07
+# =============================================================================
+
+out_menu_choice() {
+    : "${TTY:=0}"
+    local n="${1-}" short="${2-}" explain="${3-}"
+    if [ "${TTY}" -eq 1 ]; then
+        out_plain "$(printf '%s. \033[1m%s\033[0m: \033[3;37m%s\033[0m' "${n}" "${short}" "${explain}")"
+    else
+        out_plain "${n}. **${short}**: *${explain}*"
+    fi
+}
 
 # =============================================================================
 # out_double_line()
@@ -563,12 +616,12 @@ inst_perform_install() {
         return 1
     fi
 
-    # This product has no published channel. Do not call curl with an empty URL.
+    # Explicit empty channel. Do not call curl with an empty URL.
     if [ -z "${SCRIPT_URL}" ]; then
         if [ "${JSON}" -eq 1 ]; then
-            out_json_error "SCRIPT_URL is not set. There is no published install channel." "config_error"
+            out_json_error "SCRIPT_URL is empty. Refusing to download." "config_error"
         else
-            out_error "SCRIPT_URL is not set. There is no published install channel."
+            out_error "SCRIPT_URL is empty. Refusing to download."
         fi
         return 1
     fi
@@ -3588,7 +3641,7 @@ app_about() {
     : "${QUIET:=0}"
     : "${APP_NAME:=tn5250-cli}"
     # Version comes from global SSOT (VERSION="…" hard-assign near top); default only if unset
-    : "${VERSION:=1.0.0}"
+    : "${VERSION:=1.0.1}"
     : "${GLOBAL_BIN:=/usr/local/bin}"
     : "${USER_BIN:=${HOME}/.local/bin}"
     : "${SCRIPT_URL:=}"
@@ -3724,7 +3777,7 @@ app_about() {
 
 app_version() {
     : "${APP_NAME:=tn5250-cli}"
-    : "${VERSION:=1.0.0}"
+    : "${VERSION:=1.0.1}"
     : "${JSON:=0}"
     if [ "${JSON}" -eq 1 ]; then
         # Same machine contract as historical app_main inline path
@@ -3748,11 +3801,13 @@ app_version() {
 # In --quiet mode: prints nothing (silent).
 #
 # Keep in sync with requirement-shell-cli-interface.md command table.
+#
+# Last updated: 2026-10-07
 # =============================================================================
 
 app_help() {
     : "${SHORT_DESCRIPTION:=${APP_DESC:-Shell script bootstrap for self Installation & Maintenance}}"
-    : "${DESCRIPTION:=POSIX /bin/sh program: install, version-check, self-update, self-uninstall, and about, plus setup and host launch for the TN5250 client.}"
+    : "${DESCRIPTION:=POSIX /bin/sh program: install, version-check, self-update, self-uninstall, and about, plus setup and host launch for the TN5250 client. A terminal with no command opens the numbered list. A pipe, --quiet, or --json places this CLI.}"
 
     if [ "${JSON}" -eq 1 ]; then
         out_json "success" "Help text available in human-readable mode. Run without --json." \
@@ -3771,10 +3826,13 @@ app_help() {
 
     out_info "Usage:"
     out_plain "  ${APP_NAME} [command] [options]"
+    out_plain "  ${APP_NAME}                  Terminal: numbered list. Pipe, --quiet, or --json: place this CLI"
     out_empty_line
 
     out_info "Self-Management (Type 0 - any user):"
     out_plain "  install              Install ${APP_NAME} (root→global, user→~/.local/bin)"
+    out_plain "  self-install         Place this CLI the same way as install"
+    out_plain "  menu, main           Open the numbered list. Needs a terminal"
     out_plain "  version              Show current version"
     out_plain "  about                Show detailed diagnostics"
     out_plain "  version-check        Compare local vs remote version (needs SCRIPT_URL)"
@@ -3804,8 +3862,8 @@ app_help() {
 
     # Effective channel values (Config SSOT / env override) so help is actionable.
     # CHECKSUM is an install-path runtime pin only — never listed here (requirement-shell-automatic-checksum).
-    : "${REPO_USER:=}"
-    : "${REPO_NAME:=}"
+    : "${REPO_USER:=cloudgen}"
+    : "${REPO_NAME:=tn5250-cli}"
     : "${SCRIPT_URL:=}"
 
     out_info "Environment:"
@@ -3822,6 +3880,175 @@ app_help() {
     out_empty_line
 }
 
+
+# =============================================================================
+# app_menu_read_choice() - Read one menu choice in the current shell
+# =============================================================================
+#
+# GENERAL PURPOSE:
+# Prints the choose prompt and reads one line into PROMPT_ASK_VALUE.
+# Call this in the current shell. Do not wrap it in $() or backticks.
+# A failed read (EOF) returns 1. An empty line is a successful empty value.
+#
+# WARNING — do-not-capture-read: the body contains read.
+#
+# Last updated: 2026-10-07
+# =============================================================================
+
+app_menu_read_choice() {
+    : "${PROMPT_ASK_VALUE:=}"
+    out_msg_n "Choose a number, or type the command name: "
+    PROMPT_ASK_VALUE=""
+    if ! read -r PROMPT_ASK_VALUE; then
+        return 1
+    fi
+    return 0
+}
+
+# =============================================================================
+# app_menu_draw_front() - Front board of the numbered list
+# =============================================================================
+#
+# GENERAL PURPOSE:
+# Prints the front board. Client build and host launch stay on the command
+# line. This program has no server commands. Self-management is row 8.
+#
+# Last updated: 2026-10-07
+# =============================================================================
+
+app_menu_draw_front() {
+    : "${APP_NAME:=tn5250-cli}"
+    out_info "$(util_app_ident) — numbered list of live commands"
+    out_plain "This program has no server commands."
+    out_plain "Build and open stay on the command line. Next: ${APP_NAME} setup, then ${APP_NAME} HOST."
+    out_menu_choice "8" "self-management" "Place, check, update, or remove this CLI"
+    out_plain "9. Exit"
+}
+
+# =============================================================================
+# app_menu_draw_self() - Self-management board under row 8
+# =============================================================================
+#
+# GENERAL PURPOSE:
+# Prints rows 82 through 87. Row 81 is not printed: this list does not
+# place a payload. Row 82 runs about when chosen.
+#
+# Last updated: 2026-10-07
+# =============================================================================
+
+app_menu_draw_self() {
+    : "${APP_NAME:=tn5250-cli}"
+    out_info "$(util_app_ident) — self-management"
+    out_plain "This list does not place a payload. Next: ${APP_NAME} setup."
+    out_menu_choice "82" "version" "Show current version"
+    out_menu_choice "83" "about" "Show detailed diagnostics"
+    out_menu_choice "84" "version-check" "Compare local vs remote version (needs SCRIPT_URL)"
+    out_menu_choice "85" "self-update" "Update ${APP_NAME} to a newer remote version"
+    out_menu_choice "86" "self-uninstall" "Remove ${APP_NAME} (safe PATH cleanup)"
+    out_menu_choice "87" "self-install" "Place this CLI the same way as install"
+    out_plain "0. Back"
+}
+
+# =============================================================================
+# app_cmd_menu_self() - Self-management menu layer
+# =============================================================================
+#
+# GENERAL PURPOSE:
+# Owns the self-management list. A valid leaf returns so the front board
+# is shown again. Back, an empty line, or EOF returns to the front board
+# without running a command. A wrong pick reprints this list.
+#
+# Last updated: 2026-10-07
+# =============================================================================
+
+app_cmd_menu_self() {
+    local _choice=""
+    while true; do
+        app_menu_draw_self
+        if ! app_menu_read_choice; then
+            return 0
+        fi
+        _choice="${PROMPT_ASK_VALUE}"
+        case "${_choice}" in
+            ""|0|q|back|exit|quit)
+                return 0
+                ;;
+            82|version|83|about)
+                app_about
+                return 0
+                ;;
+            84|version-check)
+                ver_check
+                return 0
+                ;;
+            85|self-update)
+                inst_self_update
+                return 0
+                ;;
+            86|self-uninstall)
+                inst_self_uninstall
+                return 0
+                ;;
+            87|self-install|install)
+                inst_perform_install
+                return 0
+                ;;
+            *)
+                out_error "${_choice} is not on this list."
+                ;;
+        esac
+    done
+}
+
+# =============================================================================
+# app_cmd_menu() - Front board of the numbered list
+# =============================================================================
+#
+# GENERAL PURPOSE:
+# Opens the numbered list on a terminal. Off a terminal it stops.
+# Interactive use ignores --json and --quiet while the list is open.
+# An empty line on this board leaves. Exit is 9.
+#
+# Last updated: 2026-10-07
+# =============================================================================
+
+app_cmd_menu() {
+    : "${JSON:=0}"
+    : "${QUIET:=0}"
+    : "${TTY:=0}"
+    : "${APP_NAME:=tn5250-cli}"
+    if [ "${TTY}" -ne 1 ]; then
+        out_die "menu needs a terminal. Next: ${APP_NAME} help"
+    fi
+    _menu_json="${JSON}"
+    _menu_quiet="${QUIET}"
+    JSON=0
+    QUIET=0
+    while true; do
+        app_menu_draw_front
+        if ! app_menu_read_choice; then
+            JSON="${_menu_json}"
+            QUIET="${_menu_quiet}"
+            unset _menu_json _menu_quiet
+            return 0
+        fi
+        _choice="${PROMPT_ASK_VALUE}"
+        case "${_choice}" in
+            ""|9|exit|quit|q)
+                JSON="${_menu_json}"
+                QUIET="${_menu_quiet}"
+                unset _menu_json _menu_quiet _choice
+                return 0
+                ;;
+            8|self-management)
+                app_cmd_menu_self
+                ;;
+            *)
+                out_error "${_choice} is not on this list."
+                ;;
+        esac
+    done
+}
 
 # =============================================================================
 # app_main() - Main entrypoint and command dispatcher
@@ -3865,13 +4092,20 @@ app_help() {
 # 2026-08-11:
 #   - Specializee injection anchors (DOMAIN_DISPATCH_*) for A→B products; empty
 #     argv remains Type O — domain setup uses explicit verbs only.
+# 2026-10-07:
+#   - No command after flag parse is empty argv. --debug, --quiet, --json, and
+#     --force with no command stay on that path.
+#   - Non-interactive empty argv (no TTY, or quiet, or json) runs self-install
+#     (inst_perform_install). It does not open the menu and does not print help.
+#   - Interactive empty argv opens app_cmd_menu.
+#   - menu and main are that same list. Off a terminal they stop.
 #
-# Last reviewed: 2026-08-11
+# Last updated: 2026-10-07
 # =============================================================================
 
 app_main() {
     # --- Safe Variable Defaults ---
-    : "${COMMAND:=help}"
+    COMMAND=""
     : "${QUIET:=0}"
     : "${JSON:=0}"
     : "${DEBUG:=0}"
@@ -3890,30 +4124,9 @@ app_main() {
     export EFFECTIVE_STORAGE_DIR STORAGE_DIR
     export TMPDIR="${EFFECTIVE_STORAGE_DIR}"
 
-    # === ZERO-ARG = Type O install-ensure (curl | sh contract) ===
-    # Product type: Type O (online-install) — not Type N help-default.
-    # Empty argv always means "ensure installed", never help, never domain setup.
-    # Cases: not installed | installed local | installed global
-    # - not installed → install (TTY prompt via inst_maybe_install; non-TTY auto)
-    # - already installed → success no-op (inst_perform_install); no --force required
-    # - --force / FORCE_REINSTALL only for deliberate re-download/replace
-    # Exit status must reflect install outcome (failed download/checksum → non-zero).
-    # SSOT: docs/requirements/requirement-shell-cli-zero-arguments.md
-    # Specializee: do NOT replace this block with domain full-setup.
-    if [ $# -eq 0 ]; then
-        if [ "${JSON}" -eq 1 ] || [ "${QUIET}" -eq 1 ]; then
-            inst_perform_install
-            exit $?
-        elif inst_is_installed; then
-            inst_perform_install
-            exit $?
-        else
-            inst_maybe_install
-            exit $?
-        fi
-    fi
-
     # === Argument parsing: flags and commands (order-independent) ===
+    # Empty argv is decided AFTER this parse. A switch with no command is still
+    # empty argv. A host token is not.
     while [ $# -gt 0 ]; do
         case "$1" in
             --quiet|-q) QUIET=1 ;;
@@ -3928,7 +4141,7 @@ app_main() {
                 COMMAND="version"
                 ;;
             # --- end DOMAIN_DISPATCH_FLAGS ---
-            version|about|help|version-check|self-update|self-uninstall|install)
+            version|about|help|version-check|self-update|self-uninstall|install|self-install|menu|main)
                 COMMAND="$1"
                 ;;
             # --- DOMAIN_DISPATCH_COMMANDS (specializee injection) ---
@@ -3955,6 +4168,20 @@ app_main() {
 
     out_debug "dispatch command=${COMMAND} quiet=${QUIET} json=${JSON} force=${FORCE}"
 
+    # No command after flag parse.
+    # Non-interactive (no TTY, or --quiet, or --json) places the CLI.
+    # Interactive opens the numbered list. Neither path starts setup.
+    # SSOT: requirement-shell-cli-zero-arguments.md
+    #       requirement-shell-cli-default-interaction.md
+    if [ -z "${COMMAND}" ]; then
+        if [ "${TTY}" -ne 1 ] || [ "${QUIET}" -eq 1 ] || [ "${JSON}" -eq 1 ]; then
+            inst_perform_install
+            exit $?
+        fi
+        app_cmd_menu
+        exit $?
+    fi
+
     case "${COMMAND}" in
         version)
             app_version
@@ -3971,8 +4198,11 @@ app_main() {
         self-uninstall)
             inst_self_uninstall
             ;;
-        install)
+        install|self-install)
             inst_perform_install
+            ;;
+        menu|main)
+            app_cmd_menu
             ;;
         # --- DOMAIN_DISPATCH_ROUTES (specializee injection) ---
         setup)
@@ -3996,8 +4226,10 @@ app_main() {
 # Always invoke the single dispatcher. Do NOT gate on ${0##*/} matching APP_NAME:
 # under curl | sh / stdin pipe, $0 is the shell (sh/bash/…), not the product
 # filename — a basename gate causes silent no-op and breaks one-liner install.
-# Product law: requirement-shell-cli-zero-arguments.md (Type O) +
-# requirement-shell-cli-interface.md (single app_main entry). Historical: INC-20260712-001.
+# Product law: requirement-shell-cli-zero-arguments.md (non-interactive empty argv
+# is self-install) + requirement-shell-cli-default-interaction.md (interactive
+# empty argv is the numbered list) + requirement-shell-cli-interface.md
+# (single app_main entry). Historical: INC-20260712-001.
 #
 # Single-file install CLI: source-as-library is unsupported; main always runs.
 # =============================================================================

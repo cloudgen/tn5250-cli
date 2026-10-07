@@ -10,7 +10,13 @@ Report a vulnerability in this installer to cloudgen.wong@gmail.com. Please incl
 
 ## Install channel
 
-This release does not set `SCRIPT_URL`. There is no `curl | sh` channel until an operator exports `SCRIPT_URL`, or exports both `REPO_USER` and `REPO_NAME`.
+`SCRIPT_URL` defaults to `https://raw.githubusercontent.com/cloudgen/tn5250-cli/main/src/tn5250-cli`. `REPO_USER` defaults to `cloudgen` and `REPO_NAME` defaults to `tn5250-cli`. Export `SCRIPT_URL` to use another script address. An empty `SCRIPT_URL` refuses the download.
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/cloudgen/tn5250-cli/main/src/tn5250-cli | sh
+```
+
+On Linux, a root login uses `sudo curl -fsSL https://raw.githubusercontent.com/cloudgen/tn5250-cli/main/src/tn5250-cli | sudo sh`. Git Bash uses the command without sudo.
 
 When `SCRIPT_URL` is set and no `CHECKSUM` pin is set, install tries the companion file at `${SCRIPT_URL}.sha256`:
 
