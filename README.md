@@ -5,7 +5,15 @@
 [![CIAO](https://img.shields.io/badge/Philosophy-CIAO%20(Caution%20%E2%80%A2%20Intentional%20%E2%80%A2%20Anti--fragile%20%E2%80%A2%20Over--engineered)-purple.svg)](https://github.com/cloudgen/ciao)
 [![Stars](https://img.shields.io/github/stars/cloudgen/tn5250-cli?style=flat-square)](https://github.com/cloudgen/tn5250-cli)
 
-`tn5250-cli` installs and launches the upstream TN5250 terminal client. You type `tn5250-cli setup`. On Debian, Ubuntu, and other Linux, missing compiler packages are installed with sudo from inside that command. Git and the compile stay with you, including when setup was started with sudo.
+`tn5250-cli` builds and opens tn5250, a free 5250 terminal client for IBM i. You type `tn5250-cli setup`, or you choose **1** on the numbered list. On Debian, Ubuntu, and other Linux, missing compiler packages are installed with sudo from inside that command. Git and the compile stay with you, including when setup was started with sudo.
+
+## What tn5250 is
+
+tn5250 is a terminal client for IBM i. IBM i is the operating system that ran on the AS/400 and the iSeries, and that still runs on IBM Power systems. A person reaches it through a 5250 session. The host draws the sign-on screen and the menus. The terminal sends the fields when you press Enter or a function key. That screen protocol, carried over Telnet, is the 5250 telnet protocol.
+
+The client this installer builds is [tn5250/tn5250](https://github.com/tn5250/tn5250). On Debian, Ubuntu, and other Linux it runs in the current terminal, with curses, including the wide 27×132 screen and color where the terminal allows it. On Windows Git Bash it opens its own window. The same build also produces `lp5250d`, the printer session, and the SCS tools `scs2ascii`, `scs2pdf`, and `scs2ps`.
+
+This repository is the installer. Its command name stays `tn5250-cli`, so the `tn5250` program on your PATH is the client. After setup, `tn5250-cli HOST` opens a session on that IBM i host. The client keeps the upstream license. This installer is MIT.
 
 ## Features
 
@@ -15,7 +23,7 @@
 - The built client is copied under the install prefix, default `~/.local`.
 - `help` and `version` print text and do not compile.
 
-Upstream is [tn5250/tn5250](https://github.com/tn5250/tn5250) tag `v0.18.0` at commit `cd5980177b9468763bcaa669bf5cacbe7de5ec63`. That client keeps its own license. This installer is MIT.
+Setup clones [tn5250/tn5250](https://github.com/tn5250/tn5250) tag `v0.18.0` at commit `cd5980177b9468763bcaa669bf5cacbe7de5ec63`.
 
 ## Quick Installation
 
@@ -62,7 +70,8 @@ At a terminal, `tn5250-cli` with no command opens the numbered list. A pipe, `--
 ```text
 [INFO] **tn5250-cli**(*1.0.2*) — numbered list of live commands
 This program has no server commands.
-Build and open stay on the command line. Next: tn5250-cli setup, then tn5250-cli HOST.
+Open a host on the command line: tn5250-cli HOST.
+1. **setup**: *Build the upstream TN5250 client*
 8. **self-management**: *Place, check, update, or remove this CLI*
 9. Exit
 ```
@@ -90,7 +99,7 @@ tn5250-cli myibmi.example.com
 tn5250-cli menu
 ```
 
-`menu` and `main` open the numbered list. They are not host names. A host name that does not resolve prints the client's session error. It does not end in a segmentation fault.
+`menu` and `main` open the numbered list. Row **1** runs `setup`. They are not host names. A host name that does not resolve prints the client's session error. It does not end in a segmentation fault.
 
 `tn5250-cli setup -h` prints the setup options and does not compile.
 

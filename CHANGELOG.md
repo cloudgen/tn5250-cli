@@ -5,6 +5,13 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- Front board row 1 is `setup`. Choosing `1` or typing `setup` runs the setup verb. After it returns, the front board is shown again.
+- The README explains that tn5250 is the 5250 telnet client for IBM i, and that this repository is the installer.
+
 ## [1.0.2] - 2026-10-07
 
 ### Fixed

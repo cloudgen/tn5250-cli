@@ -1,12 +1,12 @@
 **file**: docs/requirements/requirement-domain-tn5250.md
 **ID**: RQ-DOMAIN-TN5250
-**Status**: Active (Version 1.4.3)
+**Status**: Active (Version 1.4.4)
 **Project**: tn5250-cli
 **Philosophy**: CIAO **v2.10.2** / CIAO-Lite (Caution • Intentional • Anti-fragile • Over-engineered / Over-protect)
 
 ## 1. Purpose
 
-This is the single domain law for tn5250-cli. It owns the TN5250 client verbs: `setup` and the host launch. It does not own Type 0 self-management, and it does not own the compiler, the link line, or the package list.
+This is the single domain law for tn5250-cli. tn5250 is the upstream 5250 telnet client for IBM i, the system that was called AS/400. This file owns how the installer builds that client and opens a host: the verbs `setup` and the host launch. It does not define the 5250 data stream. It does not own Type 0 self-management, and it does not own the compiler, the link line, or the package list.
 
 Windows compilation, link, and build stay on `docs/requirements/requirement-windows-git-bash.md`. Debian compilation, link, and build stay on `docs/requirements/requirement-debian.md`. Ubuntu compilation, link, and build stay on `docs/requirements/requirement-ubuntu.md`. Other Linux compilation, link, and build stay on `docs/requirements/requirement-other-linux.md`. The command map names every verb and points here for the domain catalog.
 
@@ -164,7 +164,8 @@ Proof home: `docs/reviews/test-plan.md`. The Ubuntu compile was run on the autho
 | 2026-10-07 | Active 1.4.1 | The setup arrangement is named the mixed elevated sudo model. Help does not recommend a sudo prefix. |
 | 2026-10-07 | Active 1.4.2 | The numbered list is not this file. This file still forbids a path-and-clock screen and a setup question walk. |
 | 2026-10-07 | Active 1.4.3 | A host name that does not resolve must not be a segmentation fault. `menu` and `main` stay named verbs. |
+| 2026-10-08 | Active 1.4.4 | This file names tn5250 as the upstream 5250 telnet client for IBM i. The data stream stays out of this file. |
 
-**Last Updated**: 2026-10-07
+**Last Updated**: 2026-10-08
 **Owner**: unassigned
 **Alignment**: Registry `docs/requirements/index.md`; **CIAO** (https://github.com/cloudgen/ciao); CIAO-Lite (https://github.com/cloudgen/ciao-lite).

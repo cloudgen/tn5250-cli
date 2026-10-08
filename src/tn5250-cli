@@ -4052,17 +4052,19 @@ app_menu_read_choice() {
 # =============================================================================
 #
 # GENERAL PURPOSE:
-# Prints the front board. Client build and host launch stay on the command
-# line. This program has no server commands. Self-management is row 8.
+# Prints the front board. Row 1 is the setup verb. This program has no
+# server commands. A host name stays on the command line. Self-management
+# is row 8.
 #
-# Last updated: 2026-10-07
+# Last updated: 2026-10-08
 # =============================================================================
 
 app_menu_draw_front() {
     : "${APP_NAME:=tn5250-cli}"
     out_info "$(util_app_ident) — numbered list of live commands"
     out_plain "This program has no server commands."
-    out_plain "Build and open stay on the command line. Next: ${APP_NAME} setup, then ${APP_NAME} HOST."
+    out_plain "Open a host on the command line: ${APP_NAME} HOST."
+    out_menu_choice "1" "setup" "Build the upstream TN5250 client"
     out_menu_choice "8" "self-management" "Place, check, update, or remove this CLI"
     out_plain "9. Exit"
 }
@@ -4151,7 +4153,7 @@ app_cmd_menu_self() {
 # Interactive use ignores --json and --quiet while the list is open.
 # An empty line on this board leaves. Exit is 9.
 #
-# Last updated: 2026-10-07
+# Last updated: 2026-10-08
 # =============================================================================
 
 app_cmd_menu() {
@@ -4181,6 +4183,9 @@ app_cmd_menu() {
                 QUIET="${_menu_quiet}"
                 unset _menu_json _menu_quiet _choice
                 return 0
+                ;;
+            1|setup)
+                tn5250_setup
                 ;;
             8|self-management)
                 app_cmd_menu_self
@@ -4241,8 +4246,11 @@ app_cmd_menu() {
 #     (inst_perform_install). It does not open the menu and does not print help.
 #   - Interactive empty argv opens app_cmd_menu.
 #   - menu and main are that same list. Off a terminal they stop.
+# 2026-10-08:
+#   - Front board row 1 is setup. Choosing 1 or typing setup calls
+#     tn5250_setup. After it returns, the front board is shown again.
 #
-# Last updated: 2026-10-07
+# Last updated: 2026-10-08
 # =============================================================================
 
 app_main() {

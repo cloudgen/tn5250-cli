@@ -6,7 +6,7 @@ Report a vulnerability in this installer to cloudgen.wong@gmail.com. Please incl
 
 ## What this project is
 
-`tn5250-cli` installs and launches the upstream TN5250 client. The installer is this repository. The client source is cloned from the upstream project at setup time and keeps that project's license.
+`tn5250-cli` installs and launches the upstream tn5250 client. tn5250 is a 5250 telnet client for IBM i: the host draws the sign-on screen and the menus, and the client sends the fields. The installer is this repository. The client source is cloned from the upstream project at setup time and keeps that project's license.
 
 ## Install channel
 
