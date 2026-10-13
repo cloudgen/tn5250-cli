@@ -1,6 +1,6 @@
 **file**: docs/requirements/requirement-shell-cli-zero-arguments.md
 **ID**: RQ-SHELL-CLI-ZERO-ARGUMENTS
-**Status**: Active (Version 1.2.0)
+**Status**: Active (Version 1.2.1)
 **Project**: tn5250-cli
 **Philosophy**: CIAO **v2.10.2** / CIAO-Lite (Caution • Intentional • Anti-fragile • Over-engineered / Over-protect)
 
@@ -15,7 +15,7 @@ This file owns empty argv for tn5250-cli. No command after the program name is e
 | Box | Meaning | Example |
 |-----|---------|---------|
 | You / this login | The person who starts the program with no command | `tn5250-cli` |
-| The other role | A pipe, explicit help, and the payload build | `sh src/tn5250-cli </dev/null` · `tn5250-cli help` · `tn5250-cli setup` |
+| The other role | A pipe, explicit help, and the payload build | `sh src/tn5250-cli </dev/null` · `tn5250-cli help` · `tn5250-cli build` |
 | Not this file | The numbered list’s rows, and the compiler | `docs/requirements/requirement-shell-cli-default-interaction.md` |
 
 | Includes | Excludes |
@@ -36,7 +36,7 @@ This file owns empty argv for tn5250-cli. No command after the program name is e
 ## 2. Core Rules / Requirements (Mandatory)
 
 1. Empty argv **MUST** mean no command token after global flags are parsed. `--debug`, `--quiet`, `--json`, and `--force` with no command are still empty argv. A host name is not empty argv.
-2. Non-interactive empty argv **MUST** run self-install (`inst_perform_install`). Non-interactive means stdin or stdout is not a terminal, or `--quiet` is set, or `--json` is set. It **MUST NOT** print help. It **MUST NOT** open the numbered list. It **MUST NOT** call `setup`. It **MUST NOT** wait for an answer.
+2. Non-interactive empty argv **MUST** run self-install (`inst_perform_install`). Non-interactive means stdin or stdout is not a terminal, or `--quiet` is set, or `--json` is set. It **MUST NOT** print help. It **MUST NOT** open the numbered list. It **MUST NOT** call `build`. It **MUST NOT** wait for an answer.
 3. Interactive empty argv **MUST** open the numbered list. Interactive means stdin and stdout are both terminals, and neither quiet nor JSON is set. That list is owned by `docs/requirements/requirement-shell-cli-default-interaction.md`. Interactive empty argv **MUST NOT** place the CLI by itself and **MUST NOT** print help as its result.
 4. Already installed under `${HOME}/.local/bin` or `/usr/local/bin`, with `--force` off, **MUST** be a success no-op on self-install. `--force` is not required for that second run.
 5. Root (`id -u` 0) targets `/usr/local/bin/${APP_NAME}`. Any other login targets `${HOME}/.local/bin/${APP_NAME}`.
@@ -51,7 +51,7 @@ This file owns empty argv for tn5250-cli. No command after the program name is e
 | Product | tn5250-cli |
 | Ship unit | `src/tn5250-cli` |
 | Channel | Unset `SCRIPT_URL` is `https://raw.githubusercontent.com/cloudgen/tn5250-cli/main/src/tn5250-cli`. An explicit empty `SCRIPT_URL` fails before curl |
-| Payload build | Not this path. `setup` is explicit |
+| Payload build | Not this path. `build` is explicit |
 | Interactive empty argv | Numbered list. Not this file’s rows |
 | Non-interactive empty argv | `self-install`, same handler as `install` |
 
@@ -59,21 +59,21 @@ This file owns empty argv for tn5250-cli. No command after the program name is e
 
 Empty argv stays on this login.
 
-**This requirement:** empty argv does not install compiler packages. That install belongs to `setup` and to `docs/requirements/requirement-shell-sudo-command.md`. Git Bash **MUST NOT** be shown a `sudo curl` one-liner. A Linux root login may still be shown the root one-liner on the self-install path. Empty argv does not switch to a dedicated system user.
+**This requirement:** empty argv does not install compiler packages. That install belongs to `build` and to `docs/requirements/requirement-shell-sudo-command.md`. Git Bash **MUST NOT** be shown a `sudo curl` one-liner. A Linux root login may still be shown the root one-liner on the self-install path. Empty argv does not switch to a dedicated system user.
 
 ## 3. Design Principles (CIAO / CIAO-Lite)
 
 - **Caution**: a second run does not download again.
 - **Intentional**: a pipe places the CLI. A terminal opens the list.
 - **Anti-fragile**: a missing channel fails closed.
-- **Over-protect**: payload setup cannot hide inside the empty path.
+- **Over-protect**: payload build cannot hide inside the empty path.
 
 ## 4. Protection Rule (Sacred)
 
 **Future AI assistants or maintainers MUST NOT**:
 
 - Return help from empty argv.
-- Start `setup` from empty argv.
+- Start `build` from empty argv.
 - Open the numbered list for a pipe, for `--quiet`, or for `--json` with no command.
 - Place the CLI from an interactive empty argv before the person chooses that row.
 - Point the default channel at another product.
@@ -88,7 +88,7 @@ Empty argv stays on this login.
 | `docs/requirements/requirement-shell-self-management.md` | Install and self-install (RQ-SHELL-SELF-MANAGEMENT) |
 | `docs/requirements/requirement-shell-cli-default-interaction.md` | Numbered list for a terminal with no command (RQ-SHELL-CLI-DEFAULT-INTERACTION) |
 | `docs/requirements/requirement-shell-automatic-checksum.md` | Companion digest (RQ-SHELL-AUTOMATIC-CHECKSUM) |
-| `docs/requirements/requirement-shell-sudo-command.md` | Package install on `setup`, not on empty argv (RQ-SHELL-SUDO-COMMAND) |
+| `docs/requirements/requirement-shell-sudo-command.md` | Package install on `build`, not on empty argv (RQ-SHELL-SUDO-COMMAND) |
 | `src/tn5250-cli` | Ship unit |
 | `docs/reviews/test-plan.md` | Proof rows |
 
@@ -129,6 +129,7 @@ Proof home: `docs/reviews/test-plan.md`.
 | 2026-10-07 | Active 1.1.0 | Non-interactive empty argv is self-install. Interactive empty argv opens the numbered list. `--json` and `--quiet` with no command stay on self-install. |
 | 2026-10-07 | Active 1.2.0 | Default channel is the raw URL of `src/tn5250-cli`. An explicit empty `SCRIPT_URL` still fails before curl. |
 
-**Last Updated**: 2026-10-07
+| 2026-10-13 | Active 1.2.1 | The payload verb is `build`, not `setup`. Setup and build are different. Menus, help, and next-steps say `build`. |
+**Last Updated**: 2026-10-13
 **Owner**: unassigned
 **Alignment**: Registry `docs/requirements/index.md`; **CIAO** (https://github.com/cloudgen/ciao); CIAO-Lite (https://github.com/cloudgen/ciao-lite).

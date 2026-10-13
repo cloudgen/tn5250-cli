@@ -59,6 +59,9 @@ obj/
 *.dylib
 *.dll
 *.exe
+# Published payload names under download/ stay tracked, including Windows .exe.
+!download/*.exe
+!download/*.exe.sha256
 *.class
 *.jar
 .cache/

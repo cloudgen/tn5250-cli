@@ -6,7 +6,7 @@
 # Specialized from the bootstrap ship unit. That product's channel is not this one.
 # Type 0: install, self-install, version-check, self-update, self-uninstall, about, help, version, menu.
 # No command: a terminal opens the numbered list. A pipe, --quiet, or --json places the CLI.
-# Domain: setup, and a host token that launches the built tn5250 program.
+# Domain: build, and a host token that launches the built tn5250 program.
 # Project requirements (docs/requirements/ only — never cite templates here):
 # - requirement-shell-cli-interface.md
 # - requirement-shell-cli-zero-arguments.md
@@ -19,8 +19,20 @@
 # - requirement-shell-cli-default-interaction.md
 # - requirement-shell-automatic-checksum.md
 # - requirement-domain-tn5250.md
-# - requirement-windows-git-bash.md
-# - requirement-debian.md
+# - requirement-windows-git-bash-cli-coding.md
+# - requirement-windows-git-bash-build-payload.md
+# - requirement-debian-cli-coding.md
+# - requirement-debian-build-payload.md
+# - requirement-ubuntu.md
+# - requirement-other-linux.md
+# - requirement-alpine-cli-coding.md
+# - requirement-alpine-build-payload.md
+# - requirement-termux-cli-coding.md
+# - requirement-termux-build-payload.md
+# - requirement-macos-cli-coding.md
+# - requirement-macos-build-payload.md
+# - requirement-fedora-redhat-cli-coding.md
+# - requirement-fedora-redhat-build-payload.md
 #
 # APP NAME: hard-assign APP_NAME="tn5250-cli"
 # REPO_USER / REPO_NAME: cloudgen / tn5250-cli. An operator may export another pair.
@@ -39,10 +51,10 @@ APP_NAME="tn5250-cli"
 : "${APP_NAME:=tn5250-cli}"
 : "${APP_DESC:=Installer and launcher for the upstream TN5250 client}"
 : "${SHORT_DESCRIPTION:=${APP_DESC}}"
-: "${DESCRIPTION:=POSIX /bin/sh program: install, version-check, self-update, self-uninstall, and about, plus setup and host launch for the TN5250 client. A terminal with no command opens the numbered list. A pipe, --quiet, or --json places this CLI.}"
+: "${DESCRIPTION:=POSIX /bin/sh program: install, version-check, self-update, self-uninstall, and about, plus setup, build, and host launch for the TN5250 client. A terminal with no command opens the numbered list. A pipe, --quiet, or --json places this CLI.}"
 # Product version SSOT (semver). Extractors use: grep '^VERSION="'
-VERSION="1.0.2"
-: "${VERSION:=1.0.2}"
+VERSION="1.1.0"
+: "${VERSION:=1.1.0}"
 
 # Runtime flags (safe defaults)
 : "${QUIET:=0}"
@@ -376,7 +388,7 @@ out_empty_line() { out_text plain ""; }
 
 util_app_ident() {
     : "${APP_NAME:=tn5250-cli}"
-    : "${VERSION:=1.0.2}"
+    : "${VERSION:=1.1.0}"
     : "${TTY:=0}"
     if [ "${TTY}" -eq 1 ]; then
         printf '\033[1m%s\033[0m(\033[3m%s\033[0m)' "${APP_NAME}" "${VERSION}"
@@ -2346,12 +2358,22 @@ util_get_current_shell() {
 
 
 # =============================================================================
-# Domain prefix tn5250_* — IBM i 5250 client (setup and launch)
+# Domain prefix tn5250_* — IBM i 5250 client (build and launch)
 # Specialized from the bootstrap ship unit. That product's channel is not this one.
-# Windows compile, link, and build: docs/requirements/requirement-windows-git-bash.md
-# Debian compile, link, and build: docs/requirements/requirement-debian.md
+# Windows CLI coding: docs/requirements/requirement-windows-git-bash-cli-coding.md
+# Windows compile, link, and build: docs/requirements/requirement-windows-git-bash-build-payload.md
+# Debian CLI coding: docs/requirements/requirement-debian-cli-coding.md
+# Debian compile, link, and build: docs/requirements/requirement-debian-build-payload.md
 # Ubuntu compile, link, and build: docs/requirements/requirement-ubuntu.md
 # Other Linux compile, link, and build: docs/requirements/requirement-other-linux.md
+# Alpine CLI coding: docs/requirements/requirement-alpine-cli-coding.md
+# Alpine compile, link, and build: docs/requirements/requirement-alpine-build-payload.md
+# Termux CLI coding: docs/requirements/requirement-termux-cli-coding.md
+# Termux compile, link, and build: docs/requirements/requirement-termux-build-payload.md
+# macOS CLI coding: docs/requirements/requirement-macos-cli-coding.md
+# macOS compile, link, and build: docs/requirements/requirement-macos-build-payload.md
+# Fedora and Red Hat CLI coding: docs/requirements/requirement-fedora-redhat-cli-coding.md
+# Fedora and Red Hat compile, link, and build: docs/requirements/requirement-fedora-redhat-build-payload.md
 # Package install sudo: docs/requirements/requirement-shell-sudo-command.md
 # Command names: docs/requirements/requirement-shell-cli-interface.md
 # Domain pillars: docs/requirements/requirement-domain-tn5250.md
@@ -2377,6 +2399,12 @@ tn5250_detect_platform() {
                     return 0
                     ;;
             esac
+            ;;
+    esac
+    case "$(uname -s 2>/dev/null || true)" in
+        Darwin)
+            printf '%s\n' macos
+            return 0
             ;;
     esac
     local _id=$(tn5250_os_field ID)
@@ -2417,6 +2445,18 @@ tn5250_detect_platform() {
             printf '%s\n' ubuntu-mismatch
             return 0
         fi
+    fi
+    if [ "${_id}" = "alpine" ]; then
+        printf '%s\n' alpine
+        return 0
+    fi
+    if [ "${_id}" = "fedora" ]; then
+        printf '%s\n' fedora
+        return 0
+    fi
+    if [ "${_id}" = "rhel" ]; then
+        printf '%s\n' rhel
+        return 0
     fi
     case "$(uname -s 2>/dev/null || true)" in
         Linux)
@@ -2479,41 +2519,514 @@ tn5250_print_payload_version() {
     local _ref=$(tn5250_payload_ref)
     local _rev=$(tn5250_payload_rev)
     if [ "${_ref}" = "not installed" ] || [ "${_rev}" = "not installed" ]; then
-        out_warn "tn5250 payload is not installed. Run: ${APP_NAME} setup"
+        out_warn "tn5250 payload is not installed. Run: ${APP_NAME} build"
     else
         out_info "tn5250 ${_ref} (${_rev})"
     fi
 }
 
+# Published payload name: tn5250-<arch>-<clib>-<clib-version>.<app-version>[.exe]
+# App-version is the product VERSION semver. RQ-PAYLOAD-FILENAME owns the grammar.
+
+tn5250_payload_arch() {
+    case "$(uname -m 2>/dev/null || true)" in
+        x86_64) printf '%s\n' amd64 ;;
+        aarch64) printf '%s\n' arm64 ;;
+        armv7l) printf '%s\n' arm ;;
+        i386|i686) printf '%s\n' 386 ;;
+        ppc64le) printf '%s\n' ppc64le ;;
+        riscv64) printf '%s\n' riscv64 ;;
+        s390x) printf '%s\n' s390x ;;
+        *) return 1 ;;
+    esac
+}
+
+tn5250_bionic_compiler_floor() {
+    local _cc="" _mach="" _n=""
+    if command -v clang >/dev/null 2>&1; then
+        _cc=clang
+    elif command -v cc >/dev/null 2>&1; then
+        _cc=cc
+    else
+        return 1
+    fi
+    _mach=$("${_cc}" -dumpmachine 2>/dev/null) || return 1
+    case "${_mach}" in
+        *-android[0-9]*)
+            _n=${_mach##*-android}
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+    case "${_n}" in
+        ""|*[!0-9]*) return 1 ;;
+    esac
+    printf '%s\n' "${_n}"
+}
+
+tn5250_android_sdk() {
+    local _sdk=""
+    command -v getprop >/dev/null 2>&1 || return 1
+    _sdk=$(getprop ro.build.version.sdk 2>/dev/null) || return 1
+    _sdk=${_sdk%%[!0-9]*}
+    case "${_sdk}" in
+        ""|*[!0-9]*) return 1 ;;
+    esac
+    printf '%s\n' "${_sdk}"
+}
+
+tn5250_glibc_version() {
+    local _line="" _maj="" _min=""
+    if command -v getconf >/dev/null 2>&1; then
+        _line=$(getconf GNU_LIBC_VERSION 2>/dev/null) || _line=""
+    fi
+    case "${_line}" in
+        glibc\ *)
+            _line=${_line#glibc }
+            ;;
+        *)
+            _line=$(ldd --version 2>&1 | head -n 1) || _line=""
+            ;;
+    esac
+    _maj=${_line%%.*}
+    _maj=${_maj##*[^0-9]}
+    case "${_line}" in
+        *.*.*)
+            _min=${_line#*.}
+            _min=${_min%%.*}
+            ;;
+        *.*)
+            _min=${_line#*.}
+            _min=${_min%%[^0-9]*}
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+    case "${_maj}" in
+        ""|*[!0-9]*) return 1 ;;
+    esac
+    case "${_min}" in
+        ""|*[!0-9]*) return 1 ;;
+    esac
+    printf '%s\n' "${_maj}.${_min}"
+}
+
+tn5250_musl_or_uclibc_version() {
+    local _text="" _hit="" _maj="" _min="" _pat=""
+    _text=$(ldd --version 2>&1 | head -n 4) || _text=""
+    _hit=$(printf '%s\n' "${_text}" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n 1) || _hit=""
+    [ -n "${_hit}" ] || return 1
+    _maj=${_hit%%.*}
+    _min=${_hit#*.}
+    _pat=${_min#*.}
+    _min=${_min%%.*}
+    printf '%s\n' "${_maj}.${_min}.${_pat}"
+}
+
+tn5250_libc_kind() {
+    local _text=""
+    _text=$(ldd --version 2>&1 | head -n 4) || _text=""
+    case "${_text}" in
+        *[Mm]usl*) printf '%s\n' musl ;;
+        *uClibc*|*uclibc*|*UCLIBC*) printf '%s\n' uclibc ;;
+        *) printf '%s\n' glibc ;;
+    esac
+}
+
+tn5250_windows_nt_ok() {
+    local _s="" _nt=""
+    _s=$(uname -s 2>/dev/null || true)
+    case "${_s}" in
+        *_NT-*)
+            _nt=${_s#*_NT-}
+            _nt=${_nt%%.*}
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+    case "${_nt}" in
+        ""|*[!0-9]*) return 1 ;;
+    esac
+    [ "${_nt}" -ge 10 ]
+}
+
+# Prints: arch clib clibver mode
+# mode is exact (match that clib-version) or ceiling (clib-version <= this).
+tn5250_host_payload_key() {
+    local _arch="" _plat="" _clib="" _ver="" _mode="" _sdk=""
+    _arch=$(tn5250_payload_arch) || return 1
+    _plat=$(tn5250_detect_platform)
+    case "${_plat}" in
+        windows)
+            tn5250_windows_nt_ok || return 1
+            _clib=ucrt
+            _ver=10
+            _mode=exact
+            ;;
+        termux)
+            _clib=bionic
+            _sdk=$(tn5250_android_sdk) || return 1
+            if _ver=$(tn5250_bionic_compiler_floor); then
+                _mode=exact
+                if ver_gt "${_ver}" "${_sdk}"; then
+                    return 1
+                fi
+            else
+                _ver=${_sdk}
+                _mode=ceiling
+            fi
+            ;;
+        macos|other)
+            return 1
+            ;;
+        *)
+            _clib=$(tn5250_libc_kind)
+            case "${_clib}" in
+                musl|uclibc)
+                    _ver=$(tn5250_musl_or_uclibc_version) || return 1
+                    ;;
+                *)
+                    _clib=glibc
+                    _ver=$(tn5250_glibc_version) || return 1
+                    ;;
+            esac
+            _mode=ceiling
+            ;;
+    esac
+    printf '%s %s %s %s\n' "${_arch}" "${_clib}" "${_ver}" "${_mode}"
+}
+
+tn5250_payload_clib_parts() {
+    case "$1" in
+        glibc) printf '%s\n' 2 ;;
+        musl|uclibc) printf '%s\n' 3 ;;
+        bionic|ucrt) printf '%s\n' 1 ;;
+        *) return 1 ;;
+    esac
+}
+
+# Prints: arch clib clibver appver exe
+# exe is 1 or 0. Returns 1 when the name is not this grammar.
+tn5250_payload_parse_name() {
+    local _name=$1
+    local _exe=0 _arch="" _clib="" _rest="" _n=0 _i=0
+    local _part="" _clibver="" _app=""
+    case "${_name}" in
+        *.exe)
+            _exe=1
+            _name=${_name%.exe}
+            ;;
+    esac
+    case "${_name}" in
+        tn5250-*) ;;
+        *) return 1 ;;
+    esac
+    _rest=${_name#tn5250-}
+    _arch=${_rest%%-*}
+    case "${_rest}" in
+        *-*) _rest=${_rest#*-} ;;
+        *) return 1 ;;
+    esac
+    _clib=${_rest%%-*}
+    case "${_rest}" in
+        *-*) _rest=${_rest#*-} ;;
+        *) return 1 ;;
+    esac
+    _n=$(tn5250_payload_clib_parts "${_clib}") || return 1
+    while [ "${_i}" -lt "${_n}" ]; do
+        _part=${_rest%%.*}
+        case "${_part}" in
+            ""|*[!0-9]*) return 1 ;;
+        esac
+        if [ -n "${_clibver}" ]; then
+            _clibver="${_clibver}.${_part}"
+        else
+            _clibver=${_part}
+        fi
+        case "${_rest}" in
+            *.*) _rest=${_rest#*.} ;;
+            *) return 1 ;;
+        esac
+        _i=$((_i + 1))
+    done
+    _i=0
+    while [ "${_i}" -lt 3 ]; do
+        _part=${_rest%%.*}
+        case "${_part}" in
+            ""|*[!0-9]*) return 1 ;;
+        esac
+        if [ -n "${_app}" ]; then
+            _app="${_app}.${_part}"
+        else
+            _app=${_part}
+        fi
+        if [ "${_i}" -lt 2 ]; then
+            case "${_rest}" in
+                *.*) _rest=${_rest#*.} ;;
+                *) return 1 ;;
+            esac
+        else
+            case "${_rest}" in
+                *.*) return 1 ;;
+            esac
+        fi
+        _i=$((_i + 1))
+    done
+    printf '%s %s %s %s %s\n' "${_arch}" "${_clib}" "${_clibver}" "${_app}" "${_exe}"
+}
+
+tn5250_payload_base() {
+    local _base=""
+    : "${REPO_USER:=cloudgen}"
+    : "${REPO_NAME:=tn5250-cli}"
+    if [ -n "${TN5250_PAYLOAD_BASE:-}" ]; then
+        _base=${TN5250_PAYLOAD_BASE}
+    else
+        _base="https://raw.githubusercontent.com/${REPO_USER}/${REPO_NAME}/main/download"
+    fi
+    case "${_base}" in
+        */) _base=${_base%/} ;;
+    esac
+    printf '%s\n' "${_base}"
+}
+
+tn5250_http_get() {
+    local _url=$1
+    local _dest=$2
+    if command -v curl >/dev/null 2>&1; then
+        curl -fsSL --retry 3 --retry-delay 1 -o "${_dest}" "${_url}"
+        return $?
+    fi
+    if command -v wget >/dev/null 2>&1; then
+        wget -qO "${_dest}" "${_url}"
+        return $?
+    fi
+    return 1
+}
+
+tn5250_payload_choose() {
+    local _index=$1
+    local _arch=$2 _clib=$3 _hostver=$4 _mode=$5
+    local _line="" _parsed="" _a="" _c="" _cv="" _app="" _exe=""
+    local _want_exe=0
+    local _best_cv="" _best_app="" _best_name=""
+    if [ "$(tn5250_detect_platform)" = "windows" ]; then
+        _want_exe=1
+    fi
+    while IFS= read -r _line || [ -n "${_line}" ]; do
+        case "${_line}" in
+            ""|\#*) continue ;;
+        esac
+        _line=$(printf '%s' "${_line}" | tr -d '\r')
+        _parsed=$(tn5250_payload_parse_name "${_line}") || continue
+        # shellcheck disable=SC2086
+        set -- ${_parsed}
+        _a=$1
+        _c=$2
+        _cv=$3
+        _app=$4
+        _exe=$5
+        [ "${_a}" = "${_arch}" ] || continue
+        [ "${_c}" = "${_clib}" ] || continue
+        [ "${_exe}" = "${_want_exe}" ] || continue
+        case "${_mode}" in
+            exact)
+                [ "${_cv}" = "${_hostver}" ] || continue
+                ;;
+            *)
+                if ver_gt "${_cv}" "${_hostver}"; then
+                    continue
+                fi
+                ;;
+        esac
+        if [ -z "${_best_name}" ]; then
+            _best_cv=${_cv}
+            _best_app=${_app}
+            _best_name=${_line}
+            continue
+        fi
+        if ver_gt "${_cv}" "${_best_cv}"; then
+            _best_cv=${_cv}
+            _best_app=${_app}
+            _best_name=${_line}
+            continue
+        fi
+        if [ "${_cv}" = "${_best_cv}" ] && ver_gt "${_app}" "${_best_app}"; then
+            _best_app=${_app}
+            _best_name=${_line}
+        fi
+    done < "${_index}"
+    [ -n "${_best_name}" ] || return 1
+    printf '%s\n' "${_best_name}"
+}
+
+tn5250_payload_saved_name() {
+    if [ "$(tn5250_detect_platform)" = "windows" ]; then
+        printf '%s\n' tn5250.exe
+    else
+        printf '%s\n' tn5250
+    fi
+}
+
+tn5250_client_path() {
+    local _prefix="${TN5250_PREFIX:-${HOME}/.local}"
+    local _name=""
+    _name=$(tn5250_payload_saved_name)
+    if [ -f "${_prefix}/bin/${_name}" ]; then
+        printf '%s\n' "${_prefix}/bin/${_name}"
+        return 0
+    fi
+    if [ -f "$(tn5250_app_dir)/${_name}" ]; then
+        printf '%s\n' "$(tn5250_app_dir)/${_name}"
+        return 0
+    fi
+    return 1
+}
+
+tn5250_payload_setup_help() {
+    : "${APP_NAME:=tn5250-cli}"
+    out_info "${APP_NAME} setup — download the published tn5250 client"
+    out_plain "  ${APP_NAME} setup"
+    out_plain "  ${APP_NAME} setup -h"
+    out_empty_line
+    out_plain "setup reads download/index.txt from the published channel."
+    out_plain "It keeps the newest app version whose arch, C library, and C-library version fit this machine."
+    out_plain "The file is saved as ~/.local/bin/tn5250 (tn5250.exe on Windows) and marked executable."
+    out_plain "setup does not compile. build still compiles."
+    out_plain "A digest mismatch stops. A missing digest stops."
+    out_empty_line
+    out_plain "Channel: $(tn5250_payload_base)/"
+}
+
+tn5250_payload_setup() {
+    : "${APP_NAME:=tn5250-cli}"
+    : "${JSON:=0}"
+    : "${HOME:=/tmp}"
+    local _arg="" _key="" _arch="" _clib="" _ver="" _mode=""
+    local _base="" _index="" _pick="" _body="" _sum="" _got="" _exp=""
+    local _dest_dir="" _dest="" _saved=""
+    while [ $# -gt 0 ]; do
+        _arg=$1
+        case "${_arg}" in
+            -h|--help)
+                tn5250_payload_setup_help
+                return 0
+                ;;
+            *)
+                out_die "Unknown setup option: ${_arg}. Next: ${APP_NAME} setup -h"
+                ;;
+        esac
+        shift
+    done
+    _key=$(tn5250_host_payload_key) || out_die "This machine has no published payload name. Next: ${APP_NAME} build"
+    # shellcheck disable=SC2086
+    set -- ${_key}
+    _arch=$1
+    _clib=$2
+    _ver=$3
+    _mode=$4
+    _base=$(tn5250_payload_base)
+    _index=$(mktemp) || out_die "Cannot create a temporary file."
+    if ! tn5250_http_get "${_base}/index.txt" "${_index}"; then
+        rm -f "${_index}"
+        out_die "Cannot read the payload index. Next: ${APP_NAME} build"
+    fi
+    _pick=$(tn5250_payload_choose "${_index}" "${_arch}" "${_clib}" "${_ver}" "${_mode}") || _pick=""
+    rm -f "${_index}"
+    if [ -z "${_pick}" ]; then
+        out_die "No published payload fits ${_arch} ${_clib}-${_ver}. Next: ${APP_NAME} build"
+    fi
+    _body=$(mktemp) || out_die "Cannot create a temporary file."
+    _sum=$(mktemp) || {
+        rm -f "${_body}"
+        out_die "Cannot create a temporary file."
+    }
+    if ! tn5250_http_get "${_base}/${_pick}" "${_body}"; then
+        rm -f "${_body}" "${_sum}"
+        out_die "Cannot download ${_pick}. Next: ${APP_NAME} build"
+    fi
+    if ! tn5250_http_get "${_base}/${_pick}.sha256" "${_sum}"; then
+        rm -f "${_body}" "${_sum}"
+        out_die "Missing digest for ${_pick}. The download stopped."
+    fi
+    _got=$(util_sha256_file "${_body}") || _got=""
+    _exp=$(awk 'NF { print $1; exit }' "${_sum}" 2>/dev/null) || _exp=""
+    _got=$(printf '%s' "${_got}" | tr 'A-F' 'a-f')
+    _exp=$(printf '%s' "${_exp}" | tr 'A-F' 'a-f')
+    if [ -z "${_got}" ] || [ -z "${_exp}" ] || [ "${_got}" != "${_exp}" ]; then
+        rm -f "${_body}" "${_sum}"
+        out_die "Digest mismatch for ${_pick}. The download stopped."
+    fi
+    rm -f "${_sum}"
+    _dest_dir="${TN5250_PREFIX:-${HOME}/.local}/bin"
+    mkdir -p "${_dest_dir}" || {
+        rm -f "${_body}"
+        out_die "Cannot create ${_dest_dir}."
+    }
+    _saved=$(tn5250_payload_saved_name)
+    _dest="${_dest_dir}/${_saved}"
+    mv -f "${_body}" "${_dest}" || out_die "Cannot store ${_dest}."
+    chmod 755 "${_dest}" || out_die "Cannot mark ${_dest} executable."
+    if [ "${JSON}" -eq 1 ]; then
+        out_json "success" "Downloaded ${_pick}" "path" "${_dest}" "payload" "${_pick}" \
+            "payload_arch" "${_arch}" "payload_clib" "${_clib}-${_ver}"
+        return 0
+    fi
+    out_success "Saved ${_pick} as ${_dest}"
+}
+
 tn5250_about_human() {
+    local _key="" _arch="unknown" _clib="unsupported"
     out_info "Payload platform:  $(tn5250_detect_platform)"
+    if _key=$(tn5250_host_payload_key); then
+        # shellcheck disable=SC2086
+        set -- ${_key}
+        _arch=$1
+        _clib="${2}-${3}"
+    elif _arch=$(tn5250_payload_arch); then
+        :
+    else
+        _arch="unknown"
+    fi
+    out_info "Payload arch:      ${_arch}"
+    out_info "Payload C library: ${_clib}"
+    if [ -n "${TERMUX_VERSION:-}" ]; then
+        out_info "Termux version:    ${TERMUX_VERSION}"
+    fi
     out_info "Payload ref:       $(tn5250_payload_ref)"
     out_info "Payload revision:  $(tn5250_payload_rev)"
     out_info "Payload directory: $(tn5250_app_dir)"
 }
 
 tn5250_setup_help() {
-    out_info "${APP_NAME} setup — build the upstream TN5250 client"
-    out_plain "  ${APP_NAME} setup [options]"
+    out_info "${APP_NAME} build — build the upstream TN5250 client"
+    out_plain "  ${APP_NAME} build [options]"
     out_plain "  ${APP_NAME} HOST [arguments]"
     out_empty_line
     out_plain "Git Bash builds the Windows programs."
-    out_plain "Debian 12 and 13, Ubuntu 22.04, 24.04, and 26.04, and other Linux build the curses program."
-    out_plain "setup is the same command for your user and for a sudo launch."
-    out_plain "Missing compiler packages are installed with sudo from inside setup."
-    out_plain "Git and the compile stay with your user, including when setup was started with sudo."
+    out_plain "Debian 12 and 13, Ubuntu 22.04, 24.04, and 26.04, other Linux, Alpine, Fedora, Red Hat Enterprise Linux, Termux, and macOS build the curses program."
+    out_plain "On Debian, Ubuntu, other Linux, Alpine, Fedora, and Red Hat Enterprise Linux, build is the same command for your user and for a sudo launch."
+    out_plain "Missing compiler packages there are installed with sudo from inside build."
+    out_plain "Git and the compile stay with your user, including when build was started with sudo."
+    out_plain "On Alpine, a missing compiler package is installed with apk through that sudo wrap."
+    out_plain "On Fedora and Red Hat Enterprise Linux, a missing compiler package is installed with dnf through that sudo wrap."
+    out_plain "On Termux, missing compiler packages are installed with pkg as your user. Termux does not call sudo."
+    out_plain "On macOS, missing compiler packages are installed with brew as your user. macOS does not call sudo."
     out_plain "The compiler, the link, and the package list stay on the platform requirements."
     out_plain "This installer remains ${APP_NAME} so it does not shadow the tn5250 program."
     out_empty_line
     out_plain "  --prefix DIR       Install prefix (default: ${HOME}/.local, or TN5250_PREFIX)"
     out_plain "  --ref REF          Git tag or branch (default: v0.18.0, or TN5250_REF)"
-    out_plain "  --msys2-root DIR   Git Bash only. Debian, Ubuntu, and other Linux reject this flag"
+    out_plain "  --msys2-root DIR   Git Bash only. Debian, Ubuntu, other Linux, Alpine, Fedora, Red Hat Enterprise Linux, Termux, and macOS reject this flag"
     out_plain "  --jobs N           Parallel compile jobs (or TN5250_JOBS)"
     out_plain "  --force            Rebuild even when this revision is already installed"
     out_plain "  -h, --help         Show this text and do not check the platform"
     out_empty_line
     out_plain "Examples:"
-    out_plain "  ${APP_NAME} setup"
+    out_plain "  ${APP_NAME} build"
     out_plain "  ${APP_NAME} myibmi.example.com"
 }
 
@@ -2725,7 +3238,7 @@ tn5250_payload_has_connect_fix() {
 # =============================================================================
 #
 # GENERAL PURPOSE:
-# Writes CONNECT-FIX so a later setup can skip the compile.
+# Writes CONNECT-FIX so a later build can skip the compile.
 #
 # Last updated: 2026-10-07
 # =============================================================================
@@ -2916,7 +3429,7 @@ tn5250_ensure_toolchain() {
         out_info "Using gcc and cmake already on PATH"
         TN5250_TOOL_BIN=""
         command -v ninja >/dev/null 2>&1 || command -v mingw32-make >/dev/null 2>&1 || \
-            out_die "A generator is missing. Install ninja or mingw32-make, or rerun so setup can install MSYS2."
+            out_die "A generator is missing. Install ninja or mingw32-make, or rerun so build can install MSYS2."
         return 0
     fi
     if [ -z "${TN5250_MSYS2_ROOT}" ]; then
@@ -3127,12 +3640,12 @@ tn5250_run_elevated() {
         return 0
     fi
     if [ "${_rc}" -eq 127 ]; then
-        out_die "sudo is not available, so these compiler packages cannot be installed: ${_shown}. Next: install sudo, or install those packages as the administrator, then run ${APP_NAME} setup again."
+        out_die "sudo is not available, so these compiler packages cannot be installed: ${_shown}. Next: install sudo, or install those packages as the administrator, then run ${APP_NAME} build again."
     fi
     if [ "${_rc}" -eq 126 ]; then
-        out_die "These compiler packages are missing: ${_shown}. This run cannot ask for your password, so setup stopped before git and the compile. Next: open a terminal and run ${APP_NAME} setup, or install those packages yourself and run it again."
+        out_die "These compiler packages are missing: ${_shown}. This run cannot ask for your password, so build stopped before git and the compile. Next: open a terminal and run ${APP_NAME} build, or install those packages yourself and run it again."
     fi
-    out_die "Installing these compiler packages failed: ${_shown}. Git and the compile were not started. Next: install them with the system package manager, then run ${APP_NAME} setup again."
+    out_die "Installing these compiler packages failed: ${_shown}. Git and the compile were not started. Next: install them with the system package manager, then run ${APP_NAME} build again."
 }
 
 # =============================================================================
@@ -3151,14 +3664,47 @@ tn5250_run_elevated() {
 #
 # ALIGNMENT (live requirements only):
 # - docs/requirements/requirement-shell-sudo-command.md
-# - docs/requirements/requirement-debian.md
+# - docs/requirements/requirement-debian-cli-coding.md
+# - docs/requirements/requirement-debian-build-payload.md
 # - docs/requirements/requirement-ubuntu.md
 # - docs/requirements/requirement-other-linux.md
+# - docs/requirements/requirement-alpine-cli-coding.md
+# - docs/requirements/requirement-alpine-build-payload.md
+# - docs/requirements/requirement-termux-cli-coding.md
+# - docs/requirements/requirement-termux-build-payload.md
 #
 # !!! DO NOT MODIFY OR SIMPLIFY THIS FUNCTION !!!
 #
-# Last updated: 2026-10-07
+# Last updated: 2026-10-12
 # =============================================================================
+tn5250_have_header() {
+    local _rel=$1
+    if [ -f "/usr/include/${_rel}" ]; then
+        return 0
+    fi
+    # One prefix, or a colon-separated list. Termux sets one path. macOS sets
+    # the Homebrew openssl, ncurses, and brew prefixes. A path without a colon
+    # is still one directory.
+    local _rest=${TN5250_PROBE_PREFIX:-}
+    local _prefix
+    while [ -n "${_rest}" ]; do
+        case "${_rest}" in
+            *:*)
+                _prefix=${_rest%%:*}
+                _rest=${_rest#*:}
+                ;;
+            *)
+                _prefix=${_rest}
+                _rest=""
+                ;;
+        esac
+        if [ -n "${_prefix}" ] && [ -f "${_prefix}/include/${_rel}" ]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
 tn5250_unix_gaps() {
     : "${HOME:=/tmp}"
     local _gaps=""
@@ -3177,7 +3723,7 @@ tn5250_unix_gaps() {
             fi
             rm -f "${_c}" "${_c}.o"
         else
-            if [ ! -f /usr/include/stdio.h ]; then
+            if ! tn5250_have_header stdio.h; then
                 _header_gap=1
             fi
         fi
@@ -3210,16 +3756,40 @@ tn5250_unix_gaps() {
     if ! command -v pkg-config >/dev/null 2>&1 && ! command -v pkgconf >/dev/null 2>&1; then
         _gaps="${_gaps} pkg-config"
     fi
-    if [ ! -f /usr/include/ncurses.h ] && [ ! -f /usr/include/ncurses/ncurses.h ]; then
+    if ! tn5250_have_header ncurses.h && ! tn5250_have_header ncurses/ncurses.h; then
         _gaps="${_gaps} ncurses"
     fi
-    if [ ! -f /usr/include/openssl/ssl.h ]; then
+    if ! tn5250_have_header openssl/ssl.h; then
         _gaps="${_gaps} openssl"
     fi
     if ! command -v ninja >/dev/null 2>&1 && ! command -v make >/dev/null 2>&1; then
         _gaps="${_gaps} generator"
     fi
-    if [ ! -d /usr/share/terminfo ] && [ ! -d /lib/terminfo ] && [ ! -d /usr/lib/terminfo ] && [ ! -d /etc/terminfo ]; then
+    local _terminfo_ok=0
+    if [ -d /usr/share/terminfo ] || [ -d /lib/terminfo ] || [ -d /usr/lib/terminfo ] || [ -d /etc/terminfo ]; then
+        _terminfo_ok=1
+    fi
+    if [ "${_terminfo_ok}" -eq 0 ]; then
+        local _trest=${TN5250_PROBE_PREFIX:-}
+        local _tprefix
+        while [ -n "${_trest}" ]; do
+            case "${_trest}" in
+                *:*)
+                    _tprefix=${_trest%%:*}
+                    _trest=${_trest#*:}
+                    ;;
+                *)
+                    _tprefix=${_trest}
+                    _trest=""
+                    ;;
+            esac
+            if [ -n "${_tprefix}" ] && [ -d "${_tprefix}/share/terminfo" ]; then
+                _terminfo_ok=1
+                break
+            fi
+        done
+    fi
+    if [ "${_terminfo_ok}" -eq 0 ]; then
         _gaps="${_gaps} terminfo"
     fi
     printf '%s\n' "${_gaps# }"
@@ -3258,8 +3828,13 @@ tn5250_remember_pkg() {
 # =============================================================================
 #
 # GENERAL PURPOSE:
-# Turns the probe tokens into the package names for one family. The names are
-# the ones recorded on the sudo-command requirement.
+# Turns the probe tokens into the package names for one family. Apt names for
+# Debian 12 and 13, and for other Linux that selects apt-get, are recorded on
+# the Debian payload requirement. Ubuntu keeps its own versioned table. Apk
+# names are recorded on the Alpine payload requirement. Homebrew formula names
+# are recorded on the macOS payload requirement. Dnf names are recorded on the
+# Fedora and Red Hat payload requirement. Pacman and zypper names are recorded
+# on the sudo-command requirement. gcc and the C headers are not a Homebrew formula.
 #
 # CIAO PRINCIPLES APPLIED:
 # - Caution: an unknown token adds nothing.
@@ -3268,11 +3843,16 @@ tn5250_remember_pkg() {
 # - Over-protect: this helper does not install anything.
 #
 # ALIGNMENT (live requirements only):
+# - docs/requirements/requirement-debian-build-payload.md
+# - docs/requirements/requirement-ubuntu.md
+# - docs/requirements/requirement-alpine-build-payload.md
+# - docs/requirements/requirement-macos-build-payload.md
+# - docs/requirements/requirement-fedora-redhat-build-payload.md
 # - docs/requirements/requirement-shell-sudo-command.md
 #
 # !!! DO NOT MODIFY OR SIMPLIFY THIS FUNCTION !!!
 #
-# Last updated: 2026-10-07
+# Last updated: 2026-10-13
 # =============================================================================
 tn5250_packages_for_gaps() {
     local _fam=$1
@@ -3323,6 +3903,19 @@ tn5250_packages_for_gaps() {
             zypper:openssl) tn5250_remember_pkg libopenssl-devel ;;
             zypper:generator) tn5250_remember_pkg ninja ;;
             zypper:git) tn5250_remember_pkg git ;;
+            pkg:gcc|pkg:c-headers) tn5250_remember_pkg clang ;;
+            pkg:cmake) tn5250_remember_pkg cmake ;;
+            pkg:pkg-config) tn5250_remember_pkg pkg-config ;;
+            pkg:ncurses|pkg:terminfo) tn5250_remember_pkg ncurses ;;
+            pkg:openssl) tn5250_remember_pkg openssl ;;
+            pkg:generator) tn5250_remember_pkg make ;;
+            pkg:git) tn5250_remember_pkg git ;;
+            brew:cmake) tn5250_remember_pkg cmake ;;
+            brew:pkg-config) tn5250_remember_pkg pkgconf ;;
+            brew:ncurses|brew:terminfo) tn5250_remember_pkg ncurses ;;
+            brew:openssl) tn5250_remember_pkg openssl@3 ;;
+            brew:generator) tn5250_remember_pkg ninja ;;
+            brew:git) tn5250_remember_pkg git ;;
         esac
     done
     printf '%s\n' "${TN5250_PKG_WORDS# }"
@@ -3334,13 +3927,13 @@ tn5250_packages_for_gaps() {
 #
 # GENERAL PURPOSE:
 # Prints the family the caller forced, or the first of those package managers
-# that is on PATH. An empty line means setup must stop and name the tools.
+# that is on PATH. An empty line means build must stop and name the tools.
 #
 # CIAO PRINCIPLES APPLIED:
 # - Caution: a forced family is not replaced by a later guess.
 # - Intentional: the search order is apt-get, apk, dnf, pacman, then zypper.
 # - Anti-fragile: a missing manager is an empty result, not a made-up name.
-# - Over-protect: Termux pkg is not a family.
+# - Over-protect: Termux pkg is a family only when the caller names it. Auto-detect does not pick pkg, so Debian apt-get stays apt. brew is a family only when the caller names it. Auto-detect does not pick brew, so Homebrew on Linux is not macOS.
 #
 # ALIGNMENT (live requirements only):
 # - docs/requirements/requirement-shell-sudo-command.md
@@ -3380,12 +3973,90 @@ tn5250_package_family() {
 }
 
 # =============================================================================
+# tn5250_macos_apply_brew_prefixes() - Point the probe at Homebrew kegs
+# =============================================================================
+#
+# GENERAL PURPOSE:
+# When brew is on PATH, record the openssl@3, ncurses, and brew prefixes.
+# The shared header probe walks that colon list. CMake reads CMAKE_PREFIX_PATH
+# from the environment. This function does not pass -DCMAKE_PREFIX_PATH.
+#
+# CIAO PRINCIPLES APPLIED:
+# - Caution: a missing brew command leaves the prefixes alone.
+# - Intentional: openssl@3, then ncurses, then the brew prefix.
+# - Anti-fragile: an empty brew --prefix result is omitted.
+# - Over-protect: PKG_CONFIG_PATH is rebuilt from the saved base, not appended twice.
+#
+# ALIGNMENT (live requirements only):
+# - docs/requirements/requirement-macos-cli-coding.md
+# - docs/requirements/requirement-macos-build-payload.md
+#
+# !!! DO NOT MODIFY OR SIMPLIFY THIS FUNCTION !!!
+#
+# Last updated: 2026-10-13
+# =============================================================================
+tn5250_macos_apply_brew_prefixes() {
+    command -v brew >/dev/null 2>&1 || return 0
+    local _brew _ssl _nc _probe _pc
+    _brew=$(brew --prefix 2>/dev/null || true)
+    _ssl=$(brew --prefix openssl@3 2>/dev/null || true)
+    _nc=$(brew --prefix ncurses 2>/dev/null || true)
+    _probe=""
+    if [ -n "${_ssl}" ]; then
+        _probe="${_ssl}"
+    fi
+    if [ -n "${_nc}" ]; then
+        if [ -n "${_probe}" ]; then
+            _probe="${_probe}:${_nc}"
+        else
+            _probe="${_nc}"
+        fi
+    fi
+    if [ -n "${_brew}" ]; then
+        if [ -n "${_probe}" ]; then
+            _probe="${_probe}:${_brew}"
+        else
+            _probe="${_brew}"
+        fi
+    fi
+    TN5250_PROBE_PREFIX="${_probe}"
+    if [ -n "${_probe}" ]; then
+        CMAKE_PREFIX_PATH="${_probe}"
+        export CMAKE_PREFIX_PATH
+    fi
+    if [ -z "${TN5250_PKG_CONFIG_BASE+x}" ]; then
+        TN5250_PKG_CONFIG_BASE=${PKG_CONFIG_PATH-}
+    fi
+    _pc=""
+    if [ -n "${_ssl}" ]; then
+        _pc="${_ssl}/lib/pkgconfig"
+    fi
+    if [ -n "${_nc}" ]; then
+        if [ -n "${_pc}" ]; then
+            _pc="${_pc}:${_nc}/lib/pkgconfig"
+        else
+            _pc="${_nc}/lib/pkgconfig"
+        fi
+    fi
+    if [ -n "${_pc}" ]; then
+        if [ -n "${TN5250_PKG_CONFIG_BASE}" ]; then
+            PKG_CONFIG_PATH="${_pc}:${TN5250_PKG_CONFIG_BASE}"
+        else
+            PKG_CONFIG_PATH="${_pc}"
+        fi
+        export PKG_CONFIG_PATH
+    fi
+}
+
+# =============================================================================
 # tn5250_unix_ensure_packages() - Install only the missing compiler packages
 # =============================================================================
 #
 # GENERAL PURPOSE:
 # When the probe is empty, return without sudo. Otherwise install the missing
 # packages for the named family, or for the package manager found on PATH.
+# macOS names brew and does not call sudo. A missing gcc on that arm stops
+# before brew and names xcode-select --install.
 #
 # CIAO PRINCIPLES APPLIED:
 # - Caution: sudo is skipped when the tools are already present.
@@ -3395,13 +4066,16 @@ tn5250_package_family() {
 #
 # ALIGNMENT (live requirements only):
 # - docs/requirements/requirement-shell-sudo-command.md
-# - docs/requirements/requirement-debian.md
+# - docs/requirements/requirement-debian-cli-coding.md
+# - docs/requirements/requirement-debian-build-payload.md
 # - docs/requirements/requirement-ubuntu.md
 # - docs/requirements/requirement-other-linux.md
+# - docs/requirements/requirement-macos-cli-coding.md
+# - docs/requirements/requirement-macos-build-payload.md
 #
 # !!! DO NOT MODIFY OR SIMPLIFY THIS FUNCTION !!!
 #
-# Last updated: 2026-10-07
+# Last updated: 2026-10-13
 # =============================================================================
 tn5250_unix_ensure_packages() {
     : "${APP_NAME:=tn5250-cli}"
@@ -3414,12 +4088,19 @@ tn5250_unix_ensure_packages() {
     local _fam
     _fam=$(tn5250_package_family "${_asked}")
     if [ -z "${_fam}" ]; then
-        out_die "These tools are missing: ${_gaps}. This host has none of apt-get, apk, dnf, pacman, or zypper, so setup cannot install them. Next: install the packages that provide those tools, then run ${APP_NAME} setup again."
+        out_die "These tools are missing: ${_gaps}. This host has none of apt-get, apk, dnf, pacman, or zypper, so build cannot install them. Next: install the packages that provide those tools, then run ${APP_NAME} build again."
+    fi
+    if [ "${_fam}" = "brew" ]; then
+        case " ${_gaps} " in
+            *" gcc "*|*" c-headers "*)
+                out_die "The C compiler or the C headers are missing. macOS uses the Xcode Command Line Tools for gcc, not a Homebrew formula. Next: xcode-select --install"
+                ;;
+        esac
     fi
     local _pkgs
     _pkgs=$(tn5250_packages_for_gaps "${_fam}" ${_gaps})
     if [ -z "${_pkgs}" ]; then
-        out_die "These tools are missing: ${_gaps}. Setup has no package names for them on this host. Next: install the packages that provide those tools, then run ${APP_NAME} setup again."
+        out_die "These tools are missing: ${_gaps}. Build has no package names for them on this host. Next: install the packages that provide those tools, then run ${APP_NAME} build again."
     fi
     out_info "Installing missing compiler packages: ${_pkgs}"
     case "${_fam}" in
@@ -3439,30 +4120,41 @@ tn5250_unix_ensure_packages() {
         zypper)
             tn5250_run_elevated "${_pkgs}" zypper --non-interactive install ${_pkgs}
             ;;
+        pkg)
+            command -v pkg >/dev/null 2>&1 || out_die "These tools are missing: ${_gaps}. Termux pkg is not on PATH, so build cannot install them. Next: pkg install -y ${_pkgs}"
+            pkg install -y ${_pkgs} || out_die "pkg install failed for: ${_pkgs}. Git and the compile were not started. Next: pkg install -y ${_pkgs}"
+            hash -r 2>/dev/null || true
+            ;;
+        brew)
+            command -v brew >/dev/null 2>&1 || out_die "These tools are missing: ${_gaps}. Homebrew is not on PATH, so build cannot install them. Next: brew install ${_pkgs}"
+            HOMEBREW_NO_AUTO_UPDATE=1 brew install ${_pkgs} || out_die "brew install failed for: ${_pkgs}. Git and the compile were not started. Next: brew install ${_pkgs}"
+            hash -r 2>/dev/null || true
+            tn5250_macos_apply_brew_prefixes
+            ;;
         *)
-            out_die "These tools are missing: ${_gaps}. Setup does not know how to install them with ${_fam}. Next: install the packages that provide those tools, then run ${APP_NAME} setup again."
+            out_die "These tools are missing: ${_gaps}. Build does not know how to install them with ${_fam}. Next: install the packages that provide those tools, then run ${APP_NAME} build again."
             ;;
     esac
     _gaps=$(tn5250_unix_gaps)
     if [ -n "${_gaps}" ]; then
-        out_die "The package install finished and these tools are still missing: ${_gaps}. Git and the compile were not started. Next: install the packages that provide them, then run ${APP_NAME} setup again."
+        out_die "The package install finished and these tools are still missing: ${_gaps}. Git and the compile were not started. Next: install the packages that provide them, then run ${APP_NAME} build again."
     fi
 }
 
 # =============================================================================
-# tn5250_continue_as_login() - One setup verb for the user and for sudo
+# tn5250_continue_as_login() - One build verb for the user and for sudo
 # =============================================================================
 #
 # GENERAL PURPOSE:
 # Mixed elevated sudo model. A normal user stays as that user. sudo inside
-# setup is only the missing-package install. When setup is already root
+# build is only the missing-package install. When build is already root
 # because sudo started it, return to that person before git and the compile.
 # That return is recovery. Help does not tell the person to start that way.
 # A root login with no such person stops before git.
 #
 # CIAO PRINCIPLES APPLIED:
 # - Caution: git is not reached while the process is root.
-# - Intentional: the same setup verb serves both launches.
+# - Intentional: the same build verb serves both launches.
 # - Anti-fragile: TN5250_AS_LOGIN stops a second switch.
 # - Over-protect: a failed switch does not compile as root.
 #
@@ -3490,18 +4182,18 @@ tn5250_continue_as_login() {
         return 0
     fi
     if [ -z "${SUDO_USER:-}" ] || [ "${SUDO_USER}" = "root" ]; then
-        out_die "setup is running as root, so git and the compile would belong to root. Next: run ${APP_NAME} setup as your user. The same command installs missing compiler packages and asks for the administrator password only for that install."
+        out_die "build is running as root, so git and the compile would belong to root. Next: run ${APP_NAME} build as your user. The same command installs missing compiler packages and asks for the administrator password only for that install."
     fi
     local _home
     _home=$(getent passwd "${SUDO_USER}" 2>/dev/null | awk -F: 'NR==1 { print $6 }')
     if [ -z "${_home}" ] || [ ! -d "${_home}" ]; then
-        out_die "setup is running as root, and the home of the person who started it could not be read. Git and the compile would belong to root. Next: run ${APP_NAME} setup as that person."
+        out_die "build is running as root, and the home of the person who started it could not be read. Git and the compile would belong to root. Next: run ${APP_NAME} build as that person."
     fi
     if ! command -v runuser >/dev/null 2>&1; then
-        out_die "setup is running as root, so git and the compile would belong to root. Next: run ${APP_NAME} setup as the person who should own the build."
+        out_die "build is running as root, so git and the compile would belong to root. Next: run ${APP_NAME} build as the person who should own the build."
     fi
-    out_info "Continuing git and the compile as the user who started setup"
-    set -- setup --prefix "${TN5250_PREFIX}" --ref "${TN5250_REF}"
+    out_info "Continuing git and the compile as the user who started build"
+    set -- build --prefix "${TN5250_PREFIX}" --ref "${TN5250_REF}"
     if [ -n "${TN5250_JOBS:-}" ]; then
         set -- "$@" --jobs "${TN5250_JOBS}"
     fi
@@ -3528,7 +4220,7 @@ tn5250_continue_as_login() {
         TN5250_AS_LOGIN=1 \
         XDG_CACHE_HOME="${_home}/.cache" \
         "$0" "$@"
-    out_die "setup could not return to the person who started it, so git and the compile were not started. Next: run ${APP_NAME} setup as that person."
+    out_die "build could not return to the person who started it, so git and the compile were not started. Next: run ${APP_NAME} build as that person."
 }
 
 tn5250_build_debian() {
@@ -3542,12 +4234,22 @@ tn5250_build_debian() {
         _gen="Unix Makefiles"
     fi
     out_info "Configuring with ${_gen}"
-    cmake -G "${_gen}" -S "${_src}" -B "${_build}" -DCMAKE_BUILD_TYPE=Release || out_die "CMake configure failed."
+    # TN5250_CMAKE_EXTRA is empty on Debian, Ubuntu, other Linux, Alpine, Fedora, Red Hat Enterprise Linux, and macOS.
+    # Termux sets it to the userspace prefix so CMake finds ncurses and OpenSSL.
+    # macOS exports CMAKE_PREFIX_PATH. It does not pass that list as -DCMAKE_PREFIX_PATH.
+    cmake -G "${_gen}" -S "${_src}" -B "${_build}" -DCMAKE_BUILD_TYPE=Release ${TN5250_CMAKE_EXTRA:-} || out_die "CMake configure failed."
     out_info "Building"
     cmake --build "${_build}" --parallel "${TN5250_JOBS}" || out_die "CMake build failed."
     mkdir -p "${_dest}" || out_die "Cannot create the payload directory."
     local _names="tn5250"
-    if [ "${TN5250_SYSLOG_OPTIONAL:-0}" -eq 0 ] || [ -f /usr/include/syslog.h ]; then
+    local _syslog_header=0
+    if [ -f /usr/include/syslog.h ]; then
+        _syslog_header=1
+    fi
+    if [ -n "${TN5250_PROBE_PREFIX:-}" ] && [ -f "${TN5250_PROBE_PREFIX}/include/syslog.h" ]; then
+        _syslog_header=1
+    fi
+    if [ "${TN5250_SYSLOG_OPTIONAL:-0}" -eq 0 ] || [ "${_syslog_header}" -eq 1 ]; then
         _names="tn5250 lp5250d scs2ascii scs2pdf scs2ps"
     fi
     local _name
@@ -3562,29 +4264,41 @@ tn5250_build_debian() {
 }
 
 # =============================================================================
-# tn5250_setup_unix() - Unix setup after the package probe
+# tn5250_setup_unix() - Unix build after the package probe
 # =============================================================================
 #
 # GENERAL PURPOSE:
 # Installs missing compiler packages, then fetches and compiles as the
-# person who started setup. Debian and Ubuntu pass apt. Other Linux detects
-# the package manager. The four syslog programs are optional only on other Linux.
+# person who started build. Debian and Ubuntu pass apt. Other Linux detects
+# the package manager. Alpine passes apk. Fedora and Red Hat Enterprise Linux
+# pass dnf and use the sudo wrap. macOS passes brew and does not call sudo.
+# The four syslog programs are optional on other Linux, Alpine, Fedora,
+# Red Hat Enterprise Linux, and macOS.
 #
 # CIAO PRINCIPLES APPLIED:
 # - Caution: --msys2-root is rejected here.
-# - Intentional: one Unix build path for Debian, Ubuntu, and other Linux.
+# - Intentional: one Unix build path for Debian, Ubuntu, other Linux, Alpine, Fedora, Red Hat Enterprise Linux, Termux, and macOS.
 # - Anti-fragile: an already installed revision returns without a rebuild.
 # - Over-protect: the Windows source patch is not applied.
 #
 # ALIGNMENT (live requirements only):
-# - docs/requirements/requirement-debian.md
+# - docs/requirements/requirement-debian-cli-coding.md
+# - docs/requirements/requirement-debian-build-payload.md
 # - docs/requirements/requirement-ubuntu.md
 # - docs/requirements/requirement-other-linux.md
+# - docs/requirements/requirement-alpine-cli-coding.md
+# - docs/requirements/requirement-alpine-build-payload.md
+# - docs/requirements/requirement-termux-cli-coding.md
+# - docs/requirements/requirement-termux-build-payload.md
+# - docs/requirements/requirement-macos-cli-coding.md
+# - docs/requirements/requirement-macos-build-payload.md
+# - docs/requirements/requirement-fedora-redhat-cli-coding.md
+# - docs/requirements/requirement-fedora-redhat-build-payload.md
 # - docs/requirements/requirement-shell-sudo-command.md
 #
 # !!! DO NOT MODIFY OR SIMPLIFY THIS FUNCTION !!!
 #
-# Last updated: 2026-10-07
+# Last updated: 2026-10-13
 # =============================================================================
 tn5250_setup_unix() {
     local _label=$1
@@ -3700,7 +4414,7 @@ tn5250_setup() {
                 shift
                 ;;
             *)
-                out_die "Unknown option: $1 (try: ${APP_NAME} setup --help)"
+                out_die "Unknown option: $1 (try: ${APP_NAME} build --help)"
                 ;;
         esac
     done
@@ -3729,7 +4443,23 @@ tn5250_setup() {
         debian) tn5250_setup_unix "Debian" "apt" 0 ;;
         ubuntu) tn5250_setup_unix "Ubuntu" "apt" 0 ;;
         other-linux) tn5250_setup_unix "Linux" "" 1 ;;
-        *) tn5250_refuse_host "setup" "${_plat}" ;;
+        alpine) tn5250_setup_unix "Alpine" "apk" 1 ;;
+        fedora) tn5250_setup_unix "Fedora" "dnf" 1 ;;
+        rhel) tn5250_setup_unix "Red Hat Enterprise Linux" "dnf" 1 ;;
+        macos)
+            tn5250_macos_apply_brew_prefixes
+            tn5250_setup_unix "macOS" "brew" 1
+            ;;
+        termux)
+            if [ -z "${PREFIX:-}" ]; then
+                PREFIX="/data/data/com.termux/files/usr"
+                export PREFIX
+            fi
+            TN5250_PROBE_PREFIX="${PREFIX}"
+            TN5250_CMAKE_EXTRA="-DCMAKE_PREFIX_PATH=${PREFIX}"
+            tn5250_setup_unix "Termux" "pkg" 1
+            ;;
+        *) tn5250_refuse_host "build" "${_plat}" ;;
     esac
 }
 
@@ -3739,7 +4469,19 @@ tn5250_refuse_host() {
     : "${APP_NAME:=tn5250-cli}"
     case "${_plat}" in
         termux)
-            out_die "${_what} does not run under Termux. Next: use Debian 12 or 13, Ubuntu 22.04, 24.04, or 26.04, or another Linux."
+            out_die "${_what} detected Termux but did not start the Termux build. Next: run ${APP_NAME} build."
+            ;;
+        alpine)
+            out_die "${_what} detected Alpine but did not start the Alpine build. Next: run ${APP_NAME} build."
+            ;;
+        fedora)
+            out_die "${_what} detected Fedora but did not start the Fedora build. Next: run ${APP_NAME} build."
+            ;;
+        rhel)
+            out_die "${_what} detected Red Hat Enterprise Linux but did not start the Red Hat Enterprise Linux build. Next: run ${APP_NAME} build."
+            ;;
+        macos)
+            out_die "${_what} detected macOS but did not start the macOS build. Next: run ${APP_NAME} build."
             ;;
         debian-mismatch)
             out_die "This Debian release mixes version 12 or 13 with the wrong codename. ${_what} will not treat that as another Linux. Next: use Debian 12 bookworm or Debian 13 trixie."
@@ -3748,7 +4490,7 @@ tn5250_refuse_host() {
             out_die "This Ubuntu release mixes 22.04, 24.04, or 26.04 with the wrong codename. ${_what} will not treat that as another Linux. Next: use Ubuntu 22.04 jammy, 24.04 noble, or 26.04 resolute."
             ;;
         *)
-            out_die "${_what} needs Git Bash on Windows, Debian 12 or 13, Ubuntu 22.04, 24.04, or 26.04, or another Linux. Next: run it on one of those systems."
+            out_die "${_what} needs Git Bash on Windows, Debian 12 or 13, Ubuntu 22.04, 24.04, or 26.04, another Linux, Alpine, Fedora, Red Hat Enterprise Linux, Termux, or macOS. Next: run it on one of those systems."
             ;;
     esac
 }
@@ -3760,15 +4502,13 @@ tn5250_launch() {
     local _exe=""
     case "${_plat}" in
         windows)
-            _exe="$(tn5250_app_dir)/tn5250.exe"
-            [ -f "${_exe}" ] || out_die "tn5250 is not installed in this Git Bash yet. Run: ${APP_NAME} setup"
+            _exe=$(tn5250_client_path) || out_die "tn5250 is not installed in this Git Bash yet. Next: ${APP_NAME} setup, or ${APP_NAME} build"
             MSYS_NO_PATHCONV=1
             export MSYS_NO_PATHCONV
             exec "${_exe}" "${_host}" "$@"
             ;;
-        debian|ubuntu|other-linux)
-            _exe="$(tn5250_app_dir)/tn5250"
-            [ -x "${_exe}" ] || [ -f "${_exe}" ] || out_die "tn5250 is not installed yet. Run: ${APP_NAME} setup"
+        debian|ubuntu|other-linux|alpine|fedora|rhel|termux|macos)
+            _exe=$(tn5250_client_path) || out_die "tn5250 is not installed yet. Next: ${APP_NAME} setup, or ${APP_NAME} build"
             exec "${_exe}" "${_host}" "$@"
             ;;
         *)
@@ -3783,7 +4523,7 @@ app_about() {
     : "${QUIET:=0}"
     : "${APP_NAME:=tn5250-cli}"
     # Version comes from global SSOT (VERSION="…" hard-assign near top); default only if unset
-    : "${VERSION:=1.0.2}"
+    : "${VERSION:=1.1.0}"
     : "${GLOBAL_BIN:=/usr/local/bin}"
     : "${USER_BIN:=${HOME}/.local/bin}"
     : "${SCRIPT_URL:=}"
@@ -3821,6 +4561,16 @@ app_about() {
         local current_user
         current_user="$(id -un 2>/dev/null || echo "unknown")"
 
+        local _key="" _parch="unknown" _pclib="unsupported"
+        if _key=$(tn5250_host_payload_key); then
+            # shellcheck disable=SC2086
+            set -- ${_key}
+            _parch=$1
+            _pclib="${2}-${3}"
+        elif _parch=$(tn5250_payload_arch); then
+            :
+        fi
+
         out_json "about" "" \
             "app" "${APP_NAME}" \
             "version" "${VERSION}" \
@@ -3833,6 +4583,9 @@ app_about() {
             "effective_storage" "${EFFECTIVE_STORAGE_DIR}" \
             "storage_dir" "${STORAGE_DIR}" \
             "payload_platform" "$(tn5250_detect_platform)" \
+            "payload_arch" "${_parch}" \
+            "payload_clib" "${_pclib}" \
+            "termux_version" "${TERMUX_VERSION:-}" \
             "payload_ref" "$(tn5250_payload_ref)" \
             "payload_revision" "$(tn5250_payload_rev)"
         return 0
@@ -3919,7 +4672,7 @@ app_about() {
 
 app_version() {
     : "${APP_NAME:=tn5250-cli}"
-    : "${VERSION:=1.0.2}"
+    : "${VERSION:=1.1.0}"
     : "${JSON:=0}"
     if [ "${JSON}" -eq 1 ]; then
         # Same machine contract as historical app_main inline path
@@ -3949,7 +4702,7 @@ app_version() {
 
 app_help() {
     : "${SHORT_DESCRIPTION:=${APP_DESC:-Shell script bootstrap for self Installation & Maintenance}}"
-    : "${DESCRIPTION:=POSIX /bin/sh program: install, version-check, self-update, self-uninstall, and about, plus setup and host launch for the TN5250 client. A terminal with no command opens the numbered list. A pipe, --quiet, or --json places this CLI.}"
+    : "${DESCRIPTION:=POSIX /bin/sh program: install, version-check, self-update, self-uninstall, and about, plus setup, build, and host launch for the TN5250 client. A terminal with no command opens the numbered list. A pipe, --quiet, or --json places this CLI.}"
 
     if [ "${JSON}" -eq 1 ]; then
         out_json "success" "Help text available in human-readable mode. Run without --json." \
@@ -3985,13 +4738,16 @@ app_help() {
 
     # --- DOMAIN_HELP_ROWS (specializee injection) ---
     out_info "Domain (TN5250 client):"
-    out_plain "  setup                Build the upstream client for Git Bash or Debian 12/13"
-    out_plain "  setup -h             Show setup flags before any platform check"
+    out_plain "  setup                Download the newest published tn5250 for this machine into ~/.local/bin"
+    out_plain "  setup -h             Show that download and do not fetch"
+    out_plain "  build                Build the upstream client for Git Bash, Debian, Ubuntu, other Linux, Alpine, Fedora, Red Hat Enterprise Linux, Termux, or macOS"
+    out_plain "  build -h             Show build flags before any platform check"
     out_plain "  HOST                 Any other non-flag word launches the built tn5250"
     out_plain "  --version, -V        Same as version (CLI version and payload ref)"
     out_plain "  -h, --help           Same as help"
     out_empty_line
     out_plain "  The installed program is the upstream client. This installer remains ${APP_NAME}."
+    out_plain "setup downloads a published client. build compiles one. They are different."
     out_empty_line
     # --- end DOMAIN_HELP_ROWS ---
 
@@ -4052,11 +4808,10 @@ app_menu_read_choice() {
 # =============================================================================
 #
 # GENERAL PURPOSE:
-# Prints the front board. Row 1 is the setup verb. This program has no
-# server commands. A host name stays on the command line. Self-management
-# is row 8.
+# Prints the front board. Row 1 is build. Row 2 is setup. Row 7 is
+# languages. Self-management stays row 8. Exit is 9.
 #
-# Last updated: 2026-10-08
+# Last updated: 2026-10-13
 # =============================================================================
 
 app_menu_draw_front() {
@@ -4064,7 +4819,9 @@ app_menu_draw_front() {
     out_info "$(util_app_ident) — numbered list of live commands"
     out_plain "This program has no server commands."
     out_plain "Open a host on the command line: ${APP_NAME} HOST."
-    out_menu_choice "1" "setup" "Build the upstream TN5250 client"
+    out_menu_choice "1" "build" "Build the upstream TN5250 client"
+    out_menu_choice "2" "setup" "Download the newest published tn5250 for this machine"
+    out_menu_choice "7" "languages" "Choose the language of this list"
     out_menu_choice "8" "self-management" "Place, check, update, or remove this CLI"
     out_plain "9. Exit"
 }
@@ -4145,6 +4902,45 @@ app_cmd_menu_self() {
 }
 
 # =============================================================================
+# app_menu_draw_language() - Language board under row 7
+# =============================================================================
+
+app_menu_draw_language() {
+    : "${APP_NAME:=tn5250-cli}"
+    out_info "$(util_app_ident) — languages"
+    out_plain "The list is English. That is the only language."
+    out_menu_choice "71" "en" "English"
+    out_plain "0. Back"
+}
+
+# =============================================================================
+# app_cmd_menu_language() - Language menu layer
+# =============================================================================
+
+app_cmd_menu_language() {
+    local _choice=""
+    while true; do
+        app_menu_draw_language
+        if ! app_menu_read_choice; then
+            return 0
+        fi
+        _choice="${PROMPT_ASK_VALUE}"
+        case "${_choice}" in
+            ""|0|q|back|exit|quit)
+                return 0
+                ;;
+            71|en)
+                out_info "Language is English."
+                return 0
+                ;;
+            *)
+                out_error "${_choice} is not on this list."
+                ;;
+        esac
+    done
+}
+
+# =============================================================================
 # app_cmd_menu() - Front board of the numbered list
 # =============================================================================
 #
@@ -4184,8 +4980,14 @@ app_cmd_menu() {
                 unset _menu_json _menu_quiet _choice
                 return 0
                 ;;
-            1|setup)
+            1|build)
                 tn5250_setup
+                ;;
+            2|setup)
+                tn5250_payload_setup
+                ;;
+            7|languages)
+                app_cmd_menu_language
                 ;;
             8|self-management)
                 app_cmd_menu_self
@@ -4238,7 +5040,7 @@ app_cmd_menu() {
 #     SSOT: requirement-shell-cli-zero-arguments.md (tn5250-cli = Type O).
 # 2026-08-11:
 #   - Specializee injection anchors (DOMAIN_DISPATCH_*) for A→B products; empty
-#     argv remains Type O — domain setup uses explicit verbs only.
+#     argv remains Type O — domain build uses explicit verbs only.
 # 2026-10-07:
 #   - No command after flag parse is empty argv. --debug, --quiet, --json, and
 #     --force with no command stay on that path.
@@ -4247,10 +5049,13 @@ app_cmd_menu() {
 #   - Interactive empty argv opens app_cmd_menu.
 #   - menu and main are that same list. Off a terminal they stop.
 # 2026-10-08:
-#   - Front board row 1 is setup. Choosing 1 or typing setup calls
+#   - Front board row 1 is build. Choosing 1 or typing build calls
 #     tn5250_setup. After it returns, the front board is shown again.
+# 2026-10-13:
+#   - setup downloads a published payload. It is not build and not a host.
+#   - Front row 2 is setup. Front row 7 is languages. Row 8 stays self-management.
 #
-# Last updated: 2026-10-08
+# Last updated: 2026-10-13
 # =============================================================================
 
 app_main() {
@@ -4300,6 +5105,11 @@ app_main() {
                 shift
                 break
                 ;;
+            build)
+                COMMAND="build"
+                shift
+                break
+                ;;
             # --- end DOMAIN_DISPATCH_COMMANDS ---
             *)
                 case "$1" in
@@ -4320,7 +5130,7 @@ app_main() {
 
     # No command after flag parse.
     # Non-interactive (no TTY, or --quiet, or --json) places the CLI.
-    # Interactive opens the numbered list. Neither path starts setup.
+    # Interactive opens the numbered list. Neither path starts build.
     # SSOT: requirement-shell-cli-zero-arguments.md
     #       requirement-shell-cli-default-interaction.md
     if [ -z "${COMMAND}" ]; then
@@ -4356,6 +5166,9 @@ app_main() {
             ;;
         # --- DOMAIN_DISPATCH_ROUTES (specializee injection) ---
         setup)
+            tn5250_payload_setup "$@"
+            ;;
+        build)
             tn5250_setup "$@"
             ;;
         launch)

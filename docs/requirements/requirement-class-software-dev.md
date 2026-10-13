@@ -1,6 +1,6 @@
 **file**: docs/requirements/requirement-class-software-dev.md
 **ID**: RQ-CLASS-SOFTWARE-DEV
-**Status**: Active (Version 1.4.1)
+**Status**: Active (Version 1.4.12)
 **Project**: tn5250-cli
 **Philosophy**: CIAO **v2.10.2** / CIAO-Lite (Caution • Intentional • Anti-fragile • Over-engineered / Over-protect)
 
@@ -8,16 +8,16 @@
 
 This workspace makes a program people can run. Its project nature is software development. This file is the class law for that nature and the residual home for stack facts that no other requirement owns yet.
 
-The Windows Git Bash compile, link, and build belong to `docs/requirements/requirement-windows-git-bash.md`. The Debian compile, link, and build belong to `docs/requirements/requirement-debian.md`. The Ubuntu compile, link, and build belong to `docs/requirements/requirement-ubuntu.md`. The other-Linux compile, link, and build belong to `docs/requirements/requirement-other-linux.md`. The way the ship unit is written belongs to `docs/requirements/requirement-shell-script-coding.md`. Domain setup and host launch belong to `docs/requirements/requirement-domain-tn5250.md`. In-tool sudo for missing compiler packages belongs to `docs/requirements/requirement-shell-sudo-command.md`. This file points. It does not restate them.
+Windows Git Bash CLI coding belongs to `docs/requirements/requirement-windows-git-bash-cli-coding.md`. The Windows Git Bash payload compile, link, build, and UCRT64 package table belong to `docs/requirements/requirement-windows-git-bash-build-payload.md`. Debian CLI coding belongs to `docs/requirements/requirement-debian-cli-coding.md`. The Debian payload compile, link, build, and `apt` package table belong to `docs/requirements/requirement-debian-build-payload.md`. The Ubuntu compile, link, and build belong to `docs/requirements/requirement-ubuntu.md`. The other-Linux compile, link, and build belong to `docs/requirements/requirement-other-linux.md`. Alpine CLI coding belongs to `docs/requirements/requirement-alpine-cli-coding.md`. The Alpine payload compile, link, build, and `apk` package table belong to `docs/requirements/requirement-alpine-build-payload.md`. Termux CLI coding belongs to `docs/requirements/requirement-termux-cli-coding.md`. The Termux payload compile, link, build, and named `pkg` table belong to `docs/requirements/requirement-termux-build-payload.md`. macOS CLI coding belongs to `docs/requirements/requirement-macos-cli-coding.md`. The macOS payload compile, link, build, and Homebrew formula table belong to `docs/requirements/requirement-macos-build-payload.md`. Fedora and Red Hat Enterprise Linux CLI coding belongs to `docs/requirements/requirement-fedora-redhat-cli-coding.md`. The Fedora and Red Hat payload compile, link, build, and `dnf` package table belong to `docs/requirements/requirement-fedora-redhat-build-payload.md`. The way the ship unit is written belongs to `docs/requirements/requirement-shell-script-coding.md`. Domain build and host launch belong to `docs/requirements/requirement-domain-tn5250.md`. Published payload filenames in `download/` belong to `docs/requirements/requirement-payload-filename.md`. In-tool sudo for missing compiler packages belongs to `docs/requirements/requirement-shell-sudo-command.md`. This file points. It does not restate them.
 
 ### 1.1 Human-facing
 
-**In one sentence:** A maintainer treats this folder as software development and looks here for the language and the pointers, then opens the platform requirement for Windows, Debian, Ubuntu, or other Linux.
+**In one sentence:** A maintainer treats this folder as software development and looks here for the language and the pointers, then opens the platform requirement for Windows, Debian, Ubuntu, other Linux, Alpine, Fedora, Red Hat Enterprise Linux, Termux, or macOS.
 
 | Box | Meaning | Example |
 |-----|---------|---------|
 | You / this login | The person keeping the product law | Open this file when the question is “what kind of project is this?” |
-| The other role | The person who runs setup, on Git Bash or on Linux | That person follows the requirement for that platform |
+| The other role | The person who runs build, on Git Bash or on Linux | That person follows the requirement for that platform |
 | Not this file | The CMake arguments, the library link, and the writing rules | Those live on the platform requirements and the coding-style requirement |
 
 | Includes | Excludes |
@@ -27,15 +27,17 @@ The Windows Git Bash compile, link, and build belong to `docs/requirements/requi
 | Surface | What you open | What for |
 |---------|---------------|----------|
 | `docs/requirements/requirement-class-software-dev.md` | this file | nature and residual pointers |
-| `docs/requirements/requirement-windows-git-bash.md` | Git Bash requirement | Windows compilation, link, and build |
-| `docs/requirements/requirement-debian.md` | Debian requirement | Debian compilation, link, and build |
+| `docs/requirements/requirement-windows-git-bash-cli-coding.md` | Git Bash CLI coding | detection, `cmd.exe` isolation, installer path, and launch |
+| `docs/requirements/requirement-windows-git-bash-build-payload.md` | Git Bash payload | Windows compilation, link, and build |
+| `docs/requirements/requirement-debian-cli-coding.md` | Debian CLI coding | detection, the `apt-get` call, installer path, and launch |
+| `docs/requirements/requirement-debian-build-payload.md` | Debian payload | Debian compilation, link, and build |
 | `docs/requirements/requirement-ubuntu.md` | Ubuntu requirement | Ubuntu compilation, link, and build |
 | `docs/requirements/requirement-other-linux.md` | Other Linux requirement | Other Linux compilation, link, and build |
 | `src/tn5250-cli` | ship unit | the program people run |
 
 | You do… | What it means | What you type |
 |---------|---------------|---------------|
-| Confirm the nature | This folder ships an installer script. The script’s Windows build is a peer requirement, not a paragraph in this file | `tn5250-cli setup` |
+| Confirm the nature | This folder ships an installer script. The script’s Windows build is a peer requirement, not a paragraph in this file | `tn5250-cli build` |
 
 ## 2. Core Rules (Mandatory — portable)
 
@@ -112,16 +114,16 @@ The Windows Git Bash compile, link, and build belong to `docs/requirements/requi
 | Project display name | tn5250-cli |
 | Project nature | software development |
 | Class requirement basename | `requirement-class-software-dev.md` |
-| Primary language | POSIX `/bin/sh` for the ship unit. C for the payload that setup compiles |
+| Primary language | POSIX `/bin/sh` for the ship unit. C for the payload that the build compiles |
 | Language role | Interpreted `/bin/sh` ship unit. Compiled C payload. Polyglot in that limited sense |
-| Toolchain | Ship unit: `/bin/sh`, `set -u`, no global `set -e`. Windows payload compiler and linker: `docs/requirements/requirement-windows-git-bash.md`. Debian payload compiler and linker: `docs/requirements/requirement-debian.md`. Ubuntu payload compiler and linker: `docs/requirements/requirement-ubuntu.md`. Other Linux payload compiler and linker: `docs/requirements/requirement-other-linux.md` |
+| Toolchain | Ship unit: `/bin/sh`, `set -u`, no global `set -e`. Windows payload compiler and linker: `docs/requirements/requirement-windows-git-bash-build-payload.md`. Windows CLI coding: `docs/requirements/requirement-windows-git-bash-cli-coding.md`. Debian payload compiler and linker: `docs/requirements/requirement-debian-build-payload.md`. Debian CLI coding: `docs/requirements/requirement-debian-cli-coding.md`. Ubuntu payload compiler and linker: `docs/requirements/requirement-ubuntu.md`. Other Linux payload compiler and linker: `docs/requirements/requirement-other-linux.md`. Alpine payload compiler and linker: `docs/requirements/requirement-alpine-build-payload.md`. Alpine CLI coding: `docs/requirements/requirement-alpine-cli-coding.md`. Termux payload compiler and linker: `docs/requirements/requirement-termux-build-payload.md`. Termux CLI coding: `docs/requirements/requirement-termux-cli-coding.md` |
 | Toolchain version policy | Payload pin and CMake minimum live on the platform requirements. The shell is `/bin/sh` as the ship unit is written |
-| Cross-compile in scope? | No. Windows setup produces Windows x86_64 programs. Each Linux setup produces native programs for that machine |
-| Primary project/package tool | CMake for the C builds. MSYS2 pacman is owned by the Git Bash requirement. Debian package names are owned by the Debian requirement. Ubuntu package names are owned by the Ubuntu requirement. Other Linux checks tools, not one distribution’s package names. This file does not restate them |
+| Cross-compile in scope? | No. Windows build produces Windows x86_64 programs. Each Linux build produces native programs for that machine |
+| Primary project/package tool | CMake for the C builds. MSYS2 pacman is owned by the Git Bash payload requirement. Debian package names are owned by the Debian payload requirement. Ubuntu package names are owned by the Ubuntu requirement. Other Linux checks tools, not one distribution’s package names. Alpine `apk` package names are owned by the Alpine payload requirement. Termux package names are owned by the Termux payload requirement. This file does not restate them |
 | Lockfile policy | Not used |
 | Test runner | Not yet collected. Todo rows live in `docs/reviews/test-plan.md` |
 | Linter/formatter | Not yet collected. Writing rules that are adopted live on `docs/requirements/requirement-shell-script-coding.md`. `sh -n` and `dash -n` exit 0 on the authoring host. That is a syntax check |
-| Primary runtime / OS family | Windows Git Bash on x86_64, Debian 12 or 13, Ubuntu 22.04, 24.04, or 26.04, and other Linux. Each platform requirement owns its build |
+| Primary runtime / OS family | Windows Git Bash on x86_64, Debian 12 or 13, Ubuntu 22.04, 24.04, or 26.04, other Linux, Alpine, and Termux. Each platform requirement owns its build |
 | Architectures supported | Windows: x86_64. Linux: the native architecture of that install |
 | Git surface | Not used. This folder is not a git working tree. No origin URL is declared |
 | Workspace (host) | Ram-drive-first `/dev/shm/tn5250-cli` when that directory is present, otherwise `{{PROJECTS_ROOT}}/tn5250-cli` |
@@ -135,14 +137,21 @@ The Windows Git Bash compile, link, and build belong to `docs/requirements/requi
 | Topic | Owner | Notes |
 |-------|--------|-------|
 | Project nature membership | this file | software development |
-| Primary language of the ship unit | this file | POSIX `/bin/sh`. The C payload is named here. Windows details are on the Git Bash requirement. Linux details are on the Debian, Ubuntu, and other-Linux requirements |
-| Compiler, linker, CMake, package install for the Windows client | `docs/requirements/requirement-windows-git-bash.md` | This file points |
-| Compiler, linker, CMake, and Debian packages for the Unix client | `docs/requirements/requirement-debian.md` | This file points. Debian 12 and 13 |
+| Primary language of the ship unit | this file | POSIX `/bin/sh`. The C payload is named here. Windows details are on the Git Bash CLI coding requirement and the Git Bash payload requirement. Linux details are on the Debian CLI coding requirement, the Debian payload requirement, and the Ubuntu, other-Linux, and Alpine requirements |
+| Git Bash CLI coding: detect, cmd.exe isolation, installer path, launch | `docs/requirements/requirement-windows-git-bash-cli-coding.md` | This file points. Build does not copy the exe files into `~/.local/bin`. `setup` may save a published client there. That save is RQ-PAYLOAD-FILENAME |
+| Compiler, linker, CMake, and the UCRT64 package table for the Windows client | `docs/requirements/requirement-windows-git-bash-build-payload.md` | This file points. MSYS2, not the sudo wrap |
+| Debian CLI coding: detect, apt call through the sudo wrap, installer path, launch | `docs/requirements/requirement-debian-cli-coding.md` | This file points. Debian 12 and 13. Build does not copy the client into `~/.local/bin`. `setup` may save a published client there. That save is RQ-PAYLOAD-FILENAME |
+| Compiler, linker, CMake, and the Debian apt package table | `docs/requirements/requirement-debian-build-payload.md` | This file points. `apt` names. The sudo wrap still runs the install |
 | Compiler, linker, CMake, and Ubuntu packages for the Unix client | `docs/requirements/requirement-ubuntu.md` | This file points. Ubuntu 22.04, 24.04, and 26.04 |
 | Compiler, linker, and CMake for other Linux | `docs/requirements/requirement-other-linux.md` | This file points. Tool checks, not one distribution’s package names |
+| Alpine CLI coding: detect, apk call through the sudo wrap, installer path, launch | `docs/requirements/requirement-alpine-cli-coding.md` | This file points. Build does not copy the client into `~/.local/bin`. `setup` may save a published client there. That save is RQ-PAYLOAD-FILENAME |
+| Compiler, linker, CMake, and the Alpine apk package table | `docs/requirements/requirement-alpine-build-payload.md` | This file points. `apk` names. The sudo wrap still runs the install |
+| Termux CLI coding: detect, pkg call, installer path, bashrc marker | `docs/requirements/requirement-termux-cli-coding.md` | This file points. Build does not copy the client into `~/.local/bin`. `setup` may save a published client there. That save is RQ-PAYLOAD-FILENAME |
+| Compiler, linker, CMake, and the Termux pkg package table | `docs/requirements/requirement-termux-build-payload.md` | This file points. Named `pkg` packages. Not the sudo wrap |
 | Routed command names | `docs/requirements/requirement-shell-cli-interface.md` | Points each platform’s build at that platform requirement |
 | Empty argv | `docs/requirements/requirement-shell-cli-zero-arguments.md` | A pipe places the CLI. A terminal opens the list. This file points |
 | Numbered list | `docs/requirements/requirement-shell-cli-default-interaction.md` | Rows and the terminal entry. This file points |
+| Language of that list | `docs/requirements/requirement-shell-cli-language.md` | English samples and the translation table. This file points |
 | Type 0 lifecycle | `docs/requirements/requirement-shell-self-management.md` | This file points |
 | Output | `docs/requirements/requirement-shell-output-requirements.md` | This file points |
 | Companion digest | `docs/requirements/requirement-shell-automatic-checksum.md` | This file points. No channel is published |
@@ -150,26 +159,34 @@ The Windows Git Bash compile, link, and build belong to `docs/requirements/requi
 | Function prefixes | `docs/requirements/requirement-shell-modular-function-design.md` | This file points |
 | Re-run | `docs/requirements/requirement-shell-idempotency.md` | This file points |
 | Prompts | `docs/requirements/requirement-shell-interactive-vs-noninteractive.md` | This file points |
-| Domain setup and host launch | `docs/requirements/requirement-domain-tn5250.md` | This file points. Area domain |
+| Domain build and host launch | `docs/requirements/requirement-domain-tn5250.md` | This file points. Area domain |
 | Coding style | `docs/requirements/requirement-shell-script-coding.md` | Specialize-in home. This file points |
-| In-tool sudo | `docs/requirements/requirement-shell-sudo-command.md` | The wrap installs missing compiler packages. Git and the compile stay with the person who started setup. This file points |
+| In-tool sudo | `docs/requirements/requirement-shell-sudo-command.md` | The wrap installs missing compiler packages. Git and the compile stay with the person who started build. This file points |
 | Actor / role / subject / approver | this residual | Considered — no dest approver and no approval subject |
 | Dest fence conditions | this residual | Considered — no dest fence conditions |
-| User bashrc PATH marker | not a dedicated requirement yet | Current behavior is `tn5250_install_cli` in `src/tn5250-cli`. This change does not open that topic |
-| Unix curses build on Debian | `docs/requirements/requirement-debian.md` | In scope for Debian. The Windows requirement still excludes it |
+| User bashrc PATH marker on Termux | `docs/requirements/requirement-termux-cli-coding.md` | The marked block in `~/.bashrc`. Other platforms use the same function. This file does not restate the export |
+| Unix curses build on Debian | `docs/requirements/requirement-debian-build-payload.md` | In scope for Debian 12 and 13. The Git Bash payload requirement still excludes it |
 | Unix curses build on Ubuntu | `docs/requirements/requirement-ubuntu.md` | In scope for Ubuntu 22.04, 24.04, and 26.04. The branch is in the ship unit. This file points |
-| Unix curses build on other Linux | `docs/requirements/requirement-other-linux.md` | In scope when Debian and Ubuntu do not claim the host. The branch is in the ship unit. This file points |
+| Unix curses build on other Linux | `docs/requirements/requirement-other-linux.md` | In scope when Debian, Ubuntu, Alpine, and Termux do not claim the host. The branch is in the ship unit. This file points |
+| Unix curses build on Alpine | `docs/requirements/requirement-alpine-build-payload.md` | In scope when `/etc/os-release` `ID` is `alpine`. The branch is in the ship unit. This file points |
+| Unix curses build on Termux | `docs/requirements/requirement-termux-build-payload.md` | In scope when `TERMUX_VERSION` is set. The branch is in the ship unit. This file points |
 | Autotools `./configure` | none of the platform requirements | The supported builds are CMake |
 
 The class file points. It does not restate the peer.
 
 ```text
-Windows compilation, link, and build: owned by requirement-windows-git-bash. This class file points.
-Debian compilation, link, and build: owned by requirement-debian. This class file points.
+Windows CLI coding: owned by requirement-windows-git-bash-cli-coding. This class file points.
+Windows compilation, link, and build: owned by requirement-windows-git-bash-build-payload. This class file points.
+Debian CLI coding: owned by requirement-debian-cli-coding. This class file points.
+Debian compilation, link, and build: owned by requirement-debian-build-payload. This class file points.
 Ubuntu compilation, link, and build: owned by requirement-ubuntu. This class file points.
 Other Linux compilation, link, and build: owned by requirement-other-linux. This class file points.
+Alpine CLI coding: owned by requirement-alpine-cli-coding. This class file points.
+Alpine compilation, link, and build: owned by requirement-alpine-build-payload. This class file points.
+Termux CLI coding: owned by requirement-termux-cli-coding. This class file points.
+Termux compilation, link, and build: owned by requirement-termux-build-payload. This class file points.
 POSIX /bin/sh writing style: owned by requirement-shell-script-coding. This class file points.
-Domain setup and host launch: owned by requirement-domain-tn5250. This class file points.
+Domain build and host launch: owned by requirement-domain-tn5250. This class file points.
 ```
 
 ## 3. Why This Requirement Exists (Direct CIAO Alignment)
@@ -216,12 +233,21 @@ Domain setup and host launch: owned by requirement-domain-tn5250. This class fil
 |----------|------|
 | `docs/requirements/index.md` | Registry |
 | `docs/requirements/requirement-shell-script-coding.md` | Coding-style home (RQ-SHELL-SCRIPT-CODING) |
-| `docs/requirements/requirement-windows-git-bash.md` | Windows compilation, link, and build (RQ-WINDOWS-GIT-BASH) |
-| `docs/requirements/requirement-debian.md` | Debian compilation, link, and build (RQ-DEBIAN) |
+| `docs/requirements/requirement-windows-git-bash-cli-coding.md` | Git Bash CLI coding (RQ-WINDOWS-GIT-BASH-CLI-CODING) |
+| `docs/requirements/requirement-windows-git-bash-build-payload.md` | Windows compilation, link, and build (RQ-WINDOWS-GIT-BASH-BUILD-PAYLOAD) |
+| `docs/requirements/requirement-debian-cli-coding.md` | Debian CLI coding (RQ-DEBIAN-CLI-CODING) |
+| `docs/requirements/requirement-debian-build-payload.md` | Debian compilation, link, and build (RQ-DEBIAN-BUILD-PAYLOAD) |
 | `docs/requirements/requirement-ubuntu.md` | Ubuntu compilation, link, and build (RQ-UBUNTU) |
 | `docs/requirements/requirement-other-linux.md` | Other Linux compilation, link, and build (RQ-OTHER-LINUX) |
+| `docs/requirements/requirement-alpine-cli-coding.md` | Alpine CLI coding (RQ-ALPINE-CLI-CODING) |
+| `docs/requirements/requirement-alpine-build-payload.md` | Alpine compilation, link, and build (RQ-ALPINE-BUILD-PAYLOAD) |
+| `docs/requirements/requirement-macos-cli-coding.md` | macOS CLI coding (RQ-MACOS-CLI-CODING) |
+| `docs/requirements/requirement-macos-build-payload.md` | macOS compilation, link, and build (RQ-MACOS-BUILD-PAYLOAD) |
+| `docs/requirements/requirement-fedora-redhat-cli-coding.md` | Fedora and Red Hat Enterprise Linux CLI coding (RQ-FEDORA-REDHAT-CLI-CODING) |
+| `docs/requirements/requirement-fedora-redhat-build-payload.md` | Fedora and Red Hat compilation, link, and build (RQ-FEDORA-REDHAT-BUILD-PAYLOAD) |
 | `docs/requirements/requirement-shell-cli-interface.md` | Command names (RQ-SHELL-CLI-INTERFACE) |
-| `docs/requirements/requirement-domain-tn5250.md` | Domain setup and host launch (RQ-DOMAIN-TN5250) |
+| `docs/requirements/requirement-domain-tn5250.md` | Domain build and host launch (RQ-DOMAIN-TN5250) |
+| `docs/requirements/requirement-payload-filename.md` | Published payload filename in `download/` (RQ-PAYLOAD-FILENAME) |
 | `docs/requirements/requirement-shell-cli-zero-arguments.md` | Empty argv (RQ-SHELL-CLI-ZERO-ARGUMENTS) |
 | `docs/requirements/requirement-shell-cli-default-interaction.md` | Numbered list (RQ-SHELL-CLI-DEFAULT-INTERACTION) |
 | `docs/requirements/requirement-shell-self-management.md` | Type 0 lifecycle (RQ-SHELL-SELF-MANAGEMENT) |
@@ -264,7 +290,18 @@ Domain setup and host launch: owned by requirement-domain-tn5250. This class fil
 | 2026-10-07 | Active 1.3.0 | Ubuntu points at RQ-UBUNTU. Other Linux points at RQ-OTHER-LINUX. This file still does not restate the CMake invocation. |
 | 2026-10-07 | Active 1.4.0 | In-tool sudo points at RQ-SHELL-SUDO-COMMAND. This file does not restate the package list or the allow table. The Ubuntu and other-Linux branches are in the ship unit. |
 | 2026-10-07 | Active 1.4.1 | Empty argv and the numbered list point at their requirements. This file does not draw the list. |
+| 2026-10-12 | Active 1.4.2 | Termux points at RQ-TERMUX. This file does not restate the pkg table. |
+| 2026-10-13 | Active 1.4.3 | Termux splits into RQ-TERMUX-CLI-CODING and RQ-TERMUX-BUILD-PAYLOAD. The bashrc marker points at the CLI coding file. This file still does not restate either body. |
+| 2026-10-13 | Active 1.4.4 | Git Bash splits into RQ-WINDOWS-GIT-BASH-CLI-CODING and RQ-WINDOWS-GIT-BASH-BUILD-PAYLOAD. This file still does not restate either body. |
+| 2026-10-13 | Active 1.4.5 | Alpine is RQ-ALPINE-CLI-CODING and RQ-ALPINE-BUILD-PAYLOAD. This file still does not restate either body. |
+| 2026-10-13 | Active 1.4.6 | Debian splits into RQ-DEBIAN-CLI-CODING and RQ-DEBIAN-BUILD-PAYLOAD. This file still does not restate either body. |
+| 2026-10-13 | Active 1.4.7 | macOS is RQ-MACOS-CLI-CODING and RQ-MACOS-BUILD-PAYLOAD. This file still does not restate either body. |
 
-**Last Updated**: 2026-10-07
+| 2026-10-13 | Active 1.4.8 | Fedora and Red Hat Enterprise Linux are RQ-FEDORA-REDHAT-CLI-CODING and RQ-FEDORA-REDHAT-BUILD-PAYLOAD. This file still does not restate either body. |
+| 2026-10-13 | Active 1.4.9 | The payload verb is `build`, not `setup`. Setup and build are different. Menus, help, and next-steps say `build`. |
+| 2026-10-13 | Active 1.4.10 | Published payload filenames point at RQ-PAYLOAD-FILENAME. This file does not restate the grammar. |
+| 2026-10-13 | Active 1.4.11 | The language board points at RQ-SHELL-CLI-LANGUAGE. `setup` downloads. This file does not restate either body. |
+| 2026-10-13 | Active 1.4.12 | Build still does not copy the client into `~/.local/bin`. `setup` may save a published client there. That save stays on RQ-PAYLOAD-FILENAME. |
+**Last Updated**: 2026-10-13
 **Owner**: unassigned
 **Alignment**: Registry `docs/requirements/index.md`; **CIAO** (https://github.com/cloudgen/ciao); CIAO-Lite (https://github.com/cloudgen/ciao-lite).

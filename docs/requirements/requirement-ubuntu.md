@@ -1,6 +1,6 @@
 **file**: docs/requirements/requirement-ubuntu.md
 **ID**: RQ-UBUNTU
-**Status**: Active (Version 1.3.2)
+**Status**: Active (Version 1.3.11)
 **Project**: tn5250-cli
 **Philosophy**: CIAO **v2.10.2** / CIAO-Lite (Caution • Intentional • Anti-fragile • Over-engineered / Over-protect)
 
@@ -8,19 +8,19 @@
 
 This is the standalone requirement for the Ubuntu situation. It owns Ubuntu detection and the compilation, link, and build of the Unix TN5250 programs on the Ubuntu LTS releases that are in standard support.
 
-A person on one of those releases runs `tn5250-cli setup`. The supported result is the curses terminal client, compiled as C with CMake, linked against ncurses and OpenSSL. The Windows GUI build, MSYS2, and the autotools path are not this build.
+A person on one of those releases runs `tn5250-cli build`. The supported result is the curses terminal client, compiled as C with CMake, linked against ncurses and OpenSSL. The Windows GUI build, MSYS2, and the autotools path are not this build.
 
-`docs/requirements/requirement-debian.md` remains the owner of Debian 12 and 13. `docs/requirements/requirement-other-linux.md` remains the owner of other Linux. `docs/requirements/requirement-windows-git-bash.md` remains the owner of the Git Bash situation. `docs/requirements/requirement-shell-cli-interface.md` names the commands and points here when the machine is one of these Ubuntu releases.
+`docs/requirements/requirement-debian-cli-coding.md` remains the owner of Debian CLI coding. `docs/requirements/requirement-debian-build-payload.md` remains the owner of the Debian payload build. `docs/requirements/requirement-other-linux.md` remains the owner of other Linux. `docs/requirements/requirement-alpine-cli-coding.md` remains the owner of Alpine CLI coding. `docs/requirements/requirement-alpine-build-payload.md` remains the owner of the Alpine payload build. `docs/requirements/requirement-windows-git-bash-cli-coding.md` remains the owner of Git Bash CLI coding. `docs/requirements/requirement-windows-git-bash-build-payload.md` remains the owner of the Git Bash payload build. `docs/requirements/requirement-fedora-redhat-cli-coding.md` remains the owner of Fedora and Red Hat Enterprise Linux CLI coding. `docs/requirements/requirement-fedora-redhat-build-payload.md` remains the owner of that payload build. `docs/requirements/requirement-shell-cli-interface.md` names the commands and points here when the machine is one of these Ubuntu releases.
 
 ### 1.1 Human-facing
 
-**In one sentence:** A person on Ubuntu 22.04, 24.04, or 26.04 runs `tn5250-cli setup`, and the installer compiles and links the IBM i 5250 terminal with the system CMake, ncurses, and OpenSSL.
+**In one sentence:** A person on Ubuntu 22.04, 24.04, or 26.04 runs `tn5250-cli build`, and the installer compiles and links the IBM i 5250 terminal with the system CMake, ncurses, and OpenSSL.
 
 | Box | Meaning | Example |
 |-----|---------|---------|
-| You / this login | The person at the keyboard, with normal user privilege, on Ubuntu | `tn5250-cli setup` |
+| You / this login | The person at the keyboard, with normal user privilege, on Ubuntu | `tn5250-cli build` |
 | The other role | The upstream TN5250 project, which owns the C sources and the curses screen | `tn5250 HOST` runs in the current terminal |
-| Not this file | Debian 12 and 13, other Linux, the Windows UCRT64 build, and the short command map | `docs/requirements/requirement-debian.md` |
+| Not this file | Debian 12 and 13, other Linux, Alpine, the Windows UCRT64 build, and the short command map | `docs/requirements/requirement-debian-cli-coding.md` and `docs/requirements/requirement-debian-build-payload.md` |
 
 | Includes | Excludes |
 |----------|----------|
@@ -28,30 +28,30 @@ A person on one of those releases runs `tn5250-cli setup`. The supported result 
 
 | Surface | What you open | What for |
 |---------|---------------|----------|
-| `src/tn5250-cli` | the installer | the live setup |
-| `tn5250-cli setup` | the build command | compile, link, and build |
+| `src/tn5250-cli` | the installer | the live build |
+| `tn5250-cli build` | the build command | compile, link, and build |
 | `tn5250 HOST` | the built curses program | a 5250 session in this terminal |
 
 | You do… | What it means | What you type |
 |---------|---------------|---------------|
-| Build the client on Ubuntu | The installer fetches the pinned sources, configures CMake for Release against the system libraries, compiles, links ncurses and OpenSSL, and copies the Unix programs into the prefix | `tn5250-cli setup` |
+| Build the client on Ubuntu | The installer fetches the pinned sources, configures CMake for Release against the system libraries, compiles, links ncurses and OpenSSL, and copies the Unix programs into the prefix | `tn5250-cli build` |
 
 ## 2. Core Rules / Requirements (Mandatory)
 
 ### 2.0 Situation
 
-1. This requirement is the only owner of the Ubuntu build situation. The Debian build stays on the Debian requirement. Other Linux stays on the other-Linux requirement. The Windows compiler, the Windows link, and the Windows build steps stay on the Git Bash requirement.
-2. The supported hosts for setup and launch are the Ubuntu LTS releases in standard support on 2026-10-07, detected from `/etc/os-release`: Ubuntu 22.04 (jammy), Ubuntu 24.04 (noble), and Ubuntu 26.04 (resolute). The person has normal user privilege. `version` prints on any host. Its CLI line is owned by `docs/requirements/requirement-shell-cli-interface.md`.
-3. The supported payload build is the upstream Unix CMake build at the same pinned ref the Debian situation uses: language C, CMake 3.12 or newer, the Ubuntu `gcc` metapackage, ncurses, OpenSSL 3, a single-config Release build.
+1. This requirement is the only owner of the Ubuntu build situation. Debian CLI coding stays on `docs/requirements/requirement-debian-cli-coding.md`. The Debian payload stays on `docs/requirements/requirement-debian-build-payload.md`. Other Linux stays on the other-Linux requirement. Alpine stays on the Alpine CLI coding requirement and the Alpine payload requirement. Fedora and Red Hat Enterprise Linux stay on `docs/requirements/requirement-fedora-redhat-cli-coding.md` and `docs/requirements/requirement-fedora-redhat-build-payload.md`. The Windows compiler, the Windows link, and the Windows build steps stay on the Git Bash payload requirement.
+2. The supported hosts for build and launch are the Ubuntu LTS releases in standard support on 2026-10-07, detected from `/etc/os-release`: Ubuntu 22.04 (jammy), Ubuntu 24.04 (noble), and Ubuntu 26.04 (resolute). The person has normal user privilege. `version` prints on any host. Its CLI line is owned by `docs/requirements/requirement-shell-cli-interface.md`.
+3. The supported payload build is the upstream Unix CMake build at the pinned ref recorded by `docs/requirements/requirement-debian-build-payload.md`: language C, CMake 3.12 or newer, the Ubuntu `gcc` metapackage, ncurses, OpenSSL 3, a single-config Release build.
 4. Support means this installer builds the pinned upstream sources. It does not mean `apt install tn5250`.
 
 ### 2.1 Detection
 
-5. `setup` (except `setup -h` and `setup --help`) and launch **MUST** accept Ubuntu when `/etc/os-release` has `ID=ubuntu` and one of these pairs: `VERSION_ID=22.04` with `VERSION_CODENAME=jammy`, `VERSION_ID=24.04` with `VERSION_CODENAME=noble`, or `VERSION_ID=26.04` with `VERSION_CODENAME=resolute`. `version` is not this detect.
-6. A mismatch **MUST** stop setup and launch. A mismatch is `ID=ubuntu` together with a supported `VERSION_ID` whose `VERSION_CODENAME` is not the pair above, or a supported `VERSION_CODENAME` whose `VERSION_ID` is not the pair above. That host **MUST NOT** fall through to the other-Linux situation.
-7. An Ubuntu release outside those three pairs, including 20.04 and the interim releases, is not this situation. Other Linux may own it. A derivative whose `ID` is not `ubuntu` is not this situation, even when `ID_LIKE` contains `ubuntu`. Debian, Git Bash, and Windows are not this situation.
-8. A host that matches no platform requirement **MUST** get a non-zero status and a message that names Git Bash on Windows, Debian 12 or 13, Ubuntu 22.04, 24.04, or 26.04, and other Linux. A mismatch under rule 6 uses that same non-zero stop.
-9. `help` and `setup --help` **MUST** be allowed to print usage without the Ubuntu check.
+5. `build` (except `build -h` and `build --help`) and launch **MUST** accept Ubuntu when `/etc/os-release` has `ID=ubuntu` and one of these pairs: `VERSION_ID=22.04` with `VERSION_CODENAME=jammy`, `VERSION_ID=24.04` with `VERSION_CODENAME=noble`, or `VERSION_ID=26.04` with `VERSION_CODENAME=resolute`. `version` is not this detect.
+6. A mismatch **MUST** stop build and launch. A mismatch is `ID=ubuntu` together with a supported `VERSION_ID` whose `VERSION_CODENAME` is not the pair above, or a supported `VERSION_CODENAME` whose `VERSION_ID` is not the pair above. That host **MUST NOT** fall through to the other-Linux situation.
+7. An Ubuntu release outside those three pairs, including 20.04 and the interim releases, is not this situation. Other Linux may own it. A derivative whose `ID` is not `ubuntu` is not this situation, even when `ID_LIKE` contains `ubuntu`. Debian, Alpine, Fedora, Red Hat Enterprise Linux, macOS, Git Bash, and Windows are not this situation. Alpine is owned by `docs/requirements/requirement-alpine-cli-coding.md` and `docs/requirements/requirement-alpine-build-payload.md`. macOS is owned by `docs/requirements/requirement-macos-cli-coding.md` and `docs/requirements/requirement-macos-build-payload.md`. Fedora and Red Hat Enterprise Linux are owned by `docs/requirements/requirement-fedora-redhat-cli-coding.md` and `docs/requirements/requirement-fedora-redhat-build-payload.md`.
+8. A host that matches no platform requirement **MUST** get a non-zero status and a message that names Git Bash on Windows, Debian 12 or 13, Ubuntu 22.04, 24.04, or 26.04, other Linux, Alpine, Fedora, Red Hat Enterprise Linux, Termux, and macOS. A mismatch under rule 6 uses that same non-zero stop. macOS CLI coding is owned by `docs/requirements/requirement-macos-cli-coding.md`. The macOS payload build is owned by `docs/requirements/requirement-macos-build-payload.md`. Termux CLI coding is owned by `docs/requirements/requirement-termux-cli-coding.md`. The Termux payload build is owned by `docs/requirements/requirement-termux-build-payload.md`. Alpine CLI coding is owned by `docs/requirements/requirement-alpine-cli-coding.md`. The Alpine payload build is owned by `docs/requirements/requirement-alpine-build-payload.md`. Fedora and Red Hat Enterprise Linux CLI coding is owned by `docs/requirements/requirement-fedora-redhat-cli-coding.md`. That payload build is owned by `docs/requirements/requirement-fedora-redhat-build-payload.md`.
+9. `help` and `build --help` **MUST** be allowed to print usage without the Ubuntu check.
 10. The build **MUST** be native for the architecture of that Ubuntu install. Cross-compilation is out of scope.
 
 ### 2.2 Supported compilation
@@ -59,19 +59,19 @@ A person on one of those releases runs `tn5250-cli setup`. The supported result 
 11. The payload **MUST** be compiled as C through CMake. Configure **MUST** set the source directory, the build directory, and `-DCMAKE_BUILD_TYPE=Release`.
 12. CMake **MUST** be at least 3.12. The Ubuntu packages that meet this are cmake 3.22.1 on jammy, cmake 3.28.3 on noble, and cmake 4.2.3 on resolute.
 13. The compiler **MUST** be the native `gcc` metapackage: GCC 11 on jammy, GCC 13 on noble, GCC 15 on resolute, with `libc6-dev` present so the headers exist.
-14. The generator **MUST** be Ninja when the `ninja` binary from the `ninja-build` package is on `PATH`. Otherwise the generator **MUST** be `Unix Makefiles` when `make` is on `PATH`. If neither exists, setup **MUST** stop.
+14. The generator **MUST** be Ninja when the `ninja` binary from the `ninja-build` package is on `PATH`. Otherwise the generator **MUST** be `Unix Makefiles` when `make` is on `PATH`. If neither exists, build **MUST** stop.
 15. Release is selected at configure time. The build step **MUST** be `cmake --build <build> --parallel <jobs>`. It **MUST NOT** pass a multi-config `--config` switch.
 16. `<jobs>` **MUST** be a positive integer. The default is `nproc` when that command works, otherwise 4.
 17. Configure **MUST NOT** pass a Windows `CMAKE_PREFIX_PATH`, **MUST NOT** call `cygpath`, and **MUST NOT** set `MSYS_NO_PATHCONV`. System include and library paths are the Ubuntu defaults.
-18. Setup **MUST NOT** run `autogen.sh`, `./configure`, or `cmake --install`. Setup **MUST NOT** build the `win32/` programs (`tn5250.exe`, `lp5250d.exe`, `dftmap.exe`).
-19. Setup **MUST NOT** apply the Windows GCC 14 source fixes. Those edits change Windows API types (`u_long`, `INT_PTR`, `GetDefaultPrinter`). `sslstream.c` **MUST** still have `int ioctlarg`. Setup **MUST** apply the connect fix to `lib5250/telnetstr.c` and `lib5250/sslstream.c` before configure. That fix initializes the `addrinfo` pointer and does not call `freeaddrinfo` when `getaddrinfo` fails. `git rev-parse HEAD` stays the upstream commit. The fix is not a second commit.
+18. Build **MUST NOT** run `autogen.sh`, `./configure`, or `cmake --install`. Build **MUST NOT** build the `win32/` programs (`tn5250.exe`, `lp5250d.exe`, `dftmap.exe`).
+19. Build **MUST NOT** apply the Windows GCC 14 source fixes. Those edits change Windows API types (`u_long`, `INT_PTR`, `GetDefaultPrinter`). `sslstream.c` **MUST** still have `int ioctlarg`. Build **MUST** apply the connect fix to `lib5250/telnetstr.c` and `lib5250/sslstream.c` before configure. That fix initializes the `addrinfo` pointer and does not call `freeaddrinfo` when `getaddrinfo` fails. `git rev-parse HEAD` stays the upstream commit. The fix is not a second commit.
 
 ### 2.3 Supported link
 
 20. The protocol code **MUST** be the static library whose CMake target name is `5250`.
 21. On Ubuntu that library **MUST NOT** link `Ws2_32` or `Winmm`. Upstream adds those libraries only for `WIN32`.
 22. The supported link **MUST** link `OpenSSL::Crypto` and `OpenSSL::SSL`. `libssl-dev` (OpenSSL 3) is installed on the system, so `find_package(OpenSSL)` succeeds without a private prefix. The generated config **MUST** define `HAVE_LIBSSL` and `HAVE_LIBCRYPTO`.
-23. Upstream `find_package(OpenSSL)` is not `REQUIRED`. The supported Ubuntu setup still requires `libssl-dev` to be present before configure, so the find succeeds. A configure without OpenSSL headers is not the supported link and **MUST** stop.
+23. Upstream `find_package(OpenSSL)` is not `REQUIRED`. The supported Ubuntu build still requires `libssl-dev` to be present before configure, so the find succeeds. A configure without OpenSSL headers is not the supported link and **MUST** stop.
 24. The curses client **MUST** be built. Upstream sets `CURSES_NEED_NCURSES` and calls `find_package(Curses REQUIRED)` when not `WIN32`. Missing ncurses **MUST** fail configure.
 25. The curses executable target `tn5250` **MUST** be built from `curses/cursesterm.c` and `curses/tn5250.c`, and **MUST** link `5250` and `${CURSES_LIBRARIES}`. It is a terminal program, not a `WIN32` GUI executable.
 26. `libncurses-dev` **MUST** be the ncurses development package. It supplies the headers and the link to ncurses and tinfo. `pkg-config` **MUST** run so CMake can discover those libraries.
@@ -80,22 +80,22 @@ A person on one of those releases runs `tn5250-cli setup`. The supported result 
 
 ### 2.4 Supported build
 
-29. Setup **MUST** obtain sources for the pinned ref before compile, with the same shallow fetch the Git Bash requirement uses. `git` **MUST** be present or setup stops.
+29. Build **MUST** obtain sources for the pinned ref before compile, with the same shallow fetch the Git Bash payload requirement uses. `git` **MUST** be present or build stops.
 30. The build tree **MUST** live in the user cache. A rebuild **MUST** remove that build directory before configure.
-31. After a successful compile, setup **MUST** copy `tn5250`, `lp5250d`, `scs2ascii`, `scs2pdf`, and `scs2ps` from the build tree into `${PREFIX}/opt/tn5250`, skipping anything under a `CMakeFiles` directory. The names have no `.exe` suffix.
-32. If `tn5250` is missing after the build, setup **MUST** stop with a non-zero status.
-33. Setup **MUST** write the requested ref, the checkout’s `HEAD` revision, and `CONNECT-FIX` next to the programs. `CONNECT-FIX` contains `addrinfo-1`. When `--force` is off, setup **MUST** skip the compile only if the programs are present and `REF`, `REVISION`, and `CONNECT-FIX` all match. A payload without `CONNECT-FIX` **MUST** rebuild.
-34. Setup **MUST NOT** copy Windows runtime DLLs and **MUST NOT** vendor `libncurses` or `libssl` into the prefix. Those shared libraries come from the Ubuntu packages already installed (`libncurses6`, and `libssl3` on jammy or `libssl3t64` on noble and resolute).
-35. The default prefix **MUST** be `${HOME}/.local`, overridable by `--prefix` or `TN5250_PREFIX`. The prefix **MUST NOT** be empty. Setup **MUST NOT** install into `/usr` or `/etc`.
-36. Setup **MUST** copy the installer to `${PREFIX}/bin/tn5250-cli` when that destination is not already the same file, and **MUST** mark it executable. The installer name stays `tn5250-cli` so it does not shadow the curses `tn5250`.
-37. Launch **MUST** execute `${PREFIX}/opt/tn5250/tn5250` with the remaining arguments. It **MUST NOT** set `MSYS_NO_PATHCONV` and **MUST NOT** append `.exe`.
-38. `ncurses-base` **MUST** be present so the curses client has terminfo. When it is missing, setup installs it with the sudo wrap in `docs/requirements/requirement-shell-sudo-command.md`.
+31. After a successful compile, build **MUST** copy `tn5250`, `lp5250d`, `scs2ascii`, `scs2pdf`, and `scs2ps` from the build tree into `${PREFIX}/opt/tn5250`, skipping anything under a `CMakeFiles` directory. The names have no `.exe` suffix.
+32. If `tn5250` is missing after the build, build **MUST** stop with a non-zero status.
+33. Build **MUST** write the requested ref, the checkout’s `HEAD` revision, and `CONNECT-FIX` next to the programs. `CONNECT-FIX` contains `addrinfo-1`. When `--force` is off, build **MUST** skip the compile only if the programs are present and `REF`, `REVISION`, and `CONNECT-FIX` all match. A payload without `CONNECT-FIX` **MUST** rebuild.
+34. Build **MUST NOT** copy Windows runtime DLLs and **MUST NOT** vendor `libncurses` or `libssl` into the prefix. Those shared libraries come from the Ubuntu packages already installed (`libncurses6`, and `libssl3` on jammy or `libssl3t64` on noble and resolute).
+35. The default prefix **MUST** be `${HOME}/.local`, overridable by `--prefix` or `TN5250_PREFIX`. The prefix **MUST NOT** be empty. Build **MUST NOT** install into `/usr` or `/etc`.
+36. Build **MUST** copy the installer to `${PREFIX}/bin/tn5250-cli` when that destination is not already the same file, and **MUST** mark it executable. The installer name stays `tn5250-cli` so it does not shadow the curses `tn5250`.
+37. Launch **MUST** prefer `${TN5250_PREFIX:-${HOME}/.local}/bin/tn5250` when that file exists. That file is the `setup` save, owned by `docs/requirements/requirement-payload-filename.md`. Otherwise launch **MUST** execute `${PREFIX}/opt/tn5250/tn5250` with the remaining arguments. It **MUST NOT** set `MSYS_NO_PATHCONV` and **MUST NOT** append `.exe`. Build **MUST NOT** copy `tn5250` into `${PREFIX}/bin`. A missing program **MUST** name `tn5250-cli setup` or `tn5250-cli build`.
+38. `ncurses-base` **MUST** be present so the curses client has terminfo. When it is missing, build installs it with the sudo wrap in `docs/requirements/requirement-shell-sudo-command.md`.
 
 ### 2.5 Packages and privilege
 
-39. Before configure, these Ubuntu packages **MUST** be present. Setup **MUST** check for the tools and headers they provide. A missing package **MUST** be installed with the sudo wrap in `docs/requirements/requirement-shell-sudo-command.md`. When every check already passes, setup **MUST NOT** call sudo.
+39. Before configure, these Ubuntu packages **MUST** be present. Build **MUST** check for the tools and headers they provide. A missing package **MUST** be installed with the sudo wrap in `docs/requirements/requirement-shell-sudo-command.md`. When every check already passes, build **MUST NOT** call sudo.
 
-| Package | What setup checks |
+| Package | What build checks |
 |---------|-------------------|
 | `gcc` | `gcc` runs |
 | `libc6-dev` | C headers are usable by that `gcc` |
@@ -107,21 +107,21 @@ A person on one of those releases runs `tn5250-cli setup`. The supported result 
 | `ncurses-base` | terminfo data is present for the runtime client |
 | `git` | `git` runs |
 
-40. The package install **MAY** use the in-tool sudo wrap. The setup command is the mixed elevated sudo model: the same verb for a normal user and for a sudo launch. Help does not tell the person to prefix that verb with sudo. When that launch is root, git and the compile return to the person who started it. A root login with no such person stops before git. Git, cmake, make, ninja, and the copy of the built programs **MUST** stay with the person who started setup. Dedicated system user privilege stays unused. `apt install tn5250` is still not the supported install.
-41. `--msys2-root` is a Windows toolchain flag. On Ubuntu, setup **MUST** reject it.
+40. The package install **MAY** use the in-tool sudo wrap. The build command is the mixed elevated sudo model: the same verb for a normal user and for a sudo launch. Help does not tell the person to prefix that verb with sudo. When that launch is root, git and the compile return to the person who started it. A root login with no such person stops before git. Git, cmake, make, ninja, and the copy of the built programs **MUST** stay with the person who started build. Dedicated system user privilege stays unused. `apt install tn5250` is still not the supported install.
+41. `--msys2-root` is a Windows toolchain flag. On Ubuntu, build **MUST** reject it.
 
 ### 2.6 Commands this file also names
 
 ```bash
-tn5250-cli setup
-tn5250-cli setup --prefix "${HOME}/.local" --ref v0.18.0 --jobs 4
-tn5250-cli setup --force
+tn5250-cli build
+tn5250-cli build --prefix "${HOME}/.local" --ref v0.18.0 --jobs 4
+tn5250-cli build --force
 tn5250-cli help
 tn5250-cli version
 tn5250-cli myibmi.example.com
 ```
 
-`tn5250-cli` with no token is owned by `docs/requirements/requirement-shell-cli-zero-arguments.md`. It does not compile. `tn5250-cli setup --help` shows help and does not compile. The CLI version line is owned by `docs/requirements/requirement-shell-cli-interface.md`. When this build has written `REF` and `REVISION`, the extra payload line is `tn5250 <ref> (<revision>)`.
+`tn5250-cli` with no token is owned by `docs/requirements/requirement-shell-cli-zero-arguments.md`. It does not compile. `tn5250-cli build --help` shows help and does not compile. The CLI version line is owned by `docs/requirements/requirement-shell-cli-interface.md`. When this build has written `REF` and `REVISION`, the extra payload line is `tn5250 <ref> (<revision>)`.
 
 ### 2.7 Implementation Notes (this project)
 
@@ -173,15 +173,15 @@ Noble package versions in the table above were read on that host. Jammy and reso
 - **CIAO Principle 1 – Caution** (https://github.com/cloudgen/ciao): this situation accepts only the three Ubuntu LTS pairs, and it refuses a build that did not produce `tn5250`.
 - **CIAO Principle 2 – Intentional**: the Ubuntu releases, the packages, the generator, and the link set are written down.
 - **CIAO Principle 5 – SSOT**: Ubuntu compilation, link, and build have this file. Debian, other Linux, and Windows keep their own.
-- **CIAO Principle 9**: admin privilege is used only to install missing compiler packages. Git and the compile stay with the person who started setup.
+- **CIAO Principle 9**: admin privilege is used only to install missing compiler packages. Git and the compile stay with the person who started build.
 - **CIAO Principle 10 – Least privilege**: sudo runs only when a package is missing. The build is not written to `/usr`.
 - **CIAO Principle 21 – Dual policies**: the rules stay portable. Ubuntu package versions sit in Implementation Notes.
 
 ## Under command line for normal user only
 
-On Ubuntu the person runs setup as a normal user.
+On Ubuntu the person runs build as a normal user.
 
-**This requirement:** missing Ubuntu compiler packages are installed with the sudo wrap. Git and the compile stay with the person who started setup. Dedicated system user privilege stays unused. Termux pkg is not called. This shell is not Git Bash and not Windows cmd. The curses client runs in the terminal the person already has.
+**This requirement:** missing Ubuntu compiler packages are installed with the sudo wrap. Git and the compile stay with the person who started build. Dedicated system user privilege stays unused. Termux pkg is not called. macOS brew is not called. This shell is not Git Bash and not Windows cmd. The curses client runs in the terminal the person already has.
 
 ## 3. Design Principles (CIAO / CIAO-Lite)
 
@@ -194,7 +194,7 @@ On Ubuntu the person runs setup as a normal user.
 
 **Future AI assistants or maintainers MUST NOT**:
 
-- Fold this situation into the Debian requirement, the other-Linux requirement, the Git Bash requirement, the CLI-interface file, or the class residual.
+- Fold this situation into the Debian requirements, the other-Linux requirement, the Git Bash requirements, the CLI-interface file, or the class residual.
 - Build the Windows GUI programs, apply the Windows GCC 14 patch, or link `Ws2_32` and `Winmm` on Ubuntu.
 - Drive this build through MSYS2, `cygpath`, `cmd.exe`, or `MSYS_NO_PATHCONV`.
 - Replace this CMake build with `autogen.sh` and `./configure`.
@@ -211,9 +211,17 @@ On Ubuntu the person runs setup as a normal user.
 | Artifact | Role |
 |----------|------|
 | `docs/requirements/index.md` | Registry |
-| `docs/requirements/requirement-debian.md` | Debian situation. Does not own this build (RQ-DEBIAN) |
+| `docs/requirements/requirement-debian-cli-coding.md` | Debian CLI coding. Does not own this build (RQ-DEBIAN-CLI-CODING) |
+| `docs/requirements/requirement-debian-build-payload.md` | Debian payload. Does not own this build (RQ-DEBIAN-BUILD-PAYLOAD) |
 | `docs/requirements/requirement-other-linux.md` | Other Linux situation. Does not own these three releases (RQ-OTHER-LINUX) |
-| `docs/requirements/requirement-windows-git-bash.md` | Windows situation. Does not own this build (RQ-WINDOWS-GIT-BASH) |
+| `docs/requirements/requirement-alpine-cli-coding.md` | Alpine CLI coding. Does not own this build (RQ-ALPINE-CLI-CODING) |
+| `docs/requirements/requirement-alpine-build-payload.md` | Alpine payload. Does not own this build (RQ-ALPINE-BUILD-PAYLOAD) |
+| `docs/requirements/requirement-macos-cli-coding.md` | macOS CLI coding. Does not own this build (RQ-MACOS-CLI-CODING) |
+| `docs/requirements/requirement-macos-build-payload.md` | macOS payload. Does not own this build (RQ-MACOS-BUILD-PAYLOAD) |
+| `docs/requirements/requirement-fedora-redhat-cli-coding.md` | Fedora and Red Hat CLI coding. Does not own this build (RQ-FEDORA-REDHAT-CLI-CODING) |
+| `docs/requirements/requirement-fedora-redhat-build-payload.md` | Fedora and Red Hat payload. Does not own this build (RQ-FEDORA-REDHAT-BUILD-PAYLOAD) |
+| `docs/requirements/requirement-windows-git-bash-cli-coding.md` | Git Bash CLI coding. Does not own this build (RQ-WINDOWS-GIT-BASH-CLI-CODING) |
+| `docs/requirements/requirement-windows-git-bash-build-payload.md` | Windows payload. Does not own this build (RQ-WINDOWS-GIT-BASH-BUILD-PAYLOAD) |
 | `docs/requirements/requirement-shell-cli-interface.md` | Command names. Points here on these Ubuntu releases (RQ-SHELL-CLI-INTERFACE) |
 | `docs/requirements/requirement-shell-script-coding.md` | POSIX /bin/sh writing style. Points here for the Ubuntu C build (RQ-SHELL-SCRIPT-CODING) |
 | `docs/requirements/requirement-class-software-dev.md` | Class residual. Points here (RQ-CLASS-SOFTWARE-DEV) |
@@ -228,15 +236,15 @@ Rows marked ran were shown on the authoring host. Jammy, resolute, and the missi
 
 | TP-ID | Proves | Status |
 |-------|--------|--------|
-| TP-UBU-01 | setup accepts Ubuntu 22.04, 24.04, and 26.04, and does not treat `ID_LIKE=ubuntu` as those releases | ran for 24.04 noble on the authoring host. 22.04, 26.04, and an `ID_LIKE`-only host were not executed |
+| TP-UBU-01 | build accepts Ubuntu 22.04, 24.04, and 26.04, and does not treat `ID_LIKE=ubuntu` as those releases | ran for 24.04 noble on the authoring host. 22.04, 26.04, and an `ID_LIKE`-only host were not executed |
 | TP-UBU-02 | Configure is Ninja or Unix Makefiles, `Release`, with no Windows prefix and no `MSYS_NO_PATHCONV` | ran on the authoring host. Ninja and `Release`. `MSYS_NO_PATHCONV` was not set |
 | TP-UBU-03 | Static `5250` links OpenSSL::SSL and OpenSSL::Crypto and does not link Ws2_32 or Winmm | ran on the authoring host. `lib5250.a` plus `libssl` and `libcrypto` on the curses link line. `Ws2_32` and `Winmm` are absent |
 | TP-UBU-04 | The curses `tn5250` links `5250` and ncurses. `lp5250d`, `scs2ascii`, `scs2pdf`, and `scs2ps` are produced | ran on the authoring host. `ldd` shows `libncurses.so.6`. All five programs were copied |
 | TP-UBU-05 | The Windows GCC 14 patch is not applied on Ubuntu | ran on the authoring host. `sslstream.c` still has `int ioctlarg`. The checkout is clean |
 | TP-UBU-06 | A missing compiler package is installed with the sudo wrap. Git and the compile stay with the invoking person. A present toolchain does not call sudo | ran for the present toolchain on the authoring host. The log did not contain `Installing missing compiler packages`. The missing-package path was not run |
 | TP-UBU-07 | A build that does not produce `tn5250` fails | todo |
-| TP-UBU-08 | A `VERSION_ID` / `VERSION_CODENAME` mismatch stops setup and does not fall through to other Linux | todo |
-| TP-CLI-01 | setup, help, version, and host launch are named here and in the CLI-interface requirement | ran as a document check |
+| TP-UBU-08 | A `VERSION_ID` / `VERSION_CODENAME` mismatch stops build and does not fall through to other Linux | todo |
+| TP-CLI-01 | build, help, version, and host launch are named here and in the CLI-interface requirement | ran as a document check |
 
 Proof home: `docs/reviews/test-plan.md`.
 
@@ -250,7 +258,7 @@ Proof home: `docs/reviews/test-plan.md`.
 
 **Daily-life example:** On Termux you run pkg as yourself. On Git Bash you run git as yourself. On Windows cmd you type as yourself. None of those rooms should grow a sudo apt or a hidden system-user switch.
 
-Ubuntu itself can have an administrator. Setup borrows that role only for a missing compiler package. Git and the compile stay with the person.
+Ubuntu itself can have an administrator. Build borrows that role only for a missing compiler package. Git and the compile stay with the person.
 
 ### Operational verb
 
@@ -260,7 +268,7 @@ Ubuntu itself can have an administrator. Setup borrows that role only for a miss
 
 **Daily-life example:** “Please bake the cake” is operational. “Please run the kitchen’s practice quiz about baking” is a test verb.
 
-`setup`, `help`, `version`, and the host launch are commands that run this product.
+`build`, `help`, `version`, and the host launch are commands that run this product.
 
 ## 6. Status history
 
@@ -272,7 +280,16 @@ Ubuntu itself can have an administrator. Setup borrows that role only for a miss
 | 2026-10-07 | Active 1.3.0 | One setup verb for a normal user and a sudo launch. Git and the compile return to that person. |
 | 2026-10-07 | Active 1.3.1 | The setup arrangement is named the mixed elevated sudo model. Help does not recommend a sudo prefix. |
 | 2026-10-07 | Active 1.3.2 | The connect fix is applied before configure. A payload without `CONNECT-FIX` rebuilds. The Windows GCC 14 patch stays off. |
+| 2026-10-12 | Active 1.3.3 | The unsupported-host message also names Termux. This Ubuntu build is unchanged. |
+| 2026-10-13 | Active 1.3.4 | The Termux pointer names RQ-TERMUX-CLI-CODING and RQ-TERMUX-BUILD-PAYLOAD. This Ubuntu build is unchanged. |
+| 2026-10-13 | Active 1.3.5 | The Git Bash pointer names RQ-WINDOWS-GIT-BASH-CLI-CODING and RQ-WINDOWS-GIT-BASH-BUILD-PAYLOAD. This Ubuntu build is unchanged. |
+| 2026-10-13 | Active 1.3.6 | The unsupported-host message also names Alpine. Alpine points at RQ-ALPINE-CLI-CODING and RQ-ALPINE-BUILD-PAYLOAD. This Ubuntu build is unchanged. |
+| 2026-10-13 | Active 1.3.7 | Debian 12 and 13 point at RQ-DEBIAN-CLI-CODING and RQ-DEBIAN-BUILD-PAYLOAD. This Ubuntu build is unchanged. Ubuntu keeps its own versioned package table. |
+| 2026-10-13 | Active 1.3.8 | The unsupported-host message also names macOS. macOS points at RQ-MACOS-CLI-CODING and RQ-MACOS-BUILD-PAYLOAD. This Ubuntu build is unchanged. |
 
-**Last Updated**: 2026-10-07
+| 2026-10-13 | Active 1.3.9 | The unsupported-host message also names Fedora and Red Hat Enterprise Linux. They point at RQ-FEDORA-REDHAT-CLI-CODING and RQ-FEDORA-REDHAT-BUILD-PAYLOAD. This Ubuntu build is unchanged. |
+| 2026-10-13 | Active 1.3.10 | The payload verb is `build`, not `setup`. Setup and build are different. Menus, help, and next-steps say `build`. |
+| 2026-10-13 | Active 1.3.11 | Launch prefers a `setup` save under `~/.local/bin`, then `${PREFIX}/opt/tn5250/tn5250`. Build does not copy the client into `bin`. |
+**Last Updated**: 2026-10-13
 **Owner**: unassigned
 **Alignment**: Registry `docs/requirements/index.md`; **CIAO** (https://github.com/cloudgen/ciao); CIAO-Lite (https://github.com/cloudgen/ciao-lite).

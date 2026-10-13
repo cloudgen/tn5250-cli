@@ -1,6 +1,6 @@
 # CLI routed-verb table
 
-Product: tn5250-cli. Ship unit: `src/tn5250-cli`. Dispatcher: `app_main`. Scan date: 2026-10-07. Mode: full. Previous table: absent. Re-checked: 11. Copied: 0.
+Product: tn5250-cli. Ship unit: `src/tn5250-cli`. Dispatcher: `app_main`. Scan date: 2026-10-13. Mode: full. Previous table: 2026-10-07. Re-checked: 12. Copied: 0.
 
 Inventory is the dispatcher. Help text supplied the explanation after the colon. A date is the handler comment’s `Last updated` or `Last reviewed`. `missing` means that comment has no date.
 
@@ -18,7 +18,8 @@ Inventory is the dispatcher. Help text supplied the explanation after the colon.
 | version | `app_version` | you | missing | version: Show current version |
 | menu | `app_cmd_menu` | you | 2026-10-07 | menu: Open the numbered list. Needs a terminal |
 | main | `app_cmd_menu` | you | 2026-10-07 | main: Open the numbered list. Needs a terminal |
-| setup | `tn5250_setup` | you; missing compiler packages may change the computer | missing | setup: Build the upstream client for Git Bash or Debian 12/13 |
+| setup | `tn5250_payload_setup` | you | 2026-10-13 | setup: Download the newest published tn5250 for this machine into ~/.local/bin |
+| build | `tn5250_setup` | you; missing compiler packages may change the computer | 2026-10-13 | build: Build the upstream client for Git Bash, Debian, Ubuntu, other Linux, Alpine, Fedora, Red Hat Enterprise Linux, Termux, or macOS |
 
 ## Not-yet-wired
 
@@ -26,4 +27,4 @@ None. A word that is not a flag and not a verb above is the host name. It is not
 
 ## Honesty
 
-Full scan. Eleven live rows. The host launch has no verb token. On a numbered board, row 82 and a typed `version` run `about`. Argv `version` stays `app_version`.
+Full scan. Twelve live rows. `setup` downloads. `build` compiles. The host launch has no verb token. On a numbered board, row 2 runs `setup`, row 7 opens languages, and row 82 and a typed `version` run `about`. Argv `version` stays `app_version`. `languages` is a menu category, not an argv verb.

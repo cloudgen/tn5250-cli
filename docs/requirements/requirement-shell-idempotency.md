@@ -1,12 +1,12 @@
 **file**: docs/requirements/requirement-shell-idempotency.md
 **ID**: RQ-SHELL-IDEMPOTENCY
-**Status**: Active (Version 1.1.0)
+**Status**: Active (Version 1.1.2)
 **Project**: tn5250-cli
 **Philosophy**: CIAO **v2.10.2** / CIAO-Lite (Caution • Intentional • Anti-fragile • Over-engineered / Over-protect)
 
 ## 1. Purpose
 
-This file owns re-run safety. A second successful install of the CLI binary is a no-op. A second setup of the same payload revision can skip the compile. `--force` is the deliberate repeat.
+This file owns re-run safety. A second successful install of the CLI binary is a no-op. A second build of the same payload revision can skip the compile. `--force` is the deliberate repeat.
 
 ### 1.1 Human-facing
 
@@ -15,18 +15,18 @@ This file owns re-run safety. A second successful install of the CLI binary is a
 | Box | Meaning | Example |
 |-----|---------|---------|
 | You / this login | The person who runs the same command twice | `tn5250-cli` |
-| The other role | A deliberate rebuild | `tn5250-cli setup --force` |
-| Not this file | How the compile is invoked | `docs/requirements/requirement-windows-git-bash.md` |
+| The other role | A deliberate rebuild | `tn5250-cli build --force` |
+| Not this file | How the compile is invoked | `docs/requirements/requirement-windows-git-bash-build-payload.md` |
 
 | Includes | Excludes |
 |----------|----------|
-| Already-installed success, and setup skip when ref and revision match | A new package list, and a text-screen menu |
+| Already-installed success, and build skip when ref and revision match | A new package list, and a text-screen menu |
 
 | Surface | What you open | What for |
 |---------|---------------|----------|
-| `src/tn5250-cli` | ship unit | install no-op and setup skip |
+| `src/tn5250-cli` | ship unit | install no-op and build skip |
 | `tn5250-cli` | command | second run |
-| `tn5250-cli setup --force` | command | rebuild |
+| `tn5250-cli build --force` | command | rebuild |
 
 | You do… | What it means | What you type |
 |---------|---------------|---------------|
@@ -35,7 +35,7 @@ This file owns re-run safety. A second successful install of the CLI binary is a
 ## 2. Core Rules / Requirements (Mandatory)
 
 1. A second `install` or `self-install`, or a non-interactive empty argv, when the CLI binary is already present and `--force` is off, **MUST** succeed and **MUST NOT** download. An interactive empty argv opens the numbered list and **MUST NOT** download.
-2. `setup` with `--force` off **MUST** skip the compile when the payload directory already has the requested ref and the current checkout revision. The Windows file records that this skip does not include the patch text in the key. This file points there. It does not add a new fail-closed rule.
+2. `build` with `--force` off **MUST** skip the compile when the payload directory already has the requested ref and the current checkout revision. The Git Bash payload file records that this skip does not include the patch text in the key. This file points there. It does not add a new fail-closed rule.
 3. `--force` **MUST** be the switch for a deliberate CLI reinstall and for a deliberate payload rebuild.
 4. A real failure **MUST** stay non-zero. “Already installed” is not a failure.
 
@@ -44,7 +44,7 @@ This file owns re-run safety. A second successful install of the CLI binary is a
 | Path | Repeat without `--force` |
 |------|--------------------------|
 | CLI install | Success no-op |
-| Payload setup | Skip when `REF` and `REVISION` match |
+| Payload build | Skip when `REF` and `REVISION` match |
 
 ## Under command line for normal user only
 
@@ -57,7 +57,7 @@ Re-runs stay on this login.
 - **Caution**: a retry after success is safe.
 - **Intentional**: force is explicit.
 - **Anti-fragile**: partial failure still fails.
-- **Over-protect**: the Windows skip quirk stays written on the Windows file.
+- **Over-protect**: the Windows skip quirk stays written on the Git Bash payload file.
 
 ## 4. Protection Rule (Sacred)
 
@@ -73,8 +73,8 @@ Re-runs stay on this login.
 |----------|------|
 | `docs/requirements/index.md` | Registry |
 | `docs/requirements/requirement-shell-cli-zero-arguments.md` | Empty argv (RQ-SHELL-CLI-ZERO-ARGUMENTS) |
-| `docs/requirements/requirement-windows-git-bash.md` | Rebuild skip note (RQ-WINDOWS-GIT-BASH) |
-| `docs/requirements/requirement-domain-tn5250.md` | Setup (RQ-DOMAIN-TN5250) |
+| `docs/requirements/requirement-windows-git-bash-build-payload.md` | Rebuild skip note (RQ-WINDOWS-GIT-BASH-BUILD-PAYLOAD) |
+| `docs/requirements/requirement-domain-tn5250.md` | Build (RQ-DOMAIN-TN5250) |
 | `src/tn5250-cli` | Ship unit |
 | `docs/reviews/test-plan.md` | Proof rows |
 
@@ -83,7 +83,7 @@ Re-runs stay on this login.
 | TP-ID | Proves | Status |
 |-------|--------|--------|
 | TP-IDEM-01 | Second non-interactive empty argv on an installed binary exits 0 | ran on the authoring host |
-| TP-IDEM-02 | Setup skip when ref and revision match | todo |
+| TP-IDEM-02 | Build skip when ref and revision match | todo |
 
 Proof home: `docs/reviews/test-plan.md`.
 
@@ -111,7 +111,9 @@ Proof home: `docs/reviews/test-plan.md`.
 |------|--------|-------|
 | 2026-10-07 | Active 1.0.0 | CLI re-run is a no-op. Payload skip points at the Windows note. |
 | 2026-10-07 | Active 1.1.0 | The no-download repeat is `install`, `self-install`, and non-interactive empty argv. A terminal with no command opens the list and does not download. |
+| 2026-10-13 | Active 1.1.1 | The Windows rebuild-skip note points at RQ-WINDOWS-GIT-BASH-BUILD-PAYLOAD. This file still does not add a patch-text key. |
 
-**Last Updated**: 2026-10-07
+| 2026-10-13 | Active 1.1.2 | The payload verb is `build`, not `setup`. Setup and build are different. Menus, help, and next-steps say `build`. |
+**Last Updated**: 2026-10-13
 **Owner**: unassigned
 **Alignment**: Registry `docs/requirements/index.md`; **CIAO** (https://github.com/cloudgen/ciao); CIAO-Lite (https://github.com/cloudgen/ciao-lite).

@@ -1,6 +1,6 @@
 **file**: docs/requirements/requirement-shell-cli-storage.md
 **ID**: RQ-SHELL-CLI-STORAGE
-**Status**: Active (Version 1.0.0)
+**Status**: Active (Version 1.0.2)
 **Project**: tn5250-cli
 **Philosophy**: CIAO **v2.10.2** / CIAO-Lite (Caution • Intentional • Anti-fragile • Over-engineered / Over-protect)
 
@@ -15,7 +15,7 @@ This file owns the scratch directory `app_main` creates for one run of tn5250-cl
 | Box | Meaning | Example |
 |-----|---------|---------|
 | You / this login | The person whose login name is taken from `id -un` | `tn5250-cli about` |
-| The other role | The payload cache under the home cache directory | `tn5250-cli setup` |
+| The other role | The payload cache under the home cache directory | `tn5250-cli build` |
 | Not this file | The TN5250 build tree | `docs/requirements/requirement-domain-tn5250.md` |
 
 | Includes | Excludes |
@@ -47,7 +47,7 @@ This file owns the scratch directory `app_main` creates for one run of tn5250-cl
 |------|--------|
 | Resolver | `util_resolve_storage` |
 | Payload cache | `${XDG_CACHE_HOME:-${HOME}/.cache}/tn5250`, owned by the domain requirement |
-| MSYS2 sfx cache | `${HOME}/.cache/tn5250`, owned by the Git Bash requirement |
+| MSYS2 sfx cache | `${HOME}/.cache/tn5250`, owned by `docs/requirements/requirement-windows-git-bash-build-payload.md` |
 
 ## Under command line for normal user only
 
@@ -103,7 +103,9 @@ Proof home: `docs/reviews/test-plan.md`.
 | Date | Status | Notes |
 |------|--------|-------|
 | 2026-10-07 | Active 1.0.0 | Scratch tiers for one run. Payload cache stays on the domain requirement. |
+| 2026-10-13 | Active 1.0.1 | The MSYS2 archive cache points at RQ-WINDOWS-GIT-BASH-BUILD-PAYLOAD. Scratch is unchanged. |
 
-**Last Updated**: 2026-10-07
+| 2026-10-13 | Active 1.0.2 | The payload verb is `build`, not `setup`. Setup and build are different. Menus, help, and next-steps say `build`. |
+**Last Updated**: 2026-10-13
 **Owner**: unassigned
 **Alignment**: Registry `docs/requirements/index.md`; **CIAO** (https://github.com/cloudgen/ciao); CIAO-Lite (https://github.com/cloudgen/ciao-lite).

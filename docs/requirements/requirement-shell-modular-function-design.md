@@ -1,6 +1,6 @@
 **file**: docs/requirements/requirement-shell-modular-function-design.md
 **ID**: RQ-SHELL-MODULAR-FUNCTION-DESIGN
-**Status**: Active (Version 1.0.0)
+**Status**: Active (Version 1.0.2)
 **Project**: tn5250-cli
 **Philosophy**: CIAO **v2.10.2** / CIAO-Lite (Caution • Intentional • Anti-fragile • Over-engineered / Over-protect)
 
@@ -16,7 +16,7 @@ This file owns function prefixes in the single ship unit. Each prefix has one jo
 |-----|---------|---------|
 | You / this login | The person editing the script | `src/tn5250-cli` |
 | The other role | The person running a command | `tn5250-cli help` |
-| Not this file | The CMake link line | `docs/requirements/requirement-windows-git-bash.md` |
+| Not this file | The CMake link line | `docs/requirements/requirement-windows-git-bash-build-payload.md` |
 
 | Includes | Excludes |
 |----------|----------|
@@ -35,7 +35,7 @@ This file owns function prefixes in the single ship unit. Each prefix has one jo
 ## 2. Core Rules / Requirements (Mandatory)
 
 1. The ship unit **MUST** stay one file.
-2. Prefixes **MUST** stay: `out_` messages, `inst_` CLI install lifecycle, `app_` dispatch and help, `util_` shared helpers, `ver_` version compare and check, `prompt_` questions, `tn5250_` payload setup and launch.
+2. Prefixes **MUST** stay: `out_` messages, `inst_` CLI install lifecycle, `app_` dispatch and help, `util_` shared helpers, `ver_` version compare and check, `prompt_` questions, `tn5250_` payload build and launch.
 3. Payload compile, link, and build **MUST NOT** be implemented as `inst_` functions.
 4. New product messages **MUST NOT** introduce an unprefixed `log` or `die`.
 5. This file **MUST NOT** restate a generator, a link line, or a package list.
@@ -103,7 +103,9 @@ Proof home: `docs/reviews/test-plan.md`.
 | Date | Status | Notes |
 |------|--------|-------|
 | 2026-10-07 | Active 1.0.0 | Prefixes inherited, with `tn5250_` for the client. |
+| 2026-10-13 | Active 1.0.1 | The CMake link line points at RQ-WINDOWS-GIT-BASH-BUILD-PAYLOAD. Prefixes are unchanged. |
 
-**Last Updated**: 2026-10-07
+| 2026-10-13 | Active 1.0.2 | The payload verb is `build`, not `setup`. Setup and build are different. Menus, help, and next-steps say `build`. |
+**Last Updated**: 2026-10-13
 **Owner**: unassigned
 **Alignment**: Registry `docs/requirements/index.md`; **CIAO** (https://github.com/cloudgen/ciao); CIAO-Lite (https://github.com/cloudgen/ciao-lite).

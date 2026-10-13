@@ -1,6 +1,6 @@
 **file**: docs/requirements/requirement-shell-automatic-checksum.md
 **ID**: RQ-SHELL-AUTOMATIC-CHECKSUM
-**Status**: Active (Version 1.1.0)
+**Status**: Active (Version 1.1.1)
 **Project**: tn5250-cli
 **Philosophy**: CIAO **v2.10.2** / CIAO-Lite (Caution • Intentional • Anti-fragile • Over-engineered / Over-protect)
 
@@ -16,7 +16,7 @@ This file owns integrity for a download of the tn5250-cli script. The published 
 |-----|---------|---------|
 | You / this login | The person installing from a channel | `tn5250-cli install` |
 | The other role | The publisher who ships the digest beside the script | `SCRIPT_URL.sha256` |
-| Not this file | The TN5250 source tarball and the MSYS2 archive | `docs/requirements/requirement-windows-git-bash.md` |
+| Not this file | The TN5250 source checkout and the MSYS2 archive | `docs/requirements/requirement-windows-git-bash-build-payload.md` |
 
 | Includes | Excludes |
 |----------|----------|
@@ -48,7 +48,7 @@ This file owns integrity for a download of the tn5250-cli script. The published 
 | Algorithm | SHA-256 |
 | Channel | `https://raw.githubusercontent.com/cloudgen/tn5250-cli/main/src/tn5250-cli` |
 | Companion | `src/tn5250-cli.sha256` |
-| MSYS2 archive | No checksum. That fact stays on the Git Bash requirement. This file does not own it |
+| MSYS2 archive | No checksum. That fact stays on the Git Bash payload requirement. This file does not own it |
 
 ## Under command line for normal user only
 
@@ -78,7 +78,7 @@ Checksum checks do not raise privilege.
 |----------|------|
 | `docs/requirements/index.md` | Registry |
 | `docs/requirements/requirement-shell-self-management.md` | Install and update (RQ-SHELL-SELF-MANAGEMENT) |
-| `docs/requirements/requirement-windows-git-bash.md` | MSYS2 archive has no checksum (RQ-WINDOWS-GIT-BASH) |
+| `docs/requirements/requirement-windows-git-bash-build-payload.md` | MSYS2 archive has no checksum (RQ-WINDOWS-GIT-BASH-BUILD-PAYLOAD) |
 | `src/tn5250-cli` | Ship unit |
 | `docs/reviews/test-plan.md` | Proof rows |
 
@@ -115,7 +115,8 @@ Proof home: `docs/reviews/test-plan.md`.
 |------|--------|-------|
 | 2026-10-07 | Active 1.0.0 | Companion verify is the mechanism. No digest is published because no channel is published. |
 | 2026-10-07 | Active 1.1.0 | The published channel ships `src/tn5250-cli.sha256` beside `src/tn5250-cli`. |
+| 2026-10-13 | Active 1.1.1 | The MSYS2 archive still has no checksum. That fact points at RQ-WINDOWS-GIT-BASH-BUILD-PAYLOAD. |
 
-**Last Updated**: 2026-10-07
+**Last Updated**: 2026-10-13
 **Owner**: unassigned
 **Alignment**: Registry `docs/requirements/index.md`; **CIAO** (https://github.com/cloudgen/ciao); CIAO-Lite (https://github.com/cloudgen/ciao-lite).

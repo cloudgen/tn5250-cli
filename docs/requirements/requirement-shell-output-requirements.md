@@ -1,6 +1,6 @@
 **file**: docs/requirements/requirement-shell-output-requirements.md
 **ID**: RQ-SHELL-OUTPUT-REQUIREMENTS
-**Status**: Active (Version 1.0.0)
+**Status**: Active (Version 1.0.1)
 **Project**: tn5250-cli
 **Philosophy**: CIAO **v2.10.2** / CIAO-Lite (Caution • Intentional • Anti-fragile • Over-engineered / Over-protect)
 
@@ -10,7 +10,7 @@ This file owns person-facing and machine-facing output for tn5250-cli. Every pro
 
 ### 1.1 Human-facing
 
-**In one sentence:** Messages from tn5250-cli come from one output family, so quiet and JSON mode stay consistent for install and for setup.
+**In one sentence:** Messages from tn5250-cli come from one output family, so quiet and JSON mode stay consistent for install and for build.
 
 | Box | Meaning | Example |
 |-----|---------|---------|
@@ -103,6 +103,7 @@ Proof home: `docs/reviews/test-plan.md`.
 |------|--------|-------|
 | 2026-10-07 | Active 1.0.0 | `out_*` is the only product output family. |
 
-**Last Updated**: 2026-10-07
+| 2026-10-13 | Active 1.0.1 | The payload verb is `build`, not `setup`. Setup and build are different. Menus, help, and next-steps say `build`. |
+**Last Updated**: 2026-10-13
 **Owner**: unassigned
 **Alignment**: Registry `docs/requirements/index.md`; **CIAO** (https://github.com/cloudgen/ciao); CIAO-Lite (https://github.com/cloudgen/ciao-lite).

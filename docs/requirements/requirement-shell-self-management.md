@@ -1,6 +1,6 @@
 **file**: docs/requirements/requirement-shell-self-management.md
 **ID**: RQ-SHELL-SELF-MANAGEMENT
-**Status**: Active (Version 1.2.0)
+**Status**: Active (Version 1.2.1)
 **Project**: tn5250-cli
 **Philosophy**: CIAO **v2.10.2** / CIAO-Lite (Caution • Intentional • Anti-fragile • Over-engineered / Over-protect)
 
@@ -15,7 +15,7 @@ This file owns the Type 0 lifecycle of the tn5250-cli binary: install, self-inst
 | Box | Meaning | Example |
 |-----|---------|---------|
 | You / this login | The person managing this program | `tn5250-cli about` |
-| The other role | The payload build | `tn5250-cli setup` |
+| The other role | The payload build | `tn5250-cli build` |
 | Not this file | Compilers and libraries | `docs/requirements/requirement-domain-tn5250.md` |
 
 | Includes | Excludes |
@@ -55,7 +55,7 @@ This file owns the Type 0 lifecycle of the tn5250-cli binary: install, self-inst
 
 These verbs run as this login.
 
-**This requirement:** install, self-install, version-check, self-update, self-uninstall, and about do not install compiler packages and do not call the sudo wrap. That wrap belongs to `setup` and to `docs/requirements/requirement-shell-sudo-command.md`. Git Bash is not told to use a sudo one-liner. A global install found at uninstall time may warn that removal can need admin privilege.
+**This requirement:** install, self-install, version-check, self-update, self-uninstall, and about do not install compiler packages and do not call the sudo wrap. That wrap belongs to `build` and to `docs/requirements/requirement-shell-sudo-command.md`. Git Bash is not told to use a sudo one-liner. A global install found at uninstall time may warn that removal can need admin privilege.
 
 ## 3. Design Principles (CIAO / CIAO-Lite)
 
@@ -82,7 +82,7 @@ These verbs run as this login.
 | `docs/requirements/requirement-shell-cli-zero-arguments.md` | Empty argv (RQ-SHELL-CLI-ZERO-ARGUMENTS) |
 | `docs/requirements/requirement-shell-automatic-checksum.md` | Companion digest (RQ-SHELL-AUTOMATIC-CHECKSUM) |
 | `docs/requirements/requirement-domain-tn5250.md` | Payload about fields (RQ-DOMAIN-TN5250) |
-| `docs/requirements/requirement-shell-sudo-command.md` | Package install on `setup`, not on these verbs (RQ-SHELL-SUDO-COMMAND) |
+| `docs/requirements/requirement-shell-sudo-command.md` | Package install on `build`, not on these verbs (RQ-SHELL-SUDO-COMMAND) |
 | `src/tn5250-cli` | Ship unit |
 | `docs/reviews/test-plan.md` | Proof rows |
 
@@ -131,6 +131,7 @@ Proof home: `docs/reviews/test-plan.md`.
 | 2026-10-07 | Active 1.1.0 | `self-install` places the CLI the same way as `install`. |
 | 2026-10-07 | Active 1.2.0 | The default channel is the raw URL of `src/tn5250-cli`. |
 
-**Last Updated**: 2026-10-07
+| 2026-10-13 | Active 1.2.1 | The payload verb is `build`, not `setup`. Setup and build are different. Menus, help, and next-steps say `build`. |
+**Last Updated**: 2026-10-13
 **Owner**: unassigned
 **Alignment**: Registry `docs/requirements/index.md`; **CIAO** (https://github.com/cloudgen/ciao); CIAO-Lite (https://github.com/cloudgen/ciao-lite).
