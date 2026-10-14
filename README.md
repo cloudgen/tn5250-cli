@@ -1,6 +1,6 @@
 # tn5250-cli
 
-[![Version](https://img.shields.io/badge/Version-1.2.1-blue?style=flat-square)](https://github.com/cloudgen/tn5250-cli)
+[![Version](https://img.shields.io/badge/Version-1.2.2-blue?style=flat-square)](https://github.com/cloudgen/tn5250-cli)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](./LICENSE.md)
 [![CIAO](https://img.shields.io/badge/Philosophy-CIAO%20(Caution%20%E2%80%A2%20Intentional%20%E2%80%A2%20Anti--fragile%20%E2%80%A2%20Over--engineered)-purple.svg)](https://github.com/cloudgen/ciao)
 [![Stars](https://img.shields.io/github/stars/cloudgen/tn5250-cli?style=flat-square)](https://github.com/cloudgen/tn5250-cli)
@@ -69,7 +69,7 @@ Build asks for the administrator password only when compiler packages are missin
 At a terminal, `tn5250-cli` with no command opens the numbered list. A pipe, `--quiet`, or `--json` places this CLI instead and does not wait.
 
 ```text
-[INFO] **tn5250-cli**(*1.2.1*) — numbered list of live commands
+[INFO] **tn5250-cli**(*1.2.2*) — numbered list of live commands
 This program has no server commands.
 Open a host on the command line: tn5250-cli HOST.
 1. **build**: *Clean, or install the client for this login or for every login*
@@ -80,7 +80,7 @@ Open a host on the command line: tn5250-cli HOST.
 ```
 
 ```text
-[INFO] **tn5250-cli**(*1.2.1*) — build
+[INFO] **tn5250-cli**(*1.2.2*) — build
 Local uses the login prefix. Global uses /usr/local.
 Local and global copy the named client into download/.
 11. **clean**: *Remove the built client and the compile tree*
@@ -92,14 +92,14 @@ Local and global copy the named client into download/.
 On Termux and on Windows that board omits row 13. It prints `Global is not available on Termux.` or `Global is not available on Windows.`
 
 ```text
-[INFO] **tn5250-cli**(*1.2.1*) — languages
+[INFO] **tn5250-cli**(*1.2.2*) — languages
 The list is English. That is the only language.
 71. **en**: *English*
 0. Back
 ```
 
 ```text
-[INFO] **tn5250-cli**(*1.2.1*) — self-management
+[INFO] **tn5250-cli**(*1.2.2*) — self-management
 This list does not place a payload. Next: tn5250-cli setup.
 82. **version**: *Show current version*
 83. **about**: *Show detailed diagnostics*
@@ -142,11 +142,11 @@ tn5250-cli menu
 
 `tn5250-cli setup -h` prints the download channel and does not fetch. `tn5250-cli build -h` prints the build options and does not compile.
 
-After a successful local build, the installer is copied to `~/.local/bin/tn5250-cli` unless you passed `--prefix`. The committed client remains `download/tn5250-amd64-glibc-2.34.1.2.0` from product version 1.2.0. This release does not replace that file.
+After a successful local build, the installer is copied to `~/.local/bin/tn5250-cli` unless you passed `--prefix`. The committed clients are `download/tn5250-amd64-glibc-2.34.1.2.0` and `download/tn5250-arm64-bionic-30.1.2.2`. The glibc file is from product version 1.2.0. This Termux build publishes the bionic file and does not replace the glibc file.
 
 ## Version
 
-Product version **1.2.1** is the `VERSION` line in `src/tn5250-cli`.
+Product version **1.2.2** is the `VERSION` line in `src/tn5250-cli`.
 
 ## License
 

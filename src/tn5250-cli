@@ -53,8 +53,8 @@ APP_NAME="tn5250-cli"
 : "${SHORT_DESCRIPTION:=${APP_DESC}}"
 : "${DESCRIPTION:=POSIX /bin/sh program: install, version-check, self-update, self-uninstall, and about, plus setup, build, and host launch for the TN5250 client. A terminal with no command opens the numbered list. A pipe, --quiet, or --json places this CLI.}"
 # Product version SSOT (semver). Extractors use: grep '^VERSION="'
-VERSION="1.2.1"
-: "${VERSION:=1.2.1}"
+VERSION="1.2.2"
+: "${VERSION:=1.2.2}"
 
 # Runtime flags (safe defaults)
 : "${QUIET:=0}"
@@ -388,7 +388,7 @@ out_empty_line() { out_text plain ""; }
 
 util_app_ident() {
     : "${APP_NAME:=tn5250-cli}"
-    : "${VERSION:=1.2.1}"
+    : "${VERSION:=1.2.2}"
     : "${TTY:=0}"
     if [ "${TTY}" -eq 1 ]; then
         printf '\033[1m%s\033[0m(\033[3m%s\033[0m)' "${APP_NAME}" "${VERSION}"
@@ -3211,11 +3211,98 @@ EOF
     printf '%s\n' "${_best}"
 }
 
+# Two hex digits to a decimal integer. dash rejects a 16# prefix.
+tn5250_hex_byte() {
+    local _h=$1 _hi="" _lo="" _hi_n=0 _lo_n=0
+    case "${_h}" in
+        [0-9a-fA-F][0-9a-fA-F]) ;;
+        *) return 1 ;;
+    esac
+    _hi=${_h%?}
+    _lo=${_h#?}
+    case "${_hi}" in
+        [0-9]) _hi_n=${_hi} ;;
+        a|A) _hi_n=10 ;;
+        b|B) _hi_n=11 ;;
+        c|C) _hi_n=12 ;;
+        d|D) _hi_n=13 ;;
+        e|E) _hi_n=14 ;;
+        f|F) _hi_n=15 ;;
+        *) return 1 ;;
+    esac
+    case "${_lo}" in
+        [0-9]) _lo_n=${_lo} ;;
+        a|A) _lo_n=10 ;;
+        b|B) _lo_n=11 ;;
+        c|C) _lo_n=12 ;;
+        d|D) _lo_n=13 ;;
+        e|E) _lo_n=14 ;;
+        f|F) _lo_n=15 ;;
+        *) return 1 ;;
+    esac
+    printf '%s\n' $((_hi_n * 16 + _lo_n))
+}
+
+# The Android linker is /system/bin/linker64 or /system/bin/linker.
+# Those paths do not contain android or bionic.
+tn5250_binary_is_bionic() {
+    local _bin=$1 _interp="" _text=""
+    if ! command -v readelf >/dev/null 2>&1; then
+        return 1
+    fi
+    _interp=$(readelf -l "${_bin}" 2>/dev/null | grep -F 'Requesting program interpreter' || true)
+    case "${_interp}" in
+        *linker64*|*bin/linker]*)
+            return 0
+            ;;
+    esac
+    _text=$(readelf -S "${_bin}" 2>/dev/null || true)
+    case "${_text}" in
+        *.note.android.ident*)
+            return 0
+            ;;
+    esac
+    return 1
+}
+
+# First little-endian integer in the Android ident note. Not the phone SDK.
+tn5250_binary_bionic_floor() {
+    local _bin=$1 _text="" _row="" _grab=0 _line="" _pair="" _b0="" _b1="" _lo=0 _hi=0
+    command -v readelf >/dev/null 2>&1 || return 1
+    _text=$(readelf -n "${_bin}" 2>/dev/null || true)
+    while IFS= read -r _row || [ -n "${_row}" ]; do
+        case "${_row}" in
+            *Android*)
+                _grab=1
+                ;;
+            *'description data:'*)
+                if [ "${_grab}" -eq 1 ]; then
+                    _line=${_row}
+                    break
+                fi
+                ;;
+        esac
+    done <<EOF
+${_text}
+EOF
+    [ -n "${_line}" ] || return 1
+    _pair=$(printf '%s\n' "${_line#*description data:}" | awk '{ print $1, $2 }')
+    case "${_pair}" in
+        *\ *) ;;
+        *) return 1 ;;
+    esac
+    _b0=${_pair%% *}
+    _b1=${_pair#* }
+    _lo=$(tn5250_hex_byte "${_b0}") || return 1
+    _hi=$(tn5250_hex_byte "${_b1}") || return 1
+    printf '%s\n' $((_lo + _hi * 256))
+}
+
 # Prints tn5250-<arch>-<clib>-<clib-version>.<app-version>[.exe]
 tn5250_published_filename() {
     local _bin=$1
     local _arch="" _clib="" _ver="" _exe=0 _interp=""
-    : "${VERSION:=1.2.1}"
+    : "${VERSION:=1.2.2}"
     _arch=$(tn5250_payload_arch) || return 1
     case "${_bin}" in
         *.exe)
@@ -3233,13 +3320,14 @@ tn5250_published_filename() {
                 _clib=musl
                 _ver=$(tn5250_musl_or_uclibc_version) || return 1
                 ;;
-            *android*|*bionic*)
-                _clib=bionic
-                _ver=$(tn5250_bionic_compiler_floor) || return 1
-                ;;
             *)
-                _clib=glibc
-                _ver=$(tn5250_binary_glibc_floor "${_bin}") || return 1
+                if tn5250_binary_is_bionic "${_bin}" || [ "$(tn5250_detect_platform)" = "termux" ]; then
+                    _clib=bionic
+                    _ver=$(tn5250_binary_bionic_floor "${_bin}") || _ver=$(tn5250_bionic_compiler_floor) || return 1
+                else
+                    _clib=glibc
+                    _ver=$(tn5250_binary_glibc_floor "${_bin}") || return 1
+                fi
                 ;;
         esac
     fi
@@ -3290,6 +3378,9 @@ tn5250_publish_installed_client() {
         if [ "${_plat}" = "macos" ]; then
             out_info "macOS has no published payload name. The client is installed. download/ was not changed."
             return 0
+        fi
+        if [ "${_plat}" = "termux" ] || tn5250_binary_is_bionic "${_src}"; then
+            out_die "This build has no published payload name. The client is installed. Next: read the Android API from the file note, or from clang -dumpmachine."
         fi
         out_die "This build has no published payload name. The client is installed. Next: read the GLIBC_ symbols with objdump or readelf."
     fi
@@ -4904,7 +4995,7 @@ app_about() {
     : "${QUIET:=0}"
     : "${APP_NAME:=tn5250-cli}"
     # Version comes from global SSOT (VERSION="…" hard-assign near top); default only if unset
-    : "${VERSION:=1.2.1}"
+    : "${VERSION:=1.2.2}"
     : "${GLOBAL_BIN:=/usr/local/bin}"
     : "${USER_BIN:=${HOME}/.local/bin}"
     : "${SCRIPT_URL:=}"
@@ -5053,7 +5144,7 @@ app_about() {
 
 app_version() {
     : "${APP_NAME:=tn5250-cli}"
-    : "${VERSION:=1.2.1}"
+    : "${VERSION:=1.2.2}"
     : "${JSON:=0}"
     if [ "${JSON}" -eq 1 ]; then
         # Same machine contract as historical app_main inline path

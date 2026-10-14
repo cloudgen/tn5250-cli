@@ -22,13 +22,19 @@ fi
 ABOUT=$(${CLI} about --json 2>/dev/null) || ABOUT=""
 CLIB=$(printf '%s\n' "${ABOUT}" | sed -n 's/.*"payload_clib":"\([^"]*\)".*/\1/p')
 case "${CLIB}" in
-    glibc-*) ok "about clib ${CLIB}" ;;
+    bionic-*|glibc-*|musl-*|uclibc-*|ucrt-*) ok "about clib ${CLIB}" ;;
     *) bad "about clib ${CLIB}" ;;
 esac
+if [ -n "${TERMUX_VERSION:-}" ]; then
+    case "${CLIB}" in
+        bionic-30) ok "termux clib ${CLIB}" ;;
+        *) bad "termux clib ${CLIB}" ;;
+    esac
+fi
 
 VER=$(${CLI} version 2>/dev/null) || VER=""
 case "${VER}" in
-    *"version 1.2.1"*) ok "version 1.2.1" ;;
+    *"version 1.2.2"*) ok "version 1.2.2" ;;
     *) bad "version ${VER}" ;;
 esac
 
@@ -54,23 +60,26 @@ case "${HELP}" in
     *) bad "help not available" ;;
 esac
 
-if ${CLI} build nosuch >/tmp/tn5250-build-nosuch.out 2>/tmp/tn5250-build-nosuch.err; then
+NOSUCH=$(mktemp -d) || exit 1
+if ${CLI} build nosuch >"${NOSUCH}/out" 2>"${NOSUCH}/err"; then
     bad "build nosuch exited 0"
 else
-    ERR=$(cat /tmp/tn5250-build-nosuch.err /tmp/tn5250-build-nosuch.out 2>/dev/null)
+    ERR=$(cat "${NOSUCH}/err" "${NOSUCH}/out" 2>/dev/null)
     case "${ERR}" in
         *"build --help"*) ok "build nosuch names help" ;;
         *) bad "build nosuch text" ;;
     esac
 fi
-/bin/rm -f /tmp/tn5250-build-nosuch.out /tmp/tn5250-build-nosuch.err
+/bin/rm -rf "${NOSUCH}"
 
 python3 - "${CLI}" <<'PY'
 import os, pty, select, sys
 cli = sys.argv[1]
 pid, fd = pty.fork()
 if pid == 0:
-    os.execv(cli, [cli])
+    env = os.environ.copy()
+    env.pop("TERMUX_VERSION", None)
+    os.execve(cli, [cli], env)
 buf = b""
 want = [
     b"11",
@@ -324,6 +333,42 @@ if [ "${HIGH}" = "2.34" ]; then
     ok "highest symbol GLIBC_${HIGH}"
 else
     bad "highest symbol GLIBC_${HIGH}"
+fi
+
+BNAME="tn5250-arm64-bionic-30.1.2.2"
+BBIN="${ROOT}/download/${BNAME}"
+if [ -x "${BBIN}" ]; then
+    ok "bionic download executable"
+else
+    bad "bionic download executable"
+fi
+BSUM=$(sha256sum "${BBIN}" | awk '{ print $1 }')
+BFILESUM=$(tr -d '\r\n' < "${BBIN}.sha256")
+if [ "${BSUM}" = "${BFILESUM}" ]; then
+    ok "bionic download sha256"
+else
+    bad "bionic download sha256"
+fi
+if grep -qx "${BNAME}" "${ROOT}/download/index.txt"; then
+    ok "bionic download index"
+else
+    bad "bionic download index"
+fi
+BINTERP=$(readelf -l "${BBIN}" 2>/dev/null | grep -F 'Requesting program interpreter' || true)
+case "${BINTERP}" in
+    *linker64*) ok "bionic interpreter" ;;
+    *) bad "bionic interpreter" ;;
+esac
+if readelf -n "${BBIN}" 2>/dev/null | grep -F 'description data:' | grep -q '1e 00 00 00'; then
+    ok "bionic note api 30"
+else
+    bad "bionic note api 30"
+fi
+BHIGH=$(objdump -T "${BBIN}" 2>/dev/null | grep -oE 'GLIBC_[0-9]+\.[0-9]+' | head -n 1 || true)
+if [ -z "${BHIGH}" ]; then
+    ok "bionic has no GLIBC_ symbol"
+else
+    bad "bionic has no GLIBC_ symbol"
 fi
 
 if [ "${FAIL}" -ne 0 ]; then

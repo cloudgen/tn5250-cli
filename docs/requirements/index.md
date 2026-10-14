@@ -12,7 +12,7 @@ Windows Git Bash CLI coding is `requirement-windows-git-bash-cli-coding.md`. The
 | RQ-SHELL-CLI-INTERFACE | Command names for tn5250-cli | shell | Active 1.10.1 | `docs/requirements/requirement-shell-cli-interface.md` | 2026-10-14 |
 | RQ-SHELL-CLI-ZERO-ARGUMENTS | No command: a pipe places the CLI, a terminal opens the list | shell | Active 1.2.1 | `docs/requirements/requirement-shell-cli-zero-arguments.md` | 2026-10-13 |
 | RQ-SHELL-CLI-DEFAULT-INTERACTION | Numbered list for a terminal with no command | shell | Active 1.3.1 | `docs/requirements/requirement-shell-cli-default-interaction.md` | 2026-10-14 |
-| RQ-SHELL-CLI-LANGUAGE | English language board on front row 7 | shell | Active 1.1.1 | `docs/requirements/requirement-shell-cli-language.md` | 2026-10-14 |
+| RQ-SHELL-CLI-LANGUAGE | English language board on front row 7 | shell | Active 1.1.2 | `docs/requirements/requirement-shell-cli-language.md` | 2026-10-14 |
 | RQ-SHELL-SELF-MANAGEMENT | Install, self-install, version-check, self-update, self-uninstall, and about | shell | Active 1.2.1 | `docs/requirements/requirement-shell-self-management.md` | 2026-10-13 |
 | RQ-SHELL-OUTPUT-REQUIREMENTS | Person-facing and machine-facing output | shell | Active 1.0.1 | `docs/requirements/requirement-shell-output-requirements.md` | 2026-10-13 |
 | RQ-SHELL-AUTOMATIC-CHECKSUM | Companion digest for the published channel | shell | Active 1.1.1 | `docs/requirements/requirement-shell-automatic-checksum.md` | 2026-10-13 |
@@ -21,7 +21,7 @@ Windows Git Bash CLI coding is `requirement-windows-git-bash-cli-coding.md`. The
 | RQ-SHELL-IDEMPOTENCY | A second successful install is a no-op | shell | Active 1.1.2 | `docs/requirements/requirement-shell-idempotency.md` | 2026-10-13 |
 | RQ-SHELL-INTERACTIVE-VS-NONINTERACTIVE | A pipe does not wait, and build does not interview | shell | Active 1.1.2 | `docs/requirements/requirement-shell-interactive-vs-noninteractive.md` | 2026-10-13 |
 | RQ-DOMAIN-TN5250 | TN5250 build, setup catalog, and host launch | domain | Active 1.7.1 | `docs/requirements/requirement-domain-tn5250.md` | 2026-10-14 |
-| RQ-PAYLOAD-FILENAME | Published payload filename, the build copy, and the setup download | domain | Active 1.2.1 | `docs/requirements/requirement-payload-filename.md` | 2026-10-14 |
+| RQ-PAYLOAD-FILENAME | Published payload filename, the build copy, and the setup download | domain | Active 1.2.2 | `docs/requirements/requirement-payload-filename.md` | 2026-10-14 |
 | RQ-WINDOWS-GIT-BASH-CLI-CODING | Windows Git Bash CLI coding: detect, cmd.exe isolation, installer path, and launch | shell | Active 1.0.6 | `docs/requirements/requirement-windows-git-bash-cli-coding.md` | 2026-10-13 |
 | RQ-WINDOWS-GIT-BASH-BUILD-PAYLOAD | Windows Git Bash payload compilation, link, build, and UCRT64 package table | platform | Active 1.0.3 | `docs/requirements/requirement-windows-git-bash-build-payload.md` | 2026-10-14 |
 | RQ-DEBIAN-CLI-CODING | Debian CLI coding: detect, apt through the sudo wrap, installer path, and launch | shell | Active 1.0.4 | `docs/requirements/requirement-debian-cli-coding.md` | 2026-10-13 |

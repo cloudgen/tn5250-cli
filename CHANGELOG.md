@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.2.2] - 2026-10-14
+
+### Fixed
+
+- `tn5250-cli build local` on Termux publishes `download/tn5250-arm64-bionic-30.1.2.2`. The Android linker is `/system/bin/linker64`. That path does not contain `android` or `bionic`, so the publish step read `GLIBC_` symbols, found none, and stopped after the client was already installed. A bionic file is named from the Android ident note. On this phone that note is API 30. The glibc file `download/tn5250-amd64-glibc-2.34.1.2.0` stays.
+
 ## [1.2.1] - 2026-10-14
 
 ### Changed
