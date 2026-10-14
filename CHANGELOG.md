@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-10-14
+
+### Changed
+
+- On Termux and on Windows, `build global` is not available. The build board omits row 13 and prints that sentence. `tn5250-cli build global` stops and names `tn5250-cli build local`.
+- The committed client stays `download/tn5250-amd64-glibc-2.34.1.2.0`. This release does not publish a new client file.
+
 ## [1.2.0] - 2026-10-14
 
 ### Added

@@ -1,6 +1,6 @@
 # tn5250-cli
 
-[![Version](https://img.shields.io/badge/Version-1.2.0-blue?style=flat-square)](https://github.com/cloudgen/tn5250-cli)
+[![Version](https://img.shields.io/badge/Version-1.2.1-blue?style=flat-square)](https://github.com/cloudgen/tn5250-cli)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](./LICENSE.md)
 [![CIAO](https://img.shields.io/badge/Philosophy-CIAO%20(Caution%20%E2%80%A2%20Intentional%20%E2%80%A2%20Anti--fragile%20%E2%80%A2%20Over--engineered)-purple.svg)](https://github.com/cloudgen/ciao)
 [![Stars](https://img.shields.io/github/stars/cloudgen/tn5250-cli?style=flat-square)](https://github.com/cloudgen/tn5250-cli)
@@ -20,7 +20,7 @@ This repository is the installer. Its command name stays `tn5250-cli`, so the `t
 - One build command for your user and for a sudo launch.
 - Windows Git Bash builds the Windows programs.
 - Debian 12 and 13, Ubuntu 22.04, 24.04, and 26.04, other Linux, Alpine, Fedora, Red Hat Enterprise Linux, Termux, and macOS build the curses program.
-- The built client is copied under the install prefix. Local defaults to `~/.local`. Global defaults to `/usr/local`.
+- The built client is copied under the install prefix. Local defaults to `~/.local`. Global defaults to `/usr/local`. On Termux and on Windows, global is not available.
 - Local and global also copy that client into `download/` under the published name.
 - `help` and `version` print text and do not compile.
 
@@ -69,7 +69,7 @@ Build asks for the administrator password only when compiler packages are missin
 At a terminal, `tn5250-cli` with no command opens the numbered list. A pipe, `--quiet`, or `--json` places this CLI instead and does not wait.
 
 ```text
-[INFO] **tn5250-cli**(*1.2.0*) — numbered list of live commands
+[INFO] **tn5250-cli**(*1.2.1*) — numbered list of live commands
 This program has no server commands.
 Open a host on the command line: tn5250-cli HOST.
 1. **build**: *Clean, or install the client for this login or for every login*
@@ -80,7 +80,7 @@ Open a host on the command line: tn5250-cli HOST.
 ```
 
 ```text
-[INFO] **tn5250-cli**(*1.2.0*) — build
+[INFO] **tn5250-cli**(*1.2.1*) — build
 Local uses the login prefix. Global uses /usr/local.
 Local and global copy the named client into download/.
 11. **clean**: *Remove the built client and the compile tree*
@@ -89,15 +89,17 @@ Local and global copy the named client into download/.
 0. Back
 ```
 
+On Termux and on Windows that board omits row 13. It prints `Global is not available on Termux.` or `Global is not available on Windows.`
+
 ```text
-[INFO] **tn5250-cli**(*1.2.0*) — languages
+[INFO] **tn5250-cli**(*1.2.1*) — languages
 The list is English. That is the only language.
 71. **en**: *English*
 0. Back
 ```
 
 ```text
-[INFO] **tn5250-cli**(*1.2.0*) — self-management
+[INFO] **tn5250-cli**(*1.2.1*) — self-management
 This list does not place a payload. Next: tn5250-cli setup.
 82. **version**: *Show current version*
 83. **about**: *Show detailed diagnostics*
@@ -134,17 +136,17 @@ tn5250-cli myibmi.example.com
 tn5250-cli menu
 ```
 
-`setup` downloads the newest published client for this machine's architecture and C library and saves it as `~/.local/bin/tn5250`. `build local` and `build global` compile, then copy that client into `download/` under the published name. They do not save the long name onto `PATH`. `build clean` removes the built client and the compile tree.
+`setup` downloads the newest published client for this machine's architecture and C library and saves it as `~/.local/bin/tn5250`. `build local` and `build global` compile, then copy that client into `download/` under the published name. They do not save the long name onto `PATH`. `build clean` removes the built client and the compile tree. On Termux and on Windows, `build global` is not available. The build board omits row 13 and says so. `tn5250-cli build global` stops and names `tn5250-cli build local`.
 
-`menu` and `main` open the numbered list. Row **1** opens the build board. Row **12** is local. Row **13** is global. Row **2** runs `setup`. Row **7** is languages. They are not host names. A host name that does not resolve prints the client's session error. It does not end in a segmentation fault.
+`menu` and `main` open the numbered list. Row **1** opens the build board. Row **12** is local. Row **13** is global, except on Termux and on Windows, where that row is omitted. Row **2** runs `setup`. Row **7** is languages. They are not host names. A host name that does not resolve prints the client's session error. It does not end in a segmentation fault.
 
 `tn5250-cli setup -h` prints the download channel and does not fetch. `tn5250-cli build -h` prints the build options and does not compile.
 
-After a successful local build, the installer is copied to `~/.local/bin/tn5250-cli` unless you passed `--prefix`. The published client for this release is `download/tn5250-amd64-glibc-2.34.1.2.0`.
+After a successful local build, the installer is copied to `~/.local/bin/tn5250-cli` unless you passed `--prefix`. The committed client remains `download/tn5250-amd64-glibc-2.34.1.2.0` from product version 1.2.0. This release does not replace that file.
 
 ## Version
 
-Product version **1.2.0** is the `VERSION` line in `src/tn5250-cli`.
+Product version **1.2.1** is the `VERSION` line in `src/tn5250-cli`.
 
 ## License
 

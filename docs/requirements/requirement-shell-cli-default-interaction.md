@@ -1,6 +1,6 @@
 **file**: docs/requirements/requirement-shell-cli-default-interaction.md
 **ID**: RQ-SHELL-CLI-DEFAULT-INTERACTION
-**Status**: Active (Version 1.3.0)
+**Status**: Active (Version 1.3.1)
 **Project**: tn5250-cli
 **Philosophy**: CIAO **v2.10.2** / CIAO-Lite (Caution • Intentional • Anti-fragile • Over-engineered / Over-protect)
 
@@ -31,7 +31,7 @@ This file owns the numbered list for tn5250-cli. A person at a terminal who type
 | You do… | What it means | What you type |
 |---------|---------------|---------------|
 | Open the list | Build is 1. Setup is 2. Languages is 7. Self-management is 8. Exit is 9 | `tn5250-cli` |
-| Open build | Clean is 11. Local is 12. Global is 13. Back is 0 | `1` |
+| Open build | Clean is 11. Local is 12. Global is 13, except on Termux and Windows, where that row is omitted. Back is 0 | `1` |
 | Download a client from the list | That row runs setup and does not compile | `2` |
 | Place the CLI from the list | That row is under 8 | `87` |
 
@@ -40,7 +40,7 @@ This file owns the numbered list for tn5250-cli. A person at a terminal who type
 1. This product **claims** the numbered list. A zero-argument requirement exists. It defers a terminal with no command, when quiet and JSON are off, to this list. A pipe, `--quiet`, or `--json` with no command stays self-install on `docs/requirements/requirement-shell-cli-zero-arguments.md`.
 2. `menu` and `main` **MUST** open this list on a terminal. `--json` on a terminal **MUST** be ignored while the list is drawn. Off a terminal, `menu` and `main` **MUST** stop with `menu needs a terminal. Next: tn5250-cli help` and exit 1. In JSON mode that stop **MUST** be a JSON error.
 3. The front board **MUST** be row **1** `build`, row **2** `setup`, row **7** `languages`, row **8** `self-management`, and row **9** Exit. This product has no server commands, so row **2** is not a server category. Row **1** and a typed `build` with no extra arguments, on a terminal, with JSON and quiet off, **MUST** open the build board. They **MUST NOT** compile on that open. Off a terminal, a typed `build` with no scope **MUST** install local and **MUST NOT** wait for a menu. Any build flag **MUST** skip the build board and **MUST** default the scope to local when no scope token was given. Row **2** and a typed `setup` **MUST** run `tn5250_payload_setup` with no extra arguments. They **MUST NOT** run `tn5250_setup`. Row **7** and a typed `languages` **MUST** open the language board. The sentences on the boards are owned by `docs/requirements/requirement-shell-cli-language.md`. After a verb returns, the front board **MUST** be shown again. The front board **MUST NOT** list `help`, `menu`, `main`, `install`, `self-install`, `version`, `about`, `version-check`, `self-update`, or `self-uninstall`. Self-management **MUST** stay row **8**. Languages **MUST NOT** move onto row **8**.
-3b. The build board **MUST** be row **11** `clean`, row **12** `local`, row **13** `global`, and **0** Back. **11** and `clean` **MUST** run `tn5250_setup clean`. **12** and `local` **MUST** run `tn5250_setup local`. **13** and `global` **MUST** run `tn5250_setup global`. A leaf **MUST** return so the front board is shown again. The build board **MUST NOT** stay open after a leaf. An empty line, `0`, `q`, `back`, `exit`, or `quit` on the build board **MUST** return to the front board without compiling. A wrong token **MUST** reprint the build board.
+3b. On Debian, Ubuntu, other Linux, Alpine, Fedora, Red Hat Enterprise Linux, and macOS, the build board **MUST** be row **11** `clean`, row **12** `local`, row **13** `global`, and **0** Back. **11** and `clean` **MUST** run `tn5250_setup clean`. **12** and `local` **MUST** run `tn5250_setup local`. **13** and `global` **MUST** run `tn5250_setup global`. On Termux and on Windows, row **13** **MUST** be omitted. The integer **13** stays reserved. Before the numbers, that board **MUST** print the menu-hidden message in `docs/requirements/requirement-shell-cli-language.md`. **13** and `global` on that board **MUST** print `${choice} is not on this list.` and **MUST** reprint the board. They **MUST NOT** compile or clean, and they **MUST NOT** exit. A leaf **MUST** return so the front board is shown again. The build board **MUST NOT** stay open after a leaf. An empty line, `0`, `q`, `back`, `exit`, or `quit` on the build board **MUST** return to the front board without compiling. A wrong token **MUST** reprint the build board.
 4. Before those numbers, the front board **MUST** print `This program has no server commands.` and `Open a host on the command line: tn5250-cli HOST.`
 5. Row **8** **MUST** open the self-management list. That list **MUST** be **82** `version`, **83** `about`, **84** `version-check`, **85** `self-update`, **86** `self-uninstall`, **87** `self-install`, and **0** Back. **81** **MUST NOT** be printed. Before the numbers, that list **MUST** print `This list does not place a payload. Next: tn5250-cli setup.`
 6. On the self-management list, row **82** and a typed `version` **MUST** run `about`. A typed `install` **MUST** run the same place as `self-install`. Argv `tn5250-cli version` stays the thin version line.
@@ -67,7 +67,7 @@ This file owns the numbered list for tn5250-cli. A person at a terminal who type
 | 1 | — | build | Clean, or install the client for this login or for every login | the build board |
 | 11 | 1 | clean | Remove the built client and the compile tree | `build clean` |
 | 12 | 1 | local | Build install (local) | `build local` |
-| 13 | 1 | global | Build install (global) | `build global` |
+| 13 | 1 | global | Build install (global) | `build global`. Omitted on Termux and Windows. The integer stays reserved |
 | 0 | 1 | Back | — | the front board |
 | 2 | — | setup | Download the newest published tn5250 for this machine | `setup` (`tn5250_payload_setup`) |
 | 7 | — | languages | Choose the language of this list | the language board |
@@ -109,8 +109,12 @@ app_cmd_menu_build() {
                 return 0
                 ;;
             13|global)
-                tn5250_setup global
-                return 0
+                if [ -n "$(tn5250_global_place)" ]; then
+                    out_error "${_choice} is not on this list."
+                else
+                    tn5250_setup global
+                    return 0
+                fi
                 ;;
             *)
                 out_error "${_choice} is not on this list."
@@ -124,7 +128,7 @@ app_cmd_menu_build() {
 
 The list does not raise privilege.
 
-**This requirement:** rows 2, 7, 8, and 82 through 87 do not offer sudo, apt, dnf, or Termux pkg. Row 2 downloads. Row 1 opens the build board. Rows 12 and 13 run the build verb. A missing compiler package may ask for the administrator password inside that verb. A global place into a prefix this login cannot write may use the same wrap after the compile. That ask is owned by `docs/requirements/requirement-shell-sudo-command.md`.
+**This requirement:** rows 2, 7, 8, and 82 through 87 do not offer sudo, apt, dnf, or Termux pkg. Row 2 downloads. Row 1 opens the build board. Row 12 runs the build verb. Row 13 runs it where global is available. On Termux and Windows, row 13 is omitted. A missing compiler package may ask for the administrator password inside that verb. A global place into a prefix this login cannot write may use the same wrap after the compile. That ask is owned by `docs/requirements/requirement-shell-sudo-command.md`.
 
 ## 3. Design Principles (CIAO / CIAO-Lite)
 
@@ -140,7 +144,7 @@ The list does not raise privilege.
 - Open this list from a pipe, from `--quiet`, or from `--json` with no command.
 - Put `help` or `menu` on the list.
 - Put the token `build` on any list except front-board row 1. The build board's children are `clean`, `local`, and `global`.
-- Number the build board from 1. Its children are 11, 12, and 13.
+- Number the build board from 1. Its children are 11, 12, and 13. On Termux and Windows, 13 is omitted and is not renumbered.
 - Put `setup` on row 1, on row 8, or on row 81.
 - Move self-management off row 8, or put languages on row 8.
 - Exit the process because a number is not on the list.
@@ -202,6 +206,7 @@ Proof home: `docs/reviews/test-plan.md`.
 | 2026-10-13 | Active 1.1.1 | The payload verb is `build`, not `setup`. Setup and build are different. Menus, help, and next-steps say `build`. |
 | 2026-10-13 | Active 1.2.0 | Front row 2 is `setup` and downloads. Front row 7 is `languages`. Row 8 stays self-management. The self-management hint names `setup`. |
 | 2026-10-14 | Active 1.3.0 | Row 1 opens the build board. Children are 11 clean, 12 local, and 13 global. A leaf returns to the front board. Off a terminal, bare `build` installs local. |
+| 2026-10-14 | Active 1.3.1 | On Termux and Windows, row 13 is omitted. The board prints the menu-hidden message before the numbers. Choosing 13 or `global` there stays on the board. |
 
 **Last Updated**: 2026-10-14
 **Owner**: unassigned

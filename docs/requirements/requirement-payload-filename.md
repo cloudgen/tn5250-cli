@@ -1,6 +1,6 @@
 **file**: docs/requirements/requirement-payload-filename.md
 **ID**: RQ-PAYLOAD-FILENAME
-**Status**: Active (Version 1.2.0)
+**Status**: Active (Version 1.2.1)
 **Project**: tn5250-cli
 **Philosophy**: CIAO **v2.10.2** / CIAO-Lite (Caution • Intentional • Anti-fragile • Over-engineered / Over-protect)
 
@@ -39,7 +39,7 @@ Compile, link, package names, and the copy into `${PREFIX}/opt/tn5250` stay on t
 
 ## 2. Core Rules / Requirements (Mandatory)
 
-1. This file is the only owner of the published payload filename, of the copy into `download/`, and of the `setup` download. Another requirement **MUST NOT** keep a second copy of the grammar. Platform payload requirements own compilation, link, and the copy into `${PREFIX}/opt/tn5250`. This file **MUST NOT** restate those. `build` **MUST NOT** be replaced by a download. `build` **MUST NOT** copy a published file into `~/.local/bin`. After a successful `build local` or `build global`, including when that client is already installed, `build` **MUST** copy the installed client into `download/` under the published name, write the sibling digest, and list the name in `download/index.txt`. The long name **MUST NOT** be saved onto `PATH`. `setup` remains the download. `build clean` **MUST NOT** remove `download/`.
+1. This file is the only owner of the published payload filename, of the copy into `download/`, and of the `setup` download. Another requirement **MUST NOT** keep a second copy of the grammar. Platform payload requirements own compilation, link, and the copy into `${PREFIX}/opt/tn5250`. This file **MUST NOT** restate those. `build` **MUST NOT** be replaced by a download. `build` **MUST NOT** copy a published file into `~/.local/bin`. After a successful `build local` or `build global`, including when that client is already installed, `build` **MUST** copy the installed client into `download/` under the published name, write the sibling digest, and list the name in `download/index.txt`. On Termux and on Windows, `build global` does not run, so that scope does not copy. The refusal is owned by `docs/requirements/requirement-domain-tn5250.md`. The long name **MUST NOT** be saved onto `PATH`. `setup` remains the download. `build clean` **MUST NOT** remove `download/`.
 2. A published payload file **MUST** live in `download/` at the repository root. `download/` **MUST NOT** be listed in `.gitignore`. These files **MUST NOT** be placed in `bin/`, `dist/`, `build/`, or `out/`.
 3. `.gitignore` ignores `*.exe`. It **MUST** also contain `!download/*.exe` and `!download/*.exe.sha256`, or a Windows payload would stay untracked. A Linux or other non-Windows payload **MUST NOT** use a `.exe` suffix.
 4. A non-Windows payload filename **MUST** be `tn5250-<arch>-<clib>-<clib-version>.<app-version>`. A Windows payload filename **MUST** be that name plus `.exe`. The app name, arch, and clib are separated by `-`. The clib-version and the app-version are dotted numbers joined by one extra dot. No field may add `.bin`, a compression suffix, a date, the upstream tag, the upstream commit, or `TERMUX_VERSION`.
@@ -99,7 +99,7 @@ Host key, printed as `arch clib clibver mode`:
 | Directory | `download/` |
 | Linux shape | `tn5250-<arch>-<clib>-<clib-version>.<app-version>` |
 | Windows shape | that name plus `.exe` |
-| App version now | `1.2.0` |
+| App version now | `1.2.1` |
 | Channel | `https://raw.githubusercontent.com/cloudgen/tn5250-cli/main/download/<filename>` |
 | Override | `TN5250_PAYLOAD_BASE` |
 | Index | `download/index.txt` |
@@ -220,6 +220,7 @@ Proof home: `docs/reviews/test-plan.md`.
 | 2026-10-13 | Active 1.0.1 | Termux is `bionic`. This host's name is `tn5250-arm64-bionic-30`: arch `arm64`, API floor 30 from clang, not the phone SDK 35. macOS still has no token. |
 | 2026-10-13 | Active 1.1.0 | The name gains `.<app-version>`. `setup` downloads the newest fitting file from the raw usercontent channel and saves `~/.local/bin/tn5250`. `about` shows arch and `<clib>-<clib-version>`. `TERMUX_VERSION` is shown and is not part of the name. |
 | 2026-10-14 | Active 1.2.0 | `build local` and `build global` copy the installed client into `download/` under the published name, with a sibling digest and an index line. The copy keeps the client's dynamic libraries. The glibc number stays the highest `GLIBC_` symbol. `/bin/sh` digit negation is `[!0-9]`. The committed file is `tn5250-amd64-glibc-2.34.1.2.0`. |
+| 2026-10-14 | Active 1.2.1 | On Termux and Windows, `build global` does not run, so that scope does not copy into `download/`. The ship unit version is 1.2.1. The committed file stays `download/tn5250-amd64-glibc-2.34.1.2.0`. |
 
 **Last Updated**: 2026-10-14
 **Owner**: unassigned

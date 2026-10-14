@@ -1,6 +1,6 @@
 **file**: docs/requirements/requirement-windows-git-bash-build-payload.md
 **ID**: RQ-WINDOWS-GIT-BASH-BUILD-PAYLOAD
-**Status**: Active (Version 1.0.2)
+**Status**: Active (Version 1.0.3)
 **Project**: tn5250-cli
 **Philosophy**: CIAO **v2.10.2** / CIAO-Lite (Caution • Intentional • Anti-fragile • Over-engineered / Over-protect)
 
@@ -12,7 +12,7 @@ How the ship unit detects Git Bash, starts MSYS2 through `cmd.exe`, copies `tn52
 
 ### 1.1 Human-facing
 
-**In one sentence:** In Git Bash, build compiles three Windows GUI programs with UCRT64 CMake and leaves them under `~/.local/opt/tn5250`, not in `~/.local/bin`.
+**In one sentence:** In Git Bash, build compiles three Windows GUI programs with UCRT64 CMake and leaves them under `~/.local/opt/tn5250`, not in `~/.local/bin`. Global is not available.
 
 | Box | Meaning | Example |
 |-----|---------|---------|
@@ -58,6 +58,7 @@ Package install, when needed: `pacman -Syu --noconfirm` twice, then `pacman -S -
 
 15. Build **MUST** obtain sources for the pinned ref before compile. The fetch **MUST** be a shallow clone or a shallow fetch of that ref, then a detached checkout. `git` **MUST** be present or build stops. The default ref stored is the tag text, not the commit id. A raw commit id is outside the shallow `--branch` clone.
 16. The build tree **MUST** be configured and compiled in a cache directory that belongs to the user. A rebuild **MUST** remove that build directory before configure.
+17. Scope `global` is not a Windows install. `build global`, `build install global`, and `build clean global` **MUST NOT** compile, copy, or clean. They stop as `docs/requirements/requirement-domain-tn5250.md` requires. The build board omits row 13. The login prefix in rule 12 stays the Windows install.
 
 ### 2.1 Implementation Notes (this project)
 
@@ -195,6 +196,7 @@ Proof home: `docs/reviews/test-plan.md`.
 | 2026-10-13 | Active 1.0.1 | The Debian curses build points at RQ-DEBIAN-CLI-CODING and RQ-DEBIAN-BUILD-PAYLOAD. This Windows build is unchanged. |
 
 | 2026-10-13 | Active 1.0.2 | The payload verb is `build`, not `setup`. Setup and build are different. Menus, help, and next-steps say `build`. |
-**Last Updated**: 2026-10-13
+| 2026-10-14 | Active 1.0.3 | `build global` is not a Windows install. It stops before compile, copy, or clean. |
+**Last Updated**: 2026-10-14
 **Owner**: unassigned
 **Alignment**: Registry `docs/requirements/index.md`; **CIAO** (https://github.com/cloudgen/ciao); CIAO-Lite (https://github.com/cloudgen/ciao-lite).

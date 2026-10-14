@@ -53,8 +53,8 @@ APP_NAME="tn5250-cli"
 : "${SHORT_DESCRIPTION:=${APP_DESC}}"
 : "${DESCRIPTION:=POSIX /bin/sh program: install, version-check, self-update, self-uninstall, and about, plus setup, build, and host launch for the TN5250 client. A terminal with no command opens the numbered list. A pipe, --quiet, or --json places this CLI.}"
 # Product version SSOT (semver). Extractors use: grep '^VERSION="'
-VERSION="1.2.0"
-: "${VERSION:=1.2.0}"
+VERSION="1.2.1"
+: "${VERSION:=1.2.1}"
 
 # Runtime flags (safe defaults)
 : "${QUIET:=0}"
@@ -388,7 +388,7 @@ out_empty_line() { out_text plain ""; }
 
 util_app_ident() {
     : "${APP_NAME:=tn5250-cli}"
-    : "${VERSION:=1.2.0}"
+    : "${VERSION:=1.2.1}"
     : "${TTY:=0}"
     if [ "${TTY}" -eq 1 ]; then
         printf '\033[1m%s\033[0m(\033[3m%s\033[0m)' "${APP_NAME}" "${VERSION}"
@@ -2467,6 +2467,32 @@ tn5250_detect_platform() {
     printf '%s\n' other
 }
 
+# Termux or Windows when global must not run. Empty when /usr/local is allowed.
+tn5250_global_place() {
+    case "$(tn5250_detect_platform)" in
+        termux)
+            printf '%s\n' Termux
+            ;;
+        windows)
+            printf '%s\n' Windows
+            ;;
+        *)
+            printf '\n'
+            ;;
+    esac
+}
+
+# Typed build global stops here. The build board does not call this.
+tn5250_refuse_global() {
+    local _where
+    : "${APP_NAME:=tn5250-cli}"
+    _where=$(tn5250_global_place)
+    if [ -z "${_where}" ]; then
+        return 0
+    fi
+    out_die "Global is not available on ${_where}. Next: ${APP_NAME} build local"
+}
+
 tn5250_self_path() {
     local _src=$0
     case "${_src}" in
@@ -3019,9 +3045,9 @@ tn5250_setup_help() {
     out_plain "  ${APP_NAME} build install global"
     out_plain "  ${APP_NAME} HOST [arguments]"
     out_empty_line
-    out_plain "On a terminal, build with no scope opens clean, local, and global."
+    out_plain "On a terminal, build with no scope opens clean, local, and global. On Termux and on Windows, global is not on that list."
     out_plain "local installs under the login prefix (default: ${HOME}/.local)."
-    out_plain "global installs under /usr/local. A prefix this login cannot write is copied with sudo after the compile."
+    out_plain "global installs under /usr/local. A prefix this login cannot write is copied with sudo after the compile. On Termux and on Windows, global is not available."
     out_plain "clean removes the built client under the prefix and the compile tree. It does not remove download/."
     out_plain "local and global copy the client into download/ as tn5250-<arch>-<clib>-<clib-version>.<app-version>."
     out_empty_line
@@ -3189,7 +3215,7 @@ EOF
 tn5250_published_filename() {
     local _bin=$1
     local _arch="" _clib="" _ver="" _exe=0 _interp=""
-    : "${VERSION:=1.2.0}"
+    : "${VERSION:=1.2.1}"
     _arch=$(tn5250_payload_arch) || return 1
     case "${_bin}" in
         *.exe)
@@ -4758,6 +4784,9 @@ tn5250_setup() {
     if [ -z "${_scope}" ]; then
         _scope=local
     fi
+    if [ "${_scope}" = "global" ]; then
+        tn5250_refuse_global
+    fi
     if [ "${FORCE:-0}" -eq 1 ]; then
         TN5250_FORCE=1
     else
@@ -4875,7 +4904,7 @@ app_about() {
     : "${QUIET:=0}"
     : "${APP_NAME:=tn5250-cli}"
     # Version comes from global SSOT (VERSION="…" hard-assign near top); default only if unset
-    : "${VERSION:=1.2.0}"
+    : "${VERSION:=1.2.1}"
     : "${GLOBAL_BIN:=/usr/local/bin}"
     : "${USER_BIN:=${HOME}/.local/bin}"
     : "${SCRIPT_URL:=}"
@@ -5024,7 +5053,7 @@ app_about() {
 
 app_version() {
     : "${APP_NAME:=tn5250-cli}"
-    : "${VERSION:=1.2.0}"
+    : "${VERSION:=1.2.1}"
     : "${JSON:=0}"
     if [ "${JSON}" -eq 1 ]; then
         # Same machine contract as historical app_main inline path
@@ -5092,9 +5121,9 @@ app_help() {
     out_info "Domain (TN5250 client):"
     out_plain "  setup                Download the newest published tn5250 for this machine into ~/.local/bin"
     out_plain "  setup -h             Show that download and do not fetch"
-    out_plain "  build                On a terminal, open clean, local install, and global install. Otherwise install locally"
+    out_plain "  build                On a terminal, open clean, local install, and global install. Otherwise install locally. On Termux and on Windows, global is not on that list"
     out_plain "  build local          Build and install for this login, and copy the named client into download/"
-    out_plain "  build global         Build and install under /usr/local, and copy the named client into download/"
+    out_plain "  build global         Build and install under /usr/local, and copy the named client into download/. Not available on Termux or Windows"
     out_plain "  build clean          Remove the built client and the compile tree. download/ stays"
     out_plain "  build -h             Show build flags before any platform check"
     out_plain "  HOST                 Any other non-flag word launches the built tn5250"
@@ -5102,7 +5131,7 @@ app_help() {
     out_plain "  -h, --help           Same as help"
     out_empty_line
     out_plain "  The installed program is the upstream client. This installer remains ${APP_NAME}."
-    out_plain "setup downloads a published client. build local and build global compile one and copy it into download/ with the published name."
+    out_plain "setup downloads a published client. build local and build global compile one and copy it into download/ with the published name. On Termux and on Windows, build global is not available."
     out_empty_line
     # --- end DOMAIN_HELP_ROWS ---
 
@@ -5171,10 +5200,16 @@ app_menu_read_choice() {
 
 app_menu_draw_front() {
     : "${APP_NAME:=tn5250-cli}"
+    local _where
+    _where=$(tn5250_global_place)
     out_info "$(util_app_ident) — numbered list of live commands"
     out_plain "This program has no server commands."
     out_plain "Open a host on the command line: ${APP_NAME} HOST."
-    out_menu_choice "1" "build" "Clean, or install the client for this login or for every login"
+    if [ -n "${_where}" ]; then
+        out_menu_choice "1" "build" "Clean, or install the client for this login"
+    else
+        out_menu_choice "1" "build" "Clean, or install the client for this login or for every login"
+    fi
     out_menu_choice "2" "setup" "Download the newest published tn5250 for this machine"
     out_menu_choice "7" "languages" "Choose the language of this list"
     out_menu_choice "8" "self-management" "Place, check, update, or remove this CLI"
@@ -5301,12 +5336,22 @@ app_cmd_menu_language() {
 
 app_menu_draw_build() {
     : "${APP_NAME:=tn5250-cli}"
+    local _where
+    _where=$(tn5250_global_place)
     out_info "$(util_app_ident) — build"
-    out_plain "Local uses the login prefix. Global uses /usr/local."
-    out_plain "Local and global copy the named client into download/."
-    out_menu_choice "11" "clean" "Remove the built client and the compile tree"
-    out_menu_choice "12" "local" "Build install (local)"
-    out_menu_choice "13" "global" "Build install (global)"
+    if [ -n "${_where}" ]; then
+        out_plain "Local uses the login prefix."
+        out_plain "Local copies the named client into download/."
+        out_plain "Global is not available on ${_where}."
+        out_menu_choice "11" "clean" "Remove the built client and the compile tree"
+        out_menu_choice "12" "local" "Build install (local)"
+    else
+        out_plain "Local uses the login prefix. Global uses /usr/local."
+        out_plain "Local and global copy the named client into download/."
+        out_menu_choice "11" "clean" "Remove the built client and the compile tree"
+        out_menu_choice "12" "local" "Build install (local)"
+        out_menu_choice "13" "global" "Build install (global)"
+    fi
     out_plain "0. Back"
 }
 
@@ -5341,8 +5386,12 @@ app_cmd_menu_build() {
                 return 0
                 ;;
             13|global)
-                tn5250_setup global
-                return 0
+                if [ -n "$(tn5250_global_place)" ]; then
+                    out_error "${_choice} is not on this list."
+                else
+                    tn5250_setup global
+                    return 0
+                fi
                 ;;
             *)
                 out_error "${_choice} is not on this list."

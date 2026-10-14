@@ -28,7 +28,7 @@ esac
 
 VER=$(${CLI} version 2>/dev/null) || VER=""
 case "${VER}" in
-    *"version 1.2.0"*) ok "version 1.2.0" ;;
+    *"version 1.2.1"*) ok "version 1.2.1" ;;
     *) bad "version ${VER}" ;;
 esac
 
@@ -48,6 +48,10 @@ esac
 case "${HELP}" in
     *download/*) ok "help download" ;;
     *) bad "help download" ;;
+esac
+case "${HELP}" in
+    *"not available"*) ok "help not available" ;;
+    *) bad "help not available" ;;
 esac
 
 if ${CLI} build nosuch >/tmp/tn5250-build-nosuch.out 2>/tmp/tn5250-build-nosuch.err; then
@@ -127,8 +131,144 @@ else
     bad "build board pty"
 fi
 
+python3 - "${CLI}" <<'PY'
+import os, pty, select, sys
+cli = sys.argv[1]
+pid, fd = pty.fork()
+if pid == 0:
+    env = os.environ.copy()
+    env["TERMUX_VERSION"] = "1"
+    os.execve(cli, [cli], env)
+allb = b""
+buf = b""
+steps = [b"1\n", b"13\n", b"global\n", b"0\n", b"9\n"]
+step = 0
+prompts = 0
+prompt = b"Choose a number, or type the command name: "
+while True:
+    ready, _, _ = select.select([fd], [], [], 8)
+    if not ready:
+        sys.stderr.write("timeout termux menu\n")
+        os.kill(pid, 15)
+        sys.exit(1)
+    try:
+        chunk = os.read(fd, 4096)
+    except OSError:
+        break
+    if not chunk:
+        break
+    allb += chunk
+    buf += chunk
+    if prompt in buf and step < len(steps) and (buf.endswith(b": ") or buf.rstrip().endswith(b":")):
+        os.write(fd, steps[step])
+        step += 1
+        prompts += 1
+        buf = buf.replace(prompt, b"", 1)
+_, status = os.waitpid(pid, 0)
+text = allb.decode("utf-8", "replace")
+code = os.waitstatus_to_exitcode(status) if hasattr(os, "waitstatus_to_exitcode") else (status >> 8)
+if code != 0:
+    sys.stderr.write("termux menu exit %s\n" % code)
+    sys.exit(1)
+need = (
+    "Global is not available on Termux.",
+    "Local uses the login prefix.",
+    "Local copies the named client into download/.",
+    "Clean, or install the client for this login",
+    "is not on this list",
+)
+for word in need:
+    if word not in text:
+        sys.stderr.write("missing %s\n" % word)
+        sys.exit(1)
+forbid = (
+    "Build install (global)",
+    "Global uses /usr/local",
+    "for every login",
+    "Scope:",
+)
+for word in forbid:
+    if word in text:
+        sys.stderr.write("unexpected %s\n" % word)
+        sys.exit(1)
+if prompts < 5 or text.count("is not on this list") < 2:
+    sys.stderr.write("prompts %s retries %s\n" % (prompts, text.count("is not on this list")))
+    sys.exit(1)
+sys.exit(0)
+PY
+if [ $? -eq 0 ]; then
+    ok "termux build board omits global"
+else
+    bad "termux build board omits global"
+fi
+
 TMP=$(mktemp -d) || exit 1
 trap '/bin/rm -rf "${TMP}"' EXIT
+
+refuse_global() {
+    _label=$1
+    shift
+    if "$@" >"${TMP}/refuse.out" 2>"${TMP}/refuse.err"; then
+        bad "${_label} exited 0"
+        return
+    fi
+    _err=$(cat "${TMP}/refuse.err" "${TMP}/refuse.out" 2>/dev/null)
+    case "${_err}" in
+        *"Global is not available on"*"build local"*) ok "${_label}" ;;
+        *) bad "${_label} text" ;;
+    esac
+    case "${_err}" in
+        *"Scope:"*|*"Installed"*) bad "${_label} started work" ;;
+    esac
+}
+
+refuse_global "termux build global" env TERMUX_VERSION=1 "${CLI}" build global
+refuse_global "termux build install global" env TERMUX_VERSION=1 "${CLI}" build install global
+mkdir -p "${TMP}/keep-prefix/opt/tn5250"
+printf 'keep\n' > "${TMP}/keep-prefix/opt/tn5250/tn5250"
+refuse_global "termux build clean global" env TERMUX_VERSION=1 "${CLI}" build clean global --prefix "${TMP}/keep-prefix"
+if [ -f "${TMP}/keep-prefix/opt/tn5250/tn5250" ]; then
+    ok "termux clean global left the prefix"
+else
+    bad "termux clean global removed the prefix"
+fi
+if env TERMUX_VERSION=1 "${CLI}" build global --json >"${TMP}/json.out" 2>"${TMP}/json.err"; then
+    bad "termux json global exited 0"
+else
+    _json=$(cat "${TMP}/json.err" "${TMP}/json.out")
+    case "${_json}" in
+        *"Global is not available on Termux"*) ok "termux json global" ;;
+        *) bad "termux json global" ;;
+    esac
+fi
+if env TERMUX_VERSION=1 "${CLI}" build -h >"${TMP}/help-termux.out" 2>"${TMP}/help-termux.err"; then
+    ok "termux build -h"
+else
+    bad "termux build -h"
+fi
+
+REAL_UNAME=$(command -v uname)
+cat > "${TMP}/uname" <<EOF
+#!/bin/sh
+case "\${1-}" in
+    -s) printf '%s\\n' 'MINGW64_NT-10.0' ;;
+    *) exec ${REAL_UNAME} "\$@" ;;
+esac
+EOF
+chmod 755 "${TMP}/uname"
+refuse_global "windows build global" env OSTYPE=msys PATH="${TMP}:${PATH}" "${CLI}" build global
+refuse_global "windows build clean global" env OSTYPE=msys PATH="${TMP}:${PATH}" "${CLI}" build clean global --prefix "${TMP}/keep-prefix"
+_win=$(cat "${TMP}/refuse.err" "${TMP}/refuse.out")
+case "${_win}" in
+    *"Global is not available on Windows."*) ok "windows names Windows" ;;
+    *) bad "windows names Windows" ;;
+esac
+if [ -f "${TMP}/keep-prefix/opt/tn5250/tn5250" ]; then
+    ok "windows clean global left the prefix"
+else
+    bad "windows clean global removed the prefix"
+fi
+
 mkdir -p "${TMP}/prefix/opt/tn5250" "${TMP}/cache/tn5250/build" "${TMP}/keep"
 printf 'client\n' > "${TMP}/prefix/opt/tn5250/tn5250"
 printf 'cache\n' > "${TMP}/cache/tn5250/build/CMakeCache.txt"

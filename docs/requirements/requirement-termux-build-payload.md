@@ -1,6 +1,6 @@
 **file**: docs/requirements/requirement-termux-build-payload.md
 **ID**: RQ-TERMUX-BUILD-PAYLOAD
-**Status**: Active (Version 1.0.3)
+**Status**: Active (Version 1.0.4)
 **Project**: tn5250-cli
 **Philosophy**: CIAO **v2.10.2** / CIAO-Lite (Caution • Intentional • Anti-fragile • Over-engineered / Over-protect)
 
@@ -12,7 +12,7 @@ How the ship unit detects Termux, calls `pkg`, copies `tn5250-cli` into `~/.loca
 
 ### 1.1 Human-facing
 
-**In one sentence:** On Termux, build compiles the curses `tn5250` with CMake, ncurses, and OpenSSL, and leaves that program under `~/.local/opt/tn5250`, not in `~/.local/bin`.
+**In one sentence:** On Termux, build compiles the curses `tn5250` with CMake, ncurses, and OpenSSL, and leaves that program under `~/.local/opt/tn5250`, not in `~/.local/bin`. Global is not available.
 
 | Box | Meaning | Example |
 |-----|---------|---------|
@@ -59,6 +59,8 @@ How the ship unit detects Termux, calls `pkg`, copies `tn5250-cli` into `~/.loca
 | `ncurses` | Curses headers, the curses link, and terminfo | `${PREFIX}/include/ncurses.h` or `ncurses/ncurses.h`, and `${PREFIX}/share/terminfo` |
 | `openssl` | TLS link for the 5250 stream | `${PREFIX}/include/openssl/ssl.h` |
 | `git` | Shallow fetch of the pinned ref | `git` runs |
+
+14. Scope `global` is not a Termux install. `build global`, `build install global`, and `build clean global` **MUST NOT** compile, copy, or clean. They stop as `docs/requirements/requirement-domain-tn5250.md` requires. The build board omits row 13. The login prefix in rule 10 stays the Termux install.
 
 ### 2.1 Implementation Notes (this project)
 
@@ -155,6 +157,7 @@ Proof home: `docs/reviews/test-plan.md`.
 | 2026-10-13 | Active 1.0.2 | Debian's payload is RQ-DEBIAN-BUILD-PAYLOAD. Debian CLI coding is RQ-DEBIAN-CLI-CODING. This Termux package table is unchanged. |
 
 | 2026-10-13 | Active 1.0.3 | The payload verb is `build`, not `setup`. Setup and build are different. Menus, help, and next-steps say `build`. |
-**Last Updated**: 2026-10-13
+| 2026-10-14 | Active 1.0.4 | `build global` is not a Termux install. It stops before compile, copy, or clean. |
+**Last Updated**: 2026-10-14
 **Owner**: unassigned
 **Alignment**: Registry `docs/requirements/index.md`; **CIAO** (https://github.com/cloudgen/ciao); CIAO-Lite (https://github.com/cloudgen/ciao-lite).

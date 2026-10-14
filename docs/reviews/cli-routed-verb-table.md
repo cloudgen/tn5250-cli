@@ -19,7 +19,7 @@ Inventory is the dispatcher. Help text supplied the explanation after the colon.
 | menu | `app_cmd_menu` | you | 2026-10-07 | menu: Open the numbered list. Needs a terminal |
 | main | `app_cmd_menu` | you | 2026-10-07 | main: Open the numbered list. Needs a terminal |
 | setup | `tn5250_payload_setup` | you | 2026-10-13 | setup: Download the newest published tn5250 for this machine into ~/.local/bin |
-| build | `tn5250_setup` | you; missing compiler packages may change the computer; a global place into an unwritable prefix may use the sudo wrap after the compile | 2026-10-14 | build: On a terminal with no scope, open clean, local, and global. `build local` and `build global` compile and copy the named client into `download/`. `build clean` removes the built client and the compile tree |
+| build | `tn5250_setup` | you; missing compiler packages may change the computer; a global place into an unwritable prefix may use the sudo wrap after the compile | 2026-10-14 | build: On a terminal with no scope, open clean, local, and global. `build local` and `build global` compile and copy the named client into `download/`. On Termux and Windows, `build global` is not available. `build clean` removes the built client and the compile tree |
 
 ## Not-yet-wired
 
@@ -27,4 +27,4 @@ None. A word that is not a flag and not a verb above is the host name. It is not
 
 ## Honesty
 
-Full scan. Twelve live rows. `setup` downloads. `build` compiles when a scope or a flag is present, and when the terminal is closed. On a terminal, bare `build` and row 1 open the build board. `local`, `global`, `clean`, and `install` are operands of `build`, not new top-level verbs. The host launch has no verb token. On a numbered board, row 2 runs `setup`, row 7 opens languages, and row 82 and a typed `version` run `about`. Argv `version` stays `app_version`. `languages` is a menu category, not an argv verb. `clean`, `local`, and `global` are build-board children, not argv verbs by themselves.
+Full scan. Twelve live rows. `setup` downloads. `build` compiles when a scope or a flag is present, and when the terminal is closed. On Termux and Windows, scope `global` stops before compile. On a terminal, bare `build` and row 1 open the build board. `local`, `global`, `clean`, and `install` are operands of `build`, not new top-level verbs. The host launch has no verb token. On a numbered board, row 2 runs `setup`, row 7 opens languages, and row 82 and a typed `version` run `about`. Argv `version` stays `app_version`. `languages` is a menu category, not an argv verb. `clean`, `local`, and `global` are build-board children, not argv verbs by themselves.
