@@ -1,6 +1,6 @@
 **file**: docs/requirements/requirement-shell-cli-language.md
 **ID**: RQ-SHELL-CLI-LANGUAGE
-**Status**: Active (Version 1.1.2)
+**Status**: Active (Version 1.1.3)
 **Project**: tn5250-cli
 **Philosophy**: CIAO **v2.10.2** / CIAO-Lite (Caution • Intentional • Anti-fragile • Over-engineered / Over-protect)
 
@@ -36,10 +36,10 @@ This file owns the language of the numbered list. English is the only language. 
 5. This file **MUST NOT** invent a line the ship unit does not print. Leaf verb tokens, JSON `about` field names, and the version one-liner stay in English.
 6. On Termux and on Windows, the front row **1** long **MUST** be `Clean, or install the client for this login`. The build board **MUST** print `Local uses the login prefix.`, `Local copies the named client into download/.`, and `Global is not available on Termux.` or `Global is not available on Windows.` It **MUST NOT** print the two lines that name `/usr/local`, and it **MUST NOT** print row **13**. On every other platform, §2.1 is the board.
 
-### 2.1 Worked sample (English, version 1.2.2)
+### 2.1 Worked sample (English, version 1.2.3)
 
 ```text
-[INFO] **tn5250-cli**(*1.2.2*) — numbered list of live commands
+[INFO] **tn5250-cli**(*1.2.3*) — numbered list of live commands
 This program has no server commands.
 Open a host on the command line: tn5250-cli HOST.
 1. **build**: *Clean, or install the client for this login or for every login*
@@ -50,7 +50,7 @@ Open a host on the command line: tn5250-cli HOST.
 ```
 
 ```text
-[INFO] **tn5250-cli**(*1.2.2*) — build
+[INFO] **tn5250-cli**(*1.2.3*) — build
 Local uses the login prefix. Global uses /usr/local.
 Local and global copy the named client into download/.
 11. **clean**: *Remove the built client and the compile tree*
@@ -62,7 +62,7 @@ Local and global copy the named client into download/.
 On Termux the same board is:
 
 ```text
-[INFO] **tn5250-cli**(*1.2.2*) — numbered list of live commands
+[INFO] **tn5250-cli**(*1.2.3*) — numbered list of live commands
 This program has no server commands.
 Open a host on the command line: tn5250-cli HOST.
 1. **build**: *Clean, or install the client for this login*
@@ -73,7 +73,7 @@ Open a host on the command line: tn5250-cli HOST.
 ```
 
 ```text
-[INFO] **tn5250-cli**(*1.2.2*) — build
+[INFO] **tn5250-cli**(*1.2.3*) — build
 Local uses the login prefix.
 Local copies the named client into download/.
 Global is not available on Termux.
@@ -85,14 +85,14 @@ Global is not available on Termux.
 On Windows the hidden line is `Global is not available on Windows.` The other lines match the Termux board.
 
 ```text
-[INFO] **tn5250-cli**(*1.2.2*) — languages
+[INFO] **tn5250-cli**(*1.2.3*) — languages
 The list is English. That is the only language.
 71. **en**: *English*
 0. Back
 ```
 
 ```text
-[INFO] **tn5250-cli**(*1.2.2*) — self-management
+[INFO] **tn5250-cli**(*1.2.3*) — self-management
 This list does not place a payload. Next: tn5250-cli setup.
 82. **version**: *Show current version*
 83. **about**: *Show detailed diagnostics*
@@ -203,6 +203,7 @@ Proof home: `docs/reviews/test-plan.md`.
 | 2026-10-14 | Active 1.1.0 | Samples use product version 1.2.0. The build board sentences are in the sample and in the translation table. |
 | 2026-10-14 | Active 1.1.1 | Termux and Windows omit row 13. Those boards print the not-available line. The other platforms keep the §2.1 board. Samples use product version 1.2.1. |
 | 2026-10-14 | Active 1.1.2 | Samples use product version 1.2.2. |
+| 2026-10-14 | Active 1.1.3 | Samples use product version 1.2.3. |
 
 **Last Updated**: 2026-10-14
 **Owner**: unassigned

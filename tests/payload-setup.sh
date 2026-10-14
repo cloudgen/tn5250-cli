@@ -12,6 +12,15 @@ say() { printf '%s\n' "$1"; }
 bad() { printf 'FAIL %s\n' "$1" >&2; FAIL=1; }
 ok() { printf 'ok %s\n' "$1"; }
 
+# /bin/rm is Android toybox. A Termux login rewrites it and prints a quote error.
+test_rm_rf() {
+    if command -v coreutils >/dev/null 2>&1; then
+        coreutils --coreutils-prog=rm -rf -- "$@"
+    else
+        rm -rf "$@"
+    fi
+}
+
 if ! sh -n "${CLI}"; then
     bad "sh -n"
 else
@@ -33,7 +42,7 @@ esac
 TMP=$(mktemp -d) || exit 1
 HOME_DIR=$(mktemp -d) || exit 1
 # PATH rm is safe-rm on this host and spends many seconds on each directory.
-trap '/bin/rm -rf "${TMP}" "${HOME_DIR}"' EXIT
+trap 'test_rm_rf "${TMP}" "${HOME_DIR}"' EXIT
 
 CLIB_NAME=${CLIB%%-*}
 CLIB_VER=${CLIB#*-}

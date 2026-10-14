@@ -13,6 +13,15 @@ say() { printf '%s\n' "$1"; }
 bad() { printf 'FAIL %s\n' "$1" >&2; FAIL=1; }
 ok() { printf 'ok %s\n' "$1"; }
 
+# /bin/rm is Android toybox. A Termux login rewrites it and prints a quote error.
+test_rm_rf() {
+    if command -v coreutils >/dev/null 2>&1; then
+        coreutils --coreutils-prog=rm -rf -- "$@"
+    else
+        rm -rf "$@"
+    fi
+}
+
 if ! sh -n "${CLI}"; then
     bad "sh -n"
 else
@@ -34,7 +43,7 @@ fi
 
 VER=$(${CLI} version 2>/dev/null) || VER=""
 case "${VER}" in
-    *"version 1.2.2"*) ok "version 1.2.2" ;;
+    *"version 1.2.3"*) ok "version 1.2.3" ;;
     *) bad "version ${VER}" ;;
 esac
 
@@ -70,7 +79,7 @@ else
         *) bad "build nosuch text" ;;
     esac
 fi
-/bin/rm -rf "${NOSUCH}"
+test_rm_rf "${NOSUCH}"
 
 python3 - "${CLI}" <<'PY'
 import os, pty, select, sys
@@ -212,7 +221,7 @@ else
 fi
 
 TMP=$(mktemp -d) || exit 1
-trap '/bin/rm -rf "${TMP}"' EXIT
+trap 'test_rm_rf "${TMP}"' EXIT
 
 refuse_global() {
     _label=$1
@@ -309,7 +318,7 @@ else
     bad "clean removed download/index.txt"
 fi
 
-NAME="tn5250-amd64-glibc-2.34.1.2.0"
+NAME="tn5250-amd64-glibc-2.34.1.2.3"
 BIN="${ROOT}/download/${NAME}"
 if [ -x "${BIN}" ]; then
     ok "download executable"

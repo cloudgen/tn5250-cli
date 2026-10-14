@@ -13,6 +13,7 @@ Not product law (`docs/requirements/`). Not an incident report.
 | `2026-10-14-build-submenu-review.md` | 2026-10-14 | Build board, published copy, and the glibc digit class | No P0 or P1. A live install into `/usr/local` was not run |
 | `2026-10-14-no-global-termux-windows-review.md` | 2026-10-14 | `build global` refused on Termux and Windows. Product version 1.2.1 | No P0 or P1. The committed client stays the 1.2.0 file |
 | `2026-10-14-bionic-payload-name-review.md` | 2026-10-14 | Termux publish name. Product version 1.2.2 | No P0 or P1. `download/tn5250-arm64-bionic-30.1.2.2` is the installed client |
+| `2026-10-14-termux-rm-review.md` | 2026-10-14 | Termux remove and the glibc catalog name. Product version 1.2.3 | No P0 or P1. Removes use Termux coreutils. The glibc file is `download/tn5250-amd64-glibc-2.34.1.2.3` |
 
 ## Conventions
 

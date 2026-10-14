@@ -1,2 +1,2 @@
-tn5250-amd64-glibc-2.34.1.2.0
+tn5250-amd64-glibc-2.34.1.2.3
 tn5250-arm64-bionic-30.1.2.2

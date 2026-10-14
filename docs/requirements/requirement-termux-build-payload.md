@@ -1,6 +1,6 @@
 **file**: docs/requirements/requirement-termux-build-payload.md
 **ID**: RQ-TERMUX-BUILD-PAYLOAD
-**Status**: Active (Version 1.0.4)
+**Status**: Active (Version 1.0.5)
 **Project**: tn5250-cli
 **Philosophy**: CIAO **v2.10.2** / CIAO-Lite (Caution • Intentional • Anti-fragile • Over-engineered / Over-protect)
 
@@ -8,7 +8,7 @@
 
 This is the Termux build-payload requirement. It owns the compilation, link, and build of the Unix TN5250 programs on Termux, and the named `pkg` packages those steps need.
 
-How the ship unit detects Termux, calls `pkg`, copies `tn5250-cli` into `~/.local/bin`, and edits `~/.bashrc` belongs to `docs/requirements/requirement-termux-cli-coding.md`. This file does not restate that script. Alpine compilation and the `apk` package table belong to `docs/requirements/requirement-alpine-build-payload.md`. This file does not own them.
+How the ship unit detects Termux, calls `pkg`, copies `tn5250-cli` into `~/.local/bin`, edits `~/.bashrc`, and removes a path when the remover is Android toybox or `safe-rm` belongs to `docs/requirements/requirement-termux-cli-coding.md`. This file does not restate that script. Alpine compilation and the `apk` package table belong to `docs/requirements/requirement-alpine-build-payload.md`. This file does not own them.
 
 ### 1.1 Human-facing
 
@@ -61,6 +61,7 @@ How the ship unit detects Termux, calls `pkg`, copies `tn5250-cli` into `~/.loca
 | `git` | Shallow fetch of the pinned ref | `git` runs |
 
 14. Scope `global` is not a Termux install. `build global`, `build install global`, and `build clean global` **MUST NOT** compile, copy, or clean. They stop as `docs/requirements/requirement-domain-tn5250.md` requires. The build board omits row 13. The login prefix in rule 10 stays the Termux install.
+15. A Termux remove of the payload directory or the compile tree during `build clean` uses the remover in `docs/requirements/requirement-termux-cli-coding.md`. This file does not restate the Android toybox case or the `safe-rm` case. Those removes **MUST NOT** exec `/bin/rm`. They **MUST NOT** print an error when that case or the `safe-rm` case fails. A warning is acceptable. `build clean` **MUST** continue. `build clean global` is still the stop in rule 14 and **MUST NOT** remove `/usr/local`.
 
 ### 2.1 Implementation Notes (this project)
 
@@ -148,6 +149,24 @@ The compile runs as this login. Package install is the CLI coding requirement's 
 
 Proof home: `docs/reviews/test-plan.md`.
 
+## Terminologies
+
+### Termux
+
+**Definition:** Termux is a command line for normal user only: Android userspace POSIX with this login's `PREFIX`. On detect, admin privilege and dedicated system user privilege stay unused. A named `pkg` as this login stays this login.
+
+**Human daily-life explanation:** Termux is a phone drawer that only opens with your keys.
+
+**Daily-life example:** `pkg install` as the Termux login is allowed. `sudo apt` is not.
+
+### Termux coreutils
+
+**Definition:** Termux coreutils is the GNU coreutils multi-call binary as Termux ships it. The complying remove names the applet before the switches: `coreutils --coreutils-prog=rm`. Android `/bin/rm` is toybox, not this binary. A guarded `rm` whose name is `safe-rm` is not this binary either. How those two cases avoid an error and let the command continue is owned by the Termux CLI coding requirement.
+
+**Human daily-life explanation:** Termux coreutils is one handle with many tools inside it. You name the remover before you say force. The phone's own `/bin/rm` is a different kit.
+
+**Daily-life example:** `coreutils --coreutils-prog=rm -rf` names the remover, then removes a build directory this command is allowed to remove. `/bin/rm` is not that call.
+
 ## 6. Status history
 
 | Date | Status | Notes |
@@ -158,6 +177,7 @@ Proof home: `docs/reviews/test-plan.md`.
 
 | 2026-10-13 | Active 1.0.3 | The payload verb is `build`, not `setup`. Setup and build are different. Menus, help, and next-steps say `build`. |
 | 2026-10-14 | Active 1.0.4 | `build global` is not a Termux install. It stops before compile, copy, or clean. |
+| 2026-10-14 | Active 1.0.5 | `build clean` on Termux removes through the CLI coding requirement. Android toybox and `safe-rm` must not print an error. A warning is acceptable. Clean continues. |
 **Last Updated**: 2026-10-14
 **Owner**: unassigned
 **Alignment**: Registry `docs/requirements/index.md`; **CIAO** (https://github.com/cloudgen/ciao); CIAO-Lite (https://github.com/cloudgen/ciao-lite).

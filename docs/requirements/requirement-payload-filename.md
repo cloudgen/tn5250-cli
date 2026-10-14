@@ -1,6 +1,6 @@
 **file**: docs/requirements/requirement-payload-filename.md
 **ID**: RQ-PAYLOAD-FILENAME
-**Status**: Active (Version 1.2.2)
+**Status**: Active (Version 1.2.3)
 **Project**: tn5250-cli
 **Philosophy**: CIAO **v2.10.2** / CIAO-Lite (Caution • Intentional • Anti-fragile • Over-engineered / Over-protect)
 
@@ -64,7 +64,7 @@ Compile, link, package names, and the copy into `${PREFIX}/opt/tn5250` stay on t
 12. On `arm` and `386`, glibc 2.34 is a hard seam: libpthread, libdl, and librt moved into libc, and 64-bit `time_t` is a second ABI. Those two architectures **MUST NOT** publish two `glibc` files on opposite sides of 2.34. One file, entirely below 2.34 or entirely at or above 2.34, not both.
 13. `raw.githubusercontent.com` cannot list a directory. Discovery **MUST** be `download/index.txt`. The channel base is `TN5250_PAYLOAD_BASE` when that variable is set, with one trailing slash removed, otherwise `https://raw.githubusercontent.com/${REPO_USER}/${REPO_NAME}/main/download`. `REPO_USER` defaults to `cloudgen`. `REPO_NAME` defaults to `tn5250-cli`. `TN5250_PAYLOAD_BASE` is an override for a test or a mirror. It is not a help flag. One payload filename per line. A blank line is skipped. A line whose first character is `#` is skipped. A trailing CR is stripped. A downloader **MUST NOT** invent a filename that the index does not list. The index **MUST** be committed in the same change as any payload file it names. Until the first payload is committed, the index may be absent. A missing index **MUST** stop with `Cannot read the payload index. Next: tn5250-cli build`.
 14. Each payload file **MUST** have a sibling `<filename>.sha256`. The Windows sibling ends in `.exe.sha256`. The file **MUST** be one line whose first field is 64 hex digits, compared case-folded, and **MUST NOT** require the filename on that line, the same shape as `src/tn5250-cli.sha256`. A mismatch **MUST** stop with `Digest mismatch for <filename>. The download stopped.` A missing digest **MUST** stop with `Missing digest for <filename>. The download stopped.` This rule does not change the script companion in `docs/requirements/requirement-shell-automatic-checksum.md`. A missing script companion still warns. A missing payload digest stops.
-15. `setup` **MUST** save a non-Windows file as `${TN5250_PREFIX:-${HOME}/.local}/bin/tn5250` and a Windows file as `${TN5250_PREFIX:-${HOME}/.local}/bin/tn5250.exe`. The long filename **MUST NOT** be left on `PATH`. The mode **MUST** be `0755`. The save **MUST** chmod, because a raw download does not keep the executable bit. The committed blob **MUST** be git mode `100755`. The save **MUST NOT** call sudo, `pkg`, `apt`, `apk`, `brew`, or `dnf`. It **MUST** create the `bin` directory as this user when that directory is missing. The saved program **MUST NOT** be named `tn5250-cli`. Human success **MUST** say `Saved <filename> as <path>`. JSON success **MUST** include `path`, `payload`, `payload_arch`, and `payload_clib` (`<clib>-<clib-version>`).
+15. `setup` **MUST** save a non-Windows file as `${TN5250_PREFIX:-${HOME}/.local}/bin/tn5250` and a Windows file as `${TN5250_PREFIX:-${HOME}/.local}/bin/tn5250.exe`. The long filename **MUST NOT** be left on `PATH`. The mode **MUST** be `0755`. The save **MUST** chmod, because a raw download does not keep the executable bit. The committed blob **MUST** be git mode `100755`. The save **MUST NOT** call sudo, `pkg`, `apt`, `apk`, `brew`, or `dnf`. It **MUST** create the `bin` directory as this user when that directory is missing. The saved program **MUST NOT** be named `tn5250-cli`. Human success **MUST** say `Saved <filename> as <path>`. JSON success **MUST** include `path`, `payload`, `payload_arch`, and `payload_clib` (`<clib>-<clib-version>`). On Termux, scratch files from this download are removed as `docs/requirements/requirement-termux-cli-coding.md` requires. If that remove is the Android toybox case or the `safe-rm` case, the operator **MUST NOT** see an error. A warning is acceptable. A download whose digest matched **MUST** still be saved, **MUST** still print that success line, and **MUST NOT** exit non-zero only because the remove failed.
 16. `setup -h` and `setup --help` **MUST** exit 0, print the channel, and **MUST NOT** fetch or compile. Any other token after `setup` **MUST** fail and name `tn5250-cli setup -h`. A machine with no payload key (macOS, an unmapped arch, a Termux phone whose SDK is missing, or a compiler floor newer than that SDK) **MUST** stop with `This machine has no published payload name. Next: tn5250-cli build`.
 17. A published file **MUST** be a copy of the client `build` installed under `opt/tn5250` (`tn5250`, or `tn5250.exe` on Windows). It **MUST** keep that client's dynamic libraries. This law does not require a second, statically linked build. The glibc number in the name **MUST** still be the highest `GLIBC_` symbol in that copied file, as rule 8 says. The bionic number **MUST** be the Android ident note in rule 9. The programs under `opt/tn5250` stay the install. The `download/` file is that same client under the published name. macOS has no name in this grammar: the install may succeed, and `download/` **MUST** stay unchanged. A machine other than macOS that has no published name **MUST** stop after the install and **MUST NOT** invent a filename. Classification of that client: a name ending in `.exe` is `ucrt` `10`. An interpreter containing `ld-musl` is `musl`. A file rule 9 classifies as `bionic` uses that rule's floor. Any other file is `glibc`, and the number is rule 8. When that glibc scan finds no `GLIBC_` symbol, `build` **MUST** stop after the install with `This build has no published payload name. The client is installed. Next: read the GLIBC_ symbols with objdump or readelf.` When a `bionic` floor cannot be read, the same stop **MUST** say `Next: read the Android API from the file note, or from clang -dumpmachine.` It **MUST NOT** name `GLIBC_`.
 18. macOS (libSystem) **MUST NOT** be given a name in this grammar. `setup` on macOS **MUST** stop and name `tn5250-cli build`. This file does not define a `libsystem` token. Termux **MUST** use `bionic`. It **MUST NOT** be given a `glibc`, `musl`, or `uclibc` file.
@@ -99,7 +99,7 @@ Host key, printed as `arch clib clibver mode`:
 | Directory | `download/` |
 | Linux shape | `tn5250-<arch>-<clib>-<clib-version>.<app-version>` |
 | Windows shape | that name plus `.exe` |
-| App version now | `1.2.2` |
+| App version now | `1.2.3` |
 | Channel | `https://raw.githubusercontent.com/cloudgen/tn5250-cli/main/download/<filename>` |
 | Override | `TN5250_PAYLOAD_BASE` |
 | Index | `download/index.txt` |
@@ -112,14 +112,14 @@ Host key, printed as `arch clib clibver mode`:
 
 | File | When it is the one to save |
 |------|----------------------------|
-| `tn5250-amd64-glibc-2.34.1.2.0` | The file committed with product version 1.2.0. Highest `GLIBC_` symbol in that copy is 2.34. Host glibc may be newer. `setup` on a glibc ceiling at or above 2.34 may select it |
+| `tn5250-amd64-glibc-2.34.1.2.3` | The glibc file committed with product version 1.2.3. Highest `GLIBC_` symbol in that copy is 2.34. The bytes are the client previously stored as `tn5250-amd64-glibc-2.34.1.2.0`. That older name is not in `download/`. Host glibc may be newer. `setup` on a glibc ceiling at or above 2.34 may select it |
 | `tn5250-amd64-glibc-2.35.1.1.0` | Grammar example. Host arch `amd64`, glibc 2.35 or newer, and no higher fitting `glibc` line is listed. Refused on glibc 2.34. Not committed |
 | `tn5250-amd64-musl-1.2.5.1.1.0` | Host arch `amd64` and musl 1.2.5 or newer. Not a glibc substitute |
 | `tn5250-arm64-bionic-30.1.1.0` | Grammar at product version 1.1.0. Not the committed file |
 | `tn5250-arm64-bionic-30.1.2.2` | The Termux file committed with product version 1.2.2. The Android ident note is API 30. The interpreter is `/system/bin/linker64`. The file has no `GLIBC_` symbols. Host key `bionic-30` is an exact match. Not the phone SDK 35 |
 | `tn5250-amd64-ucrt-10.1.1.0.exe` | Git Bash on `x86_64`, Windows 10 or the release called Windows 11 |
 
-The committed payloads with this version of the law are `download/tn5250-amd64-glibc-2.34.1.2.0` and `download/tn5250-arm64-bionic-30.1.2.2`, each with a sibling `.sha256` and a line in `download/index.txt`. The other names in the table are the grammar. They are not a claim that those bytes exist.
+The committed payloads with this version of the law are `download/tn5250-amd64-glibc-2.34.1.2.3` and `download/tn5250-arm64-bionic-30.1.2.2`, each with a sibling `.sha256` and a line in `download/index.txt`. The Termux file keeps the name published by product version 1.2.2. The other names in the table are the grammar. They are not a claim that those bytes exist.
 
 ### 2.3 Example (name parts in `/bin/sh`)
 
@@ -191,7 +191,7 @@ Saving a published payload does not raise privilege.
 
 ## Design-time verification
 
-`download/tn5250-amd64-glibc-2.34.1.2.0` is committed. The save proof uses a `file://` index. It does not compile.
+`download/tn5250-amd64-glibc-2.34.1.2.3` is committed. The save proof uses a `file://` index. It does not compile.
 
 | TP-ID | Proves | Status |
 |-------|--------|--------|
@@ -200,7 +200,7 @@ Saving a published payload does not raise privilege.
 | TP-PAY-05 | `setup` with a `file://` index saves the newest app-version for this arch and C library, skips a newer clib-version, mode 0755, and a bad digest stops | ran on 2026-10-13. `tests/payload-setup.sh`. The index listed `bionic-99`. Setup saved `bionic-30` at app-version 1.1.0. No network. No compile |
 | TP-PAY-02 | A host older than every listed file of its arch and clib is not given a newer file | exact `bionic` covered by TP-PAY-05: `bionic-99` was listed and was not saved. A glibc ceiling host was not run |
 | TP-PAY-03 | `.gitignore` does not ignore `download/` and re-includes `download/*.exe` | ran as a source read on 2026-10-13 |
-| TP-PAY-06 | The committed Ubuntu file is `tn5250-amd64-glibc-2.34.1.2.0`, mode `0755`, one bare sha256 line, and a matching `index.txt` line. The glibc number is the highest `GLIBC_` symbol, not the host ceiling | ran on 2026-10-14. `about` reports the host ceiling `glibc-2.39`. The copied file's highest symbol is `GLIBC_2.34` |
+| TP-PAY-06 | The committed Ubuntu file is `tn5250-amd64-glibc-2.34.1.2.3`, mode `0755`, one bare sha256 line, and a matching `index.txt` line. The glibc number is the highest `GLIBC_` symbol, not the host ceiling. The bytes match the former `tn5250-amd64-glibc-2.34.1.2.0` | ran on 2026-10-14. `about` reports the host ceiling `glibc-2.39`. The copied file's highest symbol is `GLIBC_2.34` |
 | TP-PAY-07 | The committed Termux file is `tn5250-arm64-bionic-30.1.2.2`. Its interpreter is `/system/bin/linker64`. Its Android ident note is API 30. It has no `GLIBC_` symbol. `build local` copies it into `download/` instead of stopping | ran on 2026-10-14. `tn5250-cli build local` on this phone. `tests/build-menu.sh` |
 
 Proof home: `docs/reviews/test-plan.md`.
@@ -213,7 +213,7 @@ Proof home: `docs/reviews/test-plan.md`.
 
 **Human daily-life explanation:** The payload filename is the label on the box. The last dotted number is which edition of the tool. The library number is which shelf it fits. A newer shelf can hold an older box. An older shelf cannot hold a newer box.
 
-**Daily-life example:** `tn5250-amd64-glibc-2.34.1.2.0` is the committed glibc box. It fits a machine whose glibc is 2.34 or newer. `tn5250-arm64-bionic-30.1.2.2` is the committed box for this Termux phone. The file was built for API 30. `tn5250-amd64-ucrt-10.1.1.0.exe` is the Windows grammar.
+**Daily-life example:** `tn5250-amd64-glibc-2.34.1.2.3` is the committed glibc box. It fits a machine whose glibc is 2.34 or newer. `tn5250-arm64-bionic-30.1.2.2` is the committed box for this Termux phone. The file was built for API 30. `tn5250-amd64-ucrt-10.1.1.0.exe` is the Windows grammar.
 
 ## 6. Status history
 
@@ -225,6 +225,7 @@ Proof home: `docs/reviews/test-plan.md`.
 | 2026-10-14 | Active 1.2.0 | `build local` and `build global` copy the installed client into `download/` under the published name, with a sibling digest and an index line. The copy keeps the client's dynamic libraries. The glibc number stays the highest `GLIBC_` symbol. `/bin/sh` digit negation is `[!0-9]`. The committed file is `tn5250-amd64-glibc-2.34.1.2.0`. |
 | 2026-10-14 | Active 1.2.1 | On Termux and Windows, `build global` does not run, so that scope does not copy into `download/`. The ship unit version is 1.2.1. The committed file stays `download/tn5250-amd64-glibc-2.34.1.2.0`. |
 | 2026-10-14 | Active 1.2.2 | A Termux build names the client from the Android ident note and the linker `/system/bin/linker64`, not from `GLIBC_` symbols. The ship unit version is 1.2.2. The committed Termux file is `download/tn5250-arm64-bionic-30.1.2.2`. The glibc file stays. |
+| 2026-10-14 | Active 1.2.3 | On Termux, scratch removal during `setup` follows RQ-TERMUX-CLI-CODING. Android toybox and `safe-rm` must not print an error. A warning is acceptable. A matched download still saves. The ship unit version is 1.2.3. The committed glibc file is `download/tn5250-amd64-glibc-2.34.1.2.3`. The 1.2.0 name is removed. The Termux file stays `download/tn5250-arm64-bionic-30.1.2.2`. |
 
 **Last Updated**: 2026-10-14
 **Owner**: unassigned

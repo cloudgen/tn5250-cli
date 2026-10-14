@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.2.3] - 2026-10-14
+
+### Fixed
+
+- On Termux, a remove uses `coreutils --coreutils-prog=rm` and does not exec `/bin/rm`. Android toybox and `safe-rm` do not print an error. A warning is acceptable. `setup` still saves a matched download. `build clean` still finishes.
+
+### Changed
+
+- The committed glibc client is `download/tn5250-amd64-glibc-2.34.1.2.3`. Those bytes are the client previously stored as `download/tn5250-amd64-glibc-2.34.1.2.0`. That older name is no longer in `download/`. The Termux file stays `download/tn5250-arm64-bionic-30.1.2.2`.
+
 ## [1.2.2] - 2026-10-14
 
 ### Fixed

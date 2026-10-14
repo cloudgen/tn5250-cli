@@ -53,8 +53,8 @@ APP_NAME="tn5250-cli"
 : "${SHORT_DESCRIPTION:=${APP_DESC}}"
 : "${DESCRIPTION:=POSIX /bin/sh program: install, version-check, self-update, self-uninstall, and about, plus setup, build, and host launch for the TN5250 client. A terminal with no command opens the numbered list. A pipe, --quiet, or --json places this CLI.}"
 # Product version SSOT (semver). Extractors use: grep '^VERSION="'
-VERSION="1.2.2"
-: "${VERSION:=1.2.2}"
+VERSION="1.2.3"
+: "${VERSION:=1.2.3}"
 
 # Runtime flags (safe defaults)
 : "${QUIET:=0}"
@@ -388,7 +388,7 @@ out_empty_line() { out_text plain ""; }
 
 util_app_ident() {
     : "${APP_NAME:=tn5250-cli}"
-    : "${VERSION:=1.2.2}"
+    : "${VERSION:=1.2.3}"
     : "${TTY:=0}"
     if [ "${TTY}" -eq 1 ]; then
         printf '\033[1m%s\033[0m(\033[3m%s\033[0m)' "${APP_NAME}" "${VERSION}"
@@ -657,14 +657,14 @@ inst_perform_install() {
         if inst_perform_install_download_with_checksum "${tmp_file}"; then
             downloaded_checksum_ok=1
         else
-            rm -f "${tmp_file}" 2>/dev/null || true
+            tn5250_rm_files --quiet-child "${tmp_file}" || true
             return 1
         fi
     else
         # Automatic verification via ${SCRIPT_URL}.sha256 (primary integrity path)
         INST_AUTO_CHECKSUM_OK=0
         if ! inst_perform_install_download_without_checksum "${tmp_file}"; then
-            rm -f "${tmp_file}" 2>/dev/null || true
+            tn5250_rm_files --quiet-child "${tmp_file}" || true
             return 1
         fi
         # Set only when companion matched (not on missing-sidecar continue)
@@ -673,7 +673,7 @@ inst_perform_install() {
 
     # Step 4: Atomic move to final location + PATH update + success message
     if ! inst_perform_install_atomic_install "${tmp_file}" "${downloaded_checksum_ok}"; then
-        rm -f "${tmp_file}" 2>/dev/null || true
+        tn5250_rm_files --quiet-child "${tmp_file}" || true
         return 1
     fi
 
@@ -875,7 +875,7 @@ inst_perform_install_download_without_checksum() {
                     out_success "Automatic checksum result: PASS (match ${SCRIPT_URL}.sha256)."
                 fi
             else
-                rm -f "${sha_file}"
+                tn5250_rm_files "${sha_file}"
                 if [ "${JSON}" -eq 1 ]; then
                     out_json_error "Automatic checksum verification failed" "checksum_mismatch"
                 else
@@ -890,7 +890,7 @@ inst_perform_install_download_without_checksum() {
                 out_warn "No .sha256 companion at ${SCRIPT_URL}.sha256 → continuing without automatic verification."
             fi
         fi
-        rm -f "${sha_file}" 2>/dev/null || true
+        tn5250_rm_files --quiet-child "${sha_file}" || true
 
     elif command -v wget >/dev/null 2>&1; then
         if ! wget -qO "${tmp_file}" "${SCRIPT_URL}"; then
@@ -927,7 +927,7 @@ inst_perform_install_download_without_checksum() {
                     out_success "Automatic checksum result: PASS (match ${SCRIPT_URL}.sha256)."
                 fi
             else
-                rm -f "${sha_file}"
+                tn5250_rm_files "${sha_file}"
                 if [ "${JSON}" -eq 1 ]; then
                     out_json_error "Automatic checksum verification failed" "checksum_mismatch"
                 else
@@ -942,7 +942,7 @@ inst_perform_install_download_without_checksum() {
                 out_warn "No .sha256 companion at ${SCRIPT_URL}.sha256 → continuing without automatic verification."
             fi
         fi
-        rm -f "${sha_file}" 2>/dev/null || true
+        tn5250_rm_files --quiet-child "${sha_file}" || true
 
     else
         if [ "${JSON}" -eq 1 ]; then
@@ -973,9 +973,9 @@ inst_perform_install_atomic_install() {
 
     chmod +x "${tmp_file}" 2>/dev/null || true
 
-    rm -f "${INSTALL_PATH}" 2>/dev/null
+    tn5250_rm_files --quiet-child "${INSTALL_PATH}"
     if ! mv "${tmp_file}" "${INSTALL_PATH}" 2>/dev/null; then
-        rm -f "${tmp_file}"
+        tn5250_rm_files "${tmp_file}"
         if [ "${JSON}" -eq 1 ]; then
             out_json_error "Failed to move to ${INSTALL_PATH}" "io_error"
         else
@@ -1349,7 +1349,7 @@ inst_self_uninstall_confirm_and_remove() {
     fi
 
     # Remove the binary
-    if rm -f "$bin_path" 2>/dev/null; then
+    if tn5250_rm_files --quiet-child "$bin_path"; then
         return 0
     else
         if [ "${JSON}" -eq 1 ]; then
@@ -1418,7 +1418,7 @@ inst_self_uninstall_cleanup_path() {
                 "$config" 2>/dev/null; then
                 cleaned=1
             fi
-            rm -f "${config}.bak" 2>/dev/null || true
+            tn5250_rm_files --quiet-child "${config}.bak" || true
         fi
     done
 
@@ -2820,14 +2820,176 @@ tn5250_payload_base() {
     printf '%s\n' "${_base}"
 }
 
-# mktemp scratch only. PATH rm on this host is safe-rm and spends many
-# seconds on each file, so setup looks hung. /bin/rm is the system rm.
-tn5250_rm_temp() {
-    if [ -x /bin/rm ]; then
-        /bin/rm -f "$@"
+# True when _path, or a symlink it follows, is named _want.
+tn5250_path_basename_is() {
+    local _path=$1 _want=$2 _hop=0 _next=""
+    while [ -n "${_path}" ] && [ "${_hop}" -lt 8 ]; do
+        if [ "${_path##*/}" = "${_want}" ]; then
+            return 0
+        fi
+        if [ ! -L "${_path}" ]; then
+            return 1
+        fi
+        _next=$(readlink "${_path}" 2>/dev/null) || return 1
+        case "${_next}" in
+            /*) _path=${_next} ;;
+            *) _path=${_path%/*}/${_next} ;;
+        esac
+        _hop=$((_hop + 1))
+    done
+    return 1
+}
+
+# /bin is Android toybox. toybox and BusyBox must not be given --coreutils-prog.
+tn5250_rm_is_forbidden() {
+    local _path=$1
+    case "${_path}" in
+        /bin|/bin/*) return 0 ;;
+    esac
+    if tn5250_path_basename_is "${_path}" toybox; then
+        return 0
+    fi
+    if tn5250_path_basename_is "${_path}" busybox; then
+        return 0
+    fi
+    return 1
+}
+
+# safe-rm, or a symlink to it, and not a /bin toybox path.
+tn5250_rm_is_safe() {
+    local _path=$1
+    [ -n "${_path}" ] || return 1
+    if tn5250_rm_is_forbidden "${_path}"; then
+        return 1
+    fi
+    tn5250_path_basename_is "${_path}" safe-rm
+}
+
+# Prints the Termux coreutils path. Returns 1 when it is missing or forbidden.
+tn5250_termux_coreutils() {
+    local _cu=""
+    _cu=$(command -v coreutils 2>/dev/null) || return 1
+    [ -n "${_cu}" ] && [ -x "${_cu}" ] || return 1
+    if tn5250_rm_is_forbidden "${_cu}"; then
+        return 1
+    fi
+    printf '%s\n' "${_cu}"
+}
+
+tn5250_paths_gone() {
+    local _path=""
+    for _path in "$@"; do
+        if [ -e "${_path}" ] || [ -L "${_path}" ]; then
+            return 1
+        fi
+    done
+    return 0
+}
+
+tn5250_rm_warn_remaining() {
+    local _path=""
+    for _path in "$@"; do
+        if [ -e "${_path}" ] || [ -L "${_path}" ]; then
+            out_warn "Could not remove ${_path}."
+        fi
+    done
+    return 0
+}
+
+# Termux remove. _flag is -f or -rf, then the paths.
+# coreutils --coreutils-prog=rm is the call. /bin/rm is never executed.
+# A toybox or safe-rm case hides child text, may warn, and returns 0.
+# A non-zero return means coreutils ran and a path is still there.
+tn5250_termux_rm() {
+    local _flag=$1
+    shift
+    local _cu="" _rm="" _rc=0
+    case "${_flag}" in
+        -f|-rf) ;;
+        *) return 1 ;;
+    esac
+    _cu=$(tn5250_termux_coreutils) || _cu=""
+    if [ -n "${_cu}" ]; then
+        "${_cu}" --coreutils-prog=rm "${_flag}" -- "$@" >/dev/null 2>&1
+        _rc=$?
+        if tn5250_paths_gone "$@"; then
+            return 0
+        fi
+        if [ "${_rc}" -ne 0 ]; then
+            return "${_rc}"
+        fi
+        tn5250_rm_warn_remaining "$@"
+        return 0
+    fi
+    _rm=$(command -v rm 2>/dev/null) || _rm=""
+    if tn5250_rm_is_safe "${_rm}"; then
+        "${_rm}" "${_flag}" -- "$@" >/dev/null 2>&1 || true
+        tn5250_rm_warn_remaining "$@"
+        return 0
+    fi
+    if [ -n "${PREFIX:-}" ] && tn5250_rm_is_safe "${PREFIX}/bin/rm"; then
+        "${PREFIX}/bin/rm" "${_flag}" -- "$@" >/dev/null 2>&1 || true
+        tn5250_rm_warn_remaining "$@"
+        return 0
+    fi
+    if [ -n "${_rm}" ] && [ -x "${_rm}" ] && ! tn5250_rm_is_forbidden "${_rm}"; then
+        "${_rm}" "${_flag}" -- "$@" >/dev/null 2>&1
+        _rc=$?
+        if tn5250_paths_gone "$@"; then
+            return 0
+        fi
+        return "${_rc}"
+    fi
+    tn5250_rm_warn_remaining "$@"
+    return 0
+}
+
+# File remove. Termux uses rule 14. Other hosts use rm -f.
+# --quiet-child drops the child stderr only off Termux, so a [WARN] still shows.
+tn5250_rm_files() {
+    local _quiet=0
+    if [ "${1:-}" = "--quiet-child" ]; then
+        _quiet=1
+        shift
+    fi
+    if [ -n "${TERMUX_VERSION:-}" ]; then
+        tn5250_termux_rm -f "$@"
+        return $?
+    fi
+    if [ "${_quiet}" -eq 1 ]; then
+        rm -f "$@" 2>/dev/null
         return $?
     fi
     rm -f "$@"
+}
+
+# Directory remove. Termux uses rule 14 with -rf. Other hosts use rm -rf.
+tn5250_rm_tree() {
+    local _quiet=0
+    if [ "${1:-}" = "--quiet-child" ]; then
+        _quiet=1
+        shift
+    fi
+    if [ -n "${TERMUX_VERSION:-}" ]; then
+        tn5250_termux_rm -rf "$@"
+        return $?
+    fi
+    if [ "${_quiet}" -eq 1 ]; then
+        rm -rf "$@" 2>/dev/null
+        return $?
+    fi
+    rm -rf "$@"
+}
+
+# Setup scratch. On Termux a failed remove warns and still returns 0.
+tn5250_rm_temp() {
+    if [ -n "${TERMUX_VERSION:-}" ]; then
+        if ! tn5250_rm_files "$@"; then
+            tn5250_rm_warn_remaining "$@"
+        fi
+        return 0
+    fi
+    tn5250_rm_files "$@"
 }
 
 tn5250_http_get() {
@@ -3109,7 +3271,11 @@ tn5250_can_write_dir() {
 
 tn5250_remove_path() {
     local _path=$1
-    [ -e "${_path}" ] || return 0
+    [ -e "${_path}" ] || [ -L "${_path}" ] || return 0
+    if [ -n "${TERMUX_VERSION:-}" ]; then
+        tn5250_rm_tree "${_path}"
+        return $?
+    fi
     if tn5250_can_write_dir "$(dirname "${_path}")"; then
         if [ -x /bin/rm ]; then
             /bin/rm -rf "${_path}"
@@ -3302,7 +3468,7 @@ EOF
 tn5250_published_filename() {
     local _bin=$1
     local _arch="" _clib="" _ver="" _exe=0 _interp=""
-    : "${VERSION:=1.2.2}"
+    : "${VERSION:=1.2.3}"
     _arch=$(tn5250_payload_arch) || return 1
     case "${_bin}" in
         *.exe)
@@ -3565,10 +3731,10 @@ diff --git a/win32/tn5250-win.c b/win32/tn5250-win.c
      HWND hwndMap;
 EOF
     if ! git -C "${_src}" apply --whitespace=nowarn "${_patch}"; then
-        rm -f "${_patch}"
+        tn5250_rm_files "${_patch}"
         out_die "The Windows GCC 14 patch did not apply."
     fi
-    rm -f "${_patch}"
+    tn5250_rm_files "${_patch}"
 }
 
 # =============================================================================
@@ -3701,10 +3867,10 @@ diff --git a/lib5250/sslstream.c b/lib5250/sslstream.c
      }
 EOF
     if ! git -C "${_src}" apply --whitespace=nowarn "${_patch}"; then
-        rm -f "${_patch}"
+        tn5250_rm_files "${_patch}"
         out_die "The connect fix did not apply."
     fi
-    rm -f "${_patch}"
+    tn5250_rm_files "${_patch}"
 }
 
 tn5250_msys2_bash() {
@@ -3720,7 +3886,7 @@ tn5250_msys2_bash() {
         "${_bash_win}" "${_script_win}" > "${_runner}"
     local _rc=0
     cmd.exe //c "${_runner}" || _rc=$?
-    rm -rf "${_dir}"
+    tn5250_rm_tree "${_dir}"
     return "${_rc}"
 }
 
@@ -3765,7 +3931,7 @@ tn5250_install_msys2() {
     if [ ! -s "${_sfx}" ] || [ "${_bytes}" -lt 1000000 ]; then
         out_info "Downloading MSYS2 base environment"
         out_info "${_url}"
-        rm -f "${_sfx}" "${_sfx}.partial"
+        tn5250_rm_files "${_sfx}" "${_sfx}.partial"
         curl -fL --retry 5 --retry-delay 2 -o "${_sfx}.partial" "${_url}" || out_die "MSYS2 download failed."
         mv -f "${_sfx}.partial" "${_sfx}"
         _bytes=$(wc -c < "${_sfx}" | tr -d ' ')
@@ -3845,7 +4011,7 @@ tn5250_copy_runtime_dlls() {
             cp -f "${_bin}/${_dll}" "${_dest}/"
         fi
     done < "${_list}"
-    rm -f "${_list}"
+    tn5250_rm_files "${_list}"
 }
 
 tn5250_build_windows() {
@@ -3892,7 +4058,7 @@ tn5250_build_windows() {
         cp -f "${_exe}" "${_dest}/${_base}"
         tn5250_copy_runtime_dlls "${_dest}/${_base}" "${_dest}" "${TN5250_TOOL_BIN:-}"
     done < "${_list}"
-    rm -f "${_list}"
+    tn5250_rm_files "${_list}"
     local _name
     for _name in tn5250.exe lp5250d.exe dftmap.exe; do
         [ -f "${_dest}/${_name}" ] || out_die "Build finished without producing ${_name}"
@@ -3937,7 +4103,7 @@ tn5250_setup_windows() {
             return 0
         fi
     fi
-    rm -rf "${_build}"
+    tn5250_rm_tree "${_build}"
     tn5250_build_windows "${_src}" "${_build}" "${_work}"
     if [ -n "${_stage}" ]; then
         tn5250_place_tree "${_stage}" "${TN5250_APP_DIR}" || out_die "Cannot install the client into ${TN5250_APP_DIR}."
@@ -4105,7 +4271,7 @@ tn5250_unix_gaps() {
             if ! gcc -c -x c "${_c}" -o "${_c}.o" >/dev/null 2>&1; then
                 _header_gap=1
             fi
-            rm -f "${_c}" "${_c}.o"
+            tn5250_rm_files "${_c}" "${_c}.o"
         else
             if ! tn5250_have_header stdio.h; then
                 _header_gap=1
@@ -4730,7 +4896,7 @@ tn5250_setup_unix() {
             return 0
         fi
     fi
-    rm -rf "${_build}"
+    tn5250_rm_tree "${_build}"
     tn5250_build_debian "${_src}" "${_build}" "${_work}"
     if [ -n "${_stage}" ]; then
         tn5250_place_tree "${_stage}" "${TN5250_APP_DIR}" || out_die "Cannot install the client into ${TN5250_APP_DIR}."
@@ -4995,7 +5161,7 @@ app_about() {
     : "${QUIET:=0}"
     : "${APP_NAME:=tn5250-cli}"
     # Version comes from global SSOT (VERSION="…" hard-assign near top); default only if unset
-    : "${VERSION:=1.2.2}"
+    : "${VERSION:=1.2.3}"
     : "${GLOBAL_BIN:=/usr/local/bin}"
     : "${USER_BIN:=${HOME}/.local/bin}"
     : "${SCRIPT_URL:=}"
@@ -5144,7 +5310,7 @@ app_about() {
 
 app_version() {
     : "${APP_NAME:=tn5250-cli}"
-    : "${VERSION:=1.2.2}"
+    : "${VERSION:=1.2.3}"
     : "${JSON:=0}"
     if [ "${JSON}" -eq 1 ]; then
         # Same machine contract as historical app_main inline path
