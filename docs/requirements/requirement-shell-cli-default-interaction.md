@@ -1,6 +1,6 @@
 **file**: docs/requirements/requirement-shell-cli-default-interaction.md
 **ID**: RQ-SHELL-CLI-DEFAULT-INTERACTION
-**Status**: Active (Version 1.2.0)
+**Status**: Active (Version 1.3.0)
 **Project**: tn5250-cli
 **Philosophy**: CIAO **v2.10.2** / CIAO-Lite (Caution • Intentional • Anti-fragile • Over-engineered / Over-protect)
 
@@ -10,7 +10,7 @@ This file owns the numbered list for tn5250-cli. A person at a terminal who type
 
 ### 1.1 Human-facing
 
-**In one sentence:** At a terminal, `tn5250-cli` with no command shows a numbered list; 1 builds, 2 downloads, 7 is languages, 8 is self-management, and 9 leaves.
+**In one sentence:** At a terminal, `tn5250-cli` with no command shows a numbered list; 1 opens build, 2 downloads, 7 is languages, 8 is self-management, and 9 leaves.
 
 | Box | Meaning | Example |
 |-----|---------|---------|
@@ -20,7 +20,7 @@ This file owns the numbered list for tn5250-cli. A person at a terminal who type
 
 | Includes | Excludes |
 |----------|----------|
-| The front list, row 1 running build, row 2 running setup, row 7 opening languages, the self-management list, a wrong number that stays on the list, and leaving with 9 | Help as a row, menu as a row, a pipe that waits, and a path-and-clock screen |
+| The front list, row 1 opening the build board, row 2 running setup, row 7 opening languages, the self-management list, a wrong number that stays on the list, and leaving with 9 | Help as a row, menu as a row, a pipe that waits, and a path-and-clock screen |
 
 | Surface | What you open | What for |
 |---------|---------------|----------|
@@ -31,6 +31,7 @@ This file owns the numbered list for tn5250-cli. A person at a terminal who type
 | You do… | What it means | What you type |
 |---------|---------------|---------------|
 | Open the list | Build is 1. Setup is 2. Languages is 7. Self-management is 8. Exit is 9 | `tn5250-cli` |
+| Open build | Clean is 11. Local is 12. Global is 13. Back is 0 | `1` |
 | Download a client from the list | That row runs setup and does not compile | `2` |
 | Place the CLI from the list | That row is under 8 | `87` |
 
@@ -38,15 +39,16 @@ This file owns the numbered list for tn5250-cli. A person at a terminal who type
 
 1. This product **claims** the numbered list. A zero-argument requirement exists. It defers a terminal with no command, when quiet and JSON are off, to this list. A pipe, `--quiet`, or `--json` with no command stays self-install on `docs/requirements/requirement-shell-cli-zero-arguments.md`.
 2. `menu` and `main` **MUST** open this list on a terminal. `--json` on a terminal **MUST** be ignored while the list is drawn. Off a terminal, `menu` and `main` **MUST** stop with `menu needs a terminal. Next: tn5250-cli help` and exit 1. In JSON mode that stop **MUST** be a JSON error.
-3. The front board **MUST** be row **1** `build`, row **2** `setup`, row **7** `languages`, row **8** `self-management`, and row **9** Exit. This product has no server commands, so row **2** is not a server category. Row **1** and a typed `build` **MUST** run `tn5250_setup` with no extra arguments. Row **2** and a typed `setup` **MUST** run `tn5250_payload_setup` with no extra arguments. They **MUST NOT** run `tn5250_setup`. Row **7** and a typed `languages` **MUST** open the language board. The sentences on that board are owned by `docs/requirements/requirement-shell-cli-language.md`. After a verb returns, the front board **MUST** be shown again. The front board **MUST NOT** list `help`, `menu`, `main`, `install`, `self-install`, `version`, `about`, `version-check`, `self-update`, or `self-uninstall`. Self-management **MUST** stay row **8**. Languages **MUST NOT** move onto row **8**.
+3. The front board **MUST** be row **1** `build`, row **2** `setup`, row **7** `languages`, row **8** `self-management`, and row **9** Exit. This product has no server commands, so row **2** is not a server category. Row **1** and a typed `build` with no extra arguments, on a terminal, with JSON and quiet off, **MUST** open the build board. They **MUST NOT** compile on that open. Off a terminal, a typed `build` with no scope **MUST** install local and **MUST NOT** wait for a menu. Any build flag **MUST** skip the build board and **MUST** default the scope to local when no scope token was given. Row **2** and a typed `setup` **MUST** run `tn5250_payload_setup` with no extra arguments. They **MUST NOT** run `tn5250_setup`. Row **7** and a typed `languages` **MUST** open the language board. The sentences on the boards are owned by `docs/requirements/requirement-shell-cli-language.md`. After a verb returns, the front board **MUST** be shown again. The front board **MUST NOT** list `help`, `menu`, `main`, `install`, `self-install`, `version`, `about`, `version-check`, `self-update`, or `self-uninstall`. Self-management **MUST** stay row **8**. Languages **MUST NOT** move onto row **8**.
+3b. The build board **MUST** be row **11** `clean`, row **12** `local`, row **13** `global`, and **0** Back. **11** and `clean` **MUST** run `tn5250_setup clean`. **12** and `local` **MUST** run `tn5250_setup local`. **13** and `global` **MUST** run `tn5250_setup global`. A leaf **MUST** return so the front board is shown again. The build board **MUST NOT** stay open after a leaf. An empty line, `0`, `q`, `back`, `exit`, or `quit` on the build board **MUST** return to the front board without compiling. A wrong token **MUST** reprint the build board.
 4. Before those numbers, the front board **MUST** print `This program has no server commands.` and `Open a host on the command line: tn5250-cli HOST.`
 5. Row **8** **MUST** open the self-management list. That list **MUST** be **82** `version`, **83** `about`, **84** `version-check`, **85** `self-update`, **86** `self-uninstall`, **87** `self-install`, and **0** Back. **81** **MUST NOT** be printed. Before the numbers, that list **MUST** print `This list does not place a payload. Next: tn5250-cli setup.`
 6. On the self-management list, row **82** and a typed `version` **MUST** run `about`. A typed `install` **MUST** run the same place as `self-install`. Argv `tn5250-cli version` stays the thin version line.
 7. The header **MUST** show the name and the live version, then the board title. On a terminal the name is bold and the version is italic. Each command row **MUST** be the number, a bold short name, and an italic light-gray explanation. Off a terminal the list is not drawn.
 8. The choice **MUST** be read in the current shell. The script **MUST NOT** capture that read with `$()` or backticks. The value is `PROMPT_ASK_VALUE`.
 9. A wrong number or a wrong name **MUST** print an error, reprint **this** list, and ask again. It **MUST NOT** exit. The error **MUST** be `${choice} is not on this list.`
-10. An empty line, `9`, `q`, `exit`, or `quit` on the front board **MUST** leave and return 0. An empty line, `0`, `q`, `back`, `exit`, or `quit` on the self-management list or the language board **MUST** return to the front board. EOF **MUST** leave that list without spinning.
-11. After a command on the self-management list finishes, the front board **MUST** be shown again. The self-management list **MUST NOT** stay open. After build from row **1**, setup from row **2**, or English from row **71**, the front board **MUST** be shown again.
+10. An empty line, `9`, `q`, `exit`, or `quit` on the front board **MUST** leave and return 0. An empty line, `0`, `q`, `back`, `exit`, or `quit` on the self-management list, the language board, or the build board **MUST** return to the front board. EOF **MUST** leave that list without spinning.
+11. After a command on the self-management list finishes, the front board **MUST** be shown again. The self-management list **MUST NOT** stay open. After a leaf on the build board, setup from row **2**, or English from row **71**, the front board **MUST** be shown again.
 
 ### 2.1 Implementation Notes (this product)
 
@@ -55,13 +57,18 @@ This file owns the numbered list for tn5250-cli. A person at a terminal who type
 | Claimed | yes |
 | Case | Zero-argument law defers the terminal with no command here. Non-interactive no-command stays self-install |
 | Front handler | `app_cmd_menu` |
+| Build handler | `app_cmd_menu_build` |
 | Self-management handler | `app_cmd_menu_self` |
 | Language handler | `app_cmd_menu_language` |
 | Actor consider | Already recorded on the class file. No dest approver and no approval subject |
 
 | Number | Parent | Short name | Long description | Runs |
 |--------|--------|------------|------------------|------|
-| 1 | — | build | Build the upstream TN5250 client | `build` (`tn5250_setup`) |
+| 1 | — | build | Clean, or install the client for this login or for every login | the build board |
+| 11 | 1 | clean | Remove the built client and the compile tree | `build clean` |
+| 12 | 1 | local | Build install (local) | `build local` |
+| 13 | 1 | global | Build install (global) | `build global` |
+| 0 | 1 | Back | — | the front board |
 | 2 | — | setup | Download the newest published tn5250 for this machine | `setup` (`tn5250_payload_setup`) |
 | 7 | — | languages | Choose the language of this list | the language board |
 | 8 | — | self-management | Place, check, update, or remove this CLI | the self-management list |
@@ -76,16 +83,53 @@ This file owns the numbered list for tn5250-cli. A person at a terminal who type
 | 87 | 8 | self-install | Place this CLI the same way as install | `self-install` |
 | 0 | 8 | Back | — | the front board |
 
+### 2.2 Example (build board; current shell)
+
+```sh
+# WARNING — do-not-capture-read. The choice is PROMPT_ASK_VALUE.
+# A leaf returns so the front board is shown again.
+app_cmd_menu_build() {
+    local _choice=""
+    while true; do
+        app_menu_draw_build
+        if ! app_menu_read_choice; then
+            return 0
+        fi
+        _choice="${PROMPT_ASK_VALUE}"
+        case "${_choice}" in
+            ""|0|q|back|exit|quit)
+                return 0
+                ;;
+            11|clean)
+                tn5250_setup clean
+                return 0
+                ;;
+            12|local)
+                tn5250_setup local
+                return 0
+                ;;
+            13|global)
+                tn5250_setup global
+                return 0
+                ;;
+            *)
+                out_error "${_choice} is not on this list."
+                ;;
+        esac
+    done
+}
+```
+
 ## Under command line for normal user only
 
 The list does not raise privilege.
 
-**This requirement:** rows 2, 7, 8, and 82 through 87 do not offer sudo, apt, dnf, or Termux pkg. Row 2 downloads. Row 1 runs the build verb. A missing compiler package may ask for the administrator password inside that verb. That ask is owned by `docs/requirements/requirement-shell-sudo-command.md`.
+**This requirement:** rows 2, 7, 8, and 82 through 87 do not offer sudo, apt, dnf, or Termux pkg. Row 2 downloads. Row 1 opens the build board. Rows 12 and 13 run the build verb. A missing compiler package may ask for the administrator password inside that verb. A global place into a prefix this login cannot write may use the same wrap after the compile. That ask is owned by `docs/requirements/requirement-shell-sudo-command.md`.
 
 ## 3. Design Principles (CIAO / CIAO-Lite)
 
 - **Caution**: a wrong number stays on this list.
-- **Intentional**: 1 builds, 2 downloads, 7 is languages, 8 is self-management, and 9 leaves.
+- **Intentional**: 1 opens build, 2 downloads, 7 is languages, 8 is self-management, and 9 leaves.
 - **Anti-fragile**: a pipe never opens the list.
 - **Over-protect**: the self-management list does not place a payload. Setup is row 2, not row 81. Languages stay off row 8.
 
@@ -95,7 +139,8 @@ The list does not raise privilege.
 
 - Open this list from a pipe, from `--quiet`, or from `--json` with no command.
 - Put `help` or `menu` on the list.
-- Put `build` on any list except front-board row 1.
+- Put the token `build` on any list except front-board row 1. The build board's children are `clean`, `local`, and `global`.
+- Number the build board from 1. Its children are 11, 12, and 13.
 - Put `setup` on row 1, on row 8, or on row 81.
 - Move self-management off row 8, or put languages on row 8.
 - Exit the process because a number is not on the list.
@@ -156,6 +201,8 @@ Proof home: `docs/reviews/test-plan.md`.
 
 | 2026-10-13 | Active 1.1.1 | The payload verb is `build`, not `setup`. Setup and build are different. Menus, help, and next-steps say `build`. |
 | 2026-10-13 | Active 1.2.0 | Front row 2 is `setup` and downloads. Front row 7 is `languages`. Row 8 stays self-management. The self-management hint names `setup`. |
-**Last Updated**: 2026-10-13
+| 2026-10-14 | Active 1.3.0 | Row 1 opens the build board. Children are 11 clean, 12 local, and 13 global. A leaf returns to the front board. Off a terminal, bare `build` installs local. |
+
+**Last Updated**: 2026-10-14
 **Owner**: unassigned
 **Alignment**: Registry `docs/requirements/index.md`; **CIAO** (https://github.com/cloudgen/ciao); CIAO-Lite (https://github.com/cloudgen/ciao-lite).

@@ -19,6 +19,6 @@ No payload bytes are in `download/`. `build` still compiles.
 
 | ID | Severity | Status | Note |
 |----|----------|--------|------|
-| TN5250-PAY-01 | — | fixed | The digest-mismatch path looked hung. Each `rm` on this host is `safe-rm` and takes about twenty seconds. The save itself finishes. |
+| TN5250-PAY-01 | — | fixed | Scratch files from `setup` are removed with `/bin/rm`. PATH `rm` on this host is `safe-rm` and takes about twenty seconds, which made the digest check look hung. |
 
 No P0 or P1.

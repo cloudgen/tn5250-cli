@@ -1,18 +1,18 @@
 **file**: docs/requirements/requirement-shell-sudo-command.md
 **ID**: RQ-SHELL-SUDO-COMMAND
-**Status**: Active (Version 1.3.8)
+**Status**: Active (Version 1.4.0)
 **Project**: tn5250-cli
 **Philosophy**: CIAO **v2.10.2** / CIAO-Lite (Caution • Intentional • Anti-fragile • Over-engineered / Over-protect)
 
 ## 1. Purpose
 
-This file is the only owner of in-tool sudo for `tn5250-cli`. Build may use that one wrap to install missing compiler packages. Git, make, cmake, ninja, and the compile stay with the person who started build. Without this file, a portable sudo lesson would arrive raw and either ban the package install or scatter `sudo` through the script.
+This file is the only owner of in-tool sudo for `tn5250-cli`. Build may use that one wrap to install missing compiler packages. After the compile has finished in a directory this login can write, a global place into a prefix this login cannot write may use the same wrap for `mkdir`, `cp`, `chmod`, and `rm` of that finished tree. Git, make, cmake, ninja, and the compile stay with the person who started build. A local place does not use the wrap. The copy into `download/` does not use the wrap. Without this file, a portable sudo lesson would arrive raw and either ban the package install or scatter `sudo` through the script.
 
 Debian 12 and 13 apt names stay on `docs/requirements/requirement-debian-build-payload.md`. The `apt-get` call stays on `docs/requirements/requirement-debian-cli-coding.md`. Ubuntu's versioned table stays on `docs/requirements/requirement-ubuntu.md`. Other Linux that selects `apt-get` uses the Debian name table and does not become Debian. `pacman` and `zypper` names stay in this file. `dnf` names stay on `docs/requirements/requirement-fedora-redhat-build-payload.md`. Alpine `apk` names stay on `docs/requirements/requirement-alpine-build-payload.md`. Termux package names stay on `docs/requirements/requirement-termux-build-payload.md`. The Termux `pkg` call stays on `docs/requirements/requirement-termux-cli-coding.md`. macOS formula names stay on `docs/requirements/requirement-macos-build-payload.md`. The macOS `brew` call stays on `docs/requirements/requirement-macos-cli-coding.md`. macOS does not use this wrap. This file owns the wrap, the probe, and the studied allow table. It does not restate the CMake invocation.
 
 ### 1.1 Human-facing
 
-**In one sentence:** `tn5250-cli build` is the mixed elevated sudo model: one command for a normal user and for a sudo launch. Missing compiler packages are the only part that uses sudo. Git and the compile stay with the person who started it. Help does not tell that person to prefix the verb with sudo.
+**In one sentence:** `tn5250-cli build` is the mixed elevated sudo model: one command for a normal user and for a sudo launch. Missing compiler packages use sudo. A global place into a prefix this login cannot write may use sudo after the compile. Git and the compile stay with the person who started it. Help does not tell that person to prefix the verb with sudo.
 
 | Box | Meaning | Example |
 |-----|---------|---------|
@@ -22,7 +22,7 @@ Debian 12 and 13 apt names stay on `docs/requirements/requirement-debian-build-p
 
 | Includes | Excludes |
 |----------|----------|
-| One sudo wrap, a probe that skips sudo when the tools are already present, and password sudo on a terminal | Git, cmake, make, ninja, and copying the built programs through sudo. A sudoers file written by this tool. Termux `pkg`. Git Bash package installs |
+| One sudo wrap, a probe that skips sudo when the tools are already present, password sudo on a terminal, and a global place of a finished tree into a prefix this login cannot write | Git, cmake, make, ninja, a local place, and the copy into `download/` through sudo. A sudoers file written by this tool. Termux `pkg`. Git Bash package installs |
 
 | Surface | What you open | What for |
 |---------|---------------|----------|
@@ -37,7 +37,7 @@ Debian 12 and 13 apt names stay on `docs/requirements/requirement-debian-build-p
 
 1. Every in-tool `sudo` **MUST** go through one wrapping function named `util_sudo`. Domain helpers **MUST NOT** write a raw `sudo`.
 2. Before that wrap runs, build **MUST** probe without sudo. The probe asks whether the compiler, the headers, CMake, a generator, package config, terminfo, and git are already present. When the probe matches, build **MUST NOT** call `sudo`.
-3. `sudo` **MAY** run only when the probe misses. The argv **MUST** be a package-manager install of the missing packages named by the platform requirement. Git, cmake, make, ninja, and the payload copy **MUST NOT** be passed to the wrap.
+3. `sudo` **MAY** run in two cases. When the probe misses, the argv **MUST** be a package-manager install of the missing packages named by the platform requirement. After git and the compile have finished in a directory this login can write, a global place or a global clean of a prefix this login cannot write **MAY** pass `mkdir`, `cp`, `chmod`, or `/bin/rm` of that finished tree to the wrap. Git, cmake, make, and ninja **MUST NOT** be passed to the wrap. A local place **MUST NOT** use the wrap. The copy into `download/` **MUST NOT** use the wrap. The compile **MUST NOT** write its object tree straight into an unwritable prefix.
 4. When the process is already root (`id -u` is 0), the package command **MUST** run directly and **MUST NOT** call `sudo`. Git and the compile still **MUST NOT** run in that root process.
 5. The wrap **MUST NOT** pass `sudo -n`. The studied grant for this login is not NOPASSWD for the package managers.
 6. Password sudo **MUST** run only when the process measured a terminal before any function ran, that terminal can be opened, and `--json` is off. Otherwise build **MUST** stop with a non-zero status and a message that names the missing packages and the next command. It **MUST NOT** wait for a password.
@@ -53,7 +53,7 @@ Debian 12 and 13 apt names stay on `docs/requirements/requirement-debian-build-p
 | Item | Value |
 |------|--------|
 | Wrap | `util_sudo` in `src/tn5250-cli` |
-| Callers | The Unix package ensure used by Debian, Ubuntu, other Linux, Alpine, Fedora, and Red Hat Enterprise Linux build. Windows build does not call it. Termux build does not call it. macOS build does not call it |
+| Callers | The Unix package ensure used by Debian, Ubuntu, other Linux, Alpine, Fedora, and Red Hat Enterprise Linux build. A global place or clean of a prefix this login cannot write, and only for `mkdir`, `cp`, `chmod`, and `rm` of the finished tree. A local place does not call it. The copy into `download/` does not call it. Windows build does not call it. Termux build does not call it. macOS build does not call it |
 | Probe | `gcc` runs, a small C compile works or the C header is present, `cmake` runs and is at least 3.12, `pkg-config` or `pkgconf` runs, ncurses and OpenSSL headers are present, `ninja` or `make` runs, a terminfo directory is present, `git` runs |
 | Already root | The package argv runs directly and does not call `sudo`. Git and the compile do not stay in that process |
 | Password sudo | `sudo` with the terminal as input. No `-n`. This is the package command only, from a normal user’s build |
@@ -86,9 +86,29 @@ Study on the authoring host: `sudo -n -l` lists `(ALL : ALL) ALL` without NOPASS
 | pacman | `gcc`, `glibc`, `cmake`, `ninja`, `pkgconf`, `ncurses`, `openssl`, `git` |
 | zypper | `gcc`, `glibc-devel`, `cmake`, `ninja`, `pkgconf`, `ncurses-devel`, `libopenssl-devel`, `git` |
 
-Git clone, git fetch, cmake, make, ninja, and the copy into the prefix are not rows in this table.
+Git clone, git fetch, cmake, make, and ninja are not rows in this table. A global place into a prefix this login cannot write may pass `mkdir`, `cp`, `chmod`, and `rm` of the finished tree. A local place and the copy into `download/` are not rows.
 
-### 2.2 Why This Requirement Exists (Direct CIAO Alignment)
+### 2.2 Example (the place gate)
+
+```sh
+# Writable prefix: this login copies. Unwritable prefix: the wrap places
+# the finished tree. Git, cmake, make, and ninja are not in this function.
+tn5250_place_file() {
+    local _src=$1 _dest=$2 _dir
+    _dir=$(dirname "${_dest}")
+    if tn5250_can_write_dir "${_dir}"; then
+        mkdir -p "${_dir}" || return 1
+        cp -f "${_src}" "${_dest}" || return 1
+        chmod 755 "${_dest}" || return 1
+        return 0
+    fi
+    util_sudo mkdir -p "${_dir}" || return 1
+    util_sudo cp -f "${_src}" "${_dest}" || return 1
+    util_sudo chmod 755 "${_dest}" || return 1
+}
+```
+
+### 2.3 Why This Requirement Exists (Direct CIAO Alignment)
 
 - **CIAO Principle 9** (https://github.com/cloudgen/ciao): package install is admin privilege. Git and the compile stay with the person who started build.
 - **CIAO Principle 10 – Least privilege**: sudo runs only after the probe misses, and only for the package argv.
@@ -113,9 +133,11 @@ Git Bash, Termux, macOS, and Windows cmd have no administrator install inside th
 **Future AI assistants or maintainers MUST NOT**:
 
 - Scatter a raw `sudo` outside `util_sudo`.
-- Pass git, cmake, make, ninja, or the payload copy through `util_sudo`.
+- Pass git, cmake, make, or ninja through `util_sudo`.
+- Pass a local place, or the copy into `download/`, through `util_sudo`.
+- Compile straight into a prefix this login cannot write. Compile into a cache this login can write, then place the finished tree.
 - Present `sudo tn5250-cli build` as a separate build command or as the way to start build. The mixed elevated sudo model is the design. A sudo launch is recovered, not recommended.
-- Leave git, cmake, make, ninja, or the payload copy running as root.
+- Leave git, cmake, make, or ninja running as root.
 - Default the wrap to `sudo -n`.
 - Probe with `sudo true`, `sudo ls`, or `sudo stat`.
 - Skip the probe because a password prompt is available.
@@ -157,9 +179,9 @@ Git Bash, Termux, macOS, and Windows cmd have no administrator install inside th
 
 | TP-ID | Proves | Status |
 |-------|--------|--------|
-| TP-SUDO-01 | The only executed `sudo` in `src/tn5250-cli` is inside `util_sudo`, and the package ensure is the caller | ran as a source read. The only `sudo "$@"` is inside `util_sudo`. `tn5250_run_elevated` is the caller |
+| TP-SUDO-01 | The only executed `sudo` in `src/tn5250-cli` is inside `util_sudo`. Callers are the package ensure, and place or remove when the directory is unwritable | ran as a source read on 2026-10-14. The only `sudo "$@"` is inside `util_sudo`. `tn5250_run_elevated` is the package caller. `tn5250_place_file`, `tn5250_place_tree`, and `tn5250_remove_path` call the wrap only when the directory is unwritable. That unwritable branch was not executed |
 | TP-SUDO-02 | When the compiler packages are already present, build does not call `sudo` | ran on the authoring host. Ubuntu 24.04 build exited 0 and did not print `Installing missing compiler packages` |
-| TP-SUDO-03 | Git, cmake, and make are not arguments of `util_sudo` | ran as a source read. The elevated argv is apt-get, apk, dnf, pacman, or zypper |
+| TP-SUDO-03 | Git, cmake, and make are not arguments of `util_sudo` | ran as a source read. The package argv is apt-get, apk, dnf, pacman, or zypper. Place uses `mkdir`, `cp`, `chmod`, and `rm` only when the prefix is unwritable. A live install into `/usr/local` was not run |
 | TP-SUDO-04 | `--json` or a closed terminal does not wait for a sudo password | todo |
 | TP-SUDO-05 | One build verb: a normal user continues; a root process with no person to return to stops before git; a sudo launch returns to that person before git | ran for the normal user and for root with nobody to return to. The `runuser` return was not executed on this host |
 | TP-SUDO-06 | Help for build names one command and does not tell the person to prefix build with sudo | source read of `tn5250_setup_help`. The three plain lines name one command, in-tool sudo for missing packages, and git and the compile staying with the user |
@@ -231,6 +253,8 @@ In this product the probe is “are the compiler packages already installed?” 
 
 | 2026-10-13 | Active 1.3.7 | Fedora and Red Hat Enterprise Linux use this wrap for `dnf install -y`. The call points at RQ-FEDORA-REDHAT-CLI-CODING. The `dnf` names point at RQ-FEDORA-REDHAT-BUILD-PAYLOAD. This file no longer lists those names. Other Linux that selects `dnf` uses that table and does not become that family. |
 | 2026-10-13 | Active 1.3.8 | The payload verb is `build`, not `setup`. Setup and build are different. Menus, help, and next-steps say `build`. |
-**Last Updated**: 2026-10-13
+| 2026-10-14 | Active 1.4.0 | A global place into a prefix this login cannot write may pass `mkdir`, `cp`, `chmod`, and `rm` of the finished tree. Git, cmake, make, and ninja stay off the wrap. A local place and the copy into `download/` stay off the wrap. The unwritable branch was not executed. |
+
+**Last Updated**: 2026-10-14
 **Owner**: unassigned
 **Alignment**: Registry `docs/requirements/index.md`; **CIAO** (https://github.com/cloudgen/ciao); CIAO-Lite (https://github.com/cloudgen/ciao-lite).

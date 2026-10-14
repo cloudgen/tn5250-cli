@@ -53,8 +53,8 @@ APP_NAME="tn5250-cli"
 : "${SHORT_DESCRIPTION:=${APP_DESC}}"
 : "${DESCRIPTION:=POSIX /bin/sh program: install, version-check, self-update, self-uninstall, and about, plus setup, build, and host launch for the TN5250 client. A terminal with no command opens the numbered list. A pipe, --quiet, or --json places this CLI.}"
 # Product version SSOT (semver). Extractors use: grep '^VERSION="'
-VERSION="1.1.0"
-: "${VERSION:=1.1.0}"
+VERSION="1.2.0"
+: "${VERSION:=1.2.0}"
 
 # Runtime flags (safe defaults)
 : "${QUIET:=0}"
@@ -388,7 +388,7 @@ out_empty_line() { out_text plain ""; }
 
 util_app_ident() {
     : "${APP_NAME:=tn5250-cli}"
-    : "${VERSION:=1.1.0}"
+    : "${VERSION:=1.2.0}"
     : "${TTY:=0}"
     if [ "${TTY}" -eq 1 ]; then
         printf '\033[1m%s\033[0m(\033[3m%s\033[0m)' "${APP_NAME}" "${VERSION}"
@@ -2590,7 +2590,8 @@ tn5250_glibc_version() {
             ;;
     esac
     _maj=${_line%%.*}
-    _maj=${_maj##*[^0-9]}
+    # dash treats ^ inside [] as a literal. [!0-9] is the negation.
+    _maj=${_maj##*[!0-9]}
     case "${_line}" in
         *.*.*)
             _min=${_line#*.}
@@ -2598,7 +2599,7 @@ tn5250_glibc_version() {
             ;;
         *.*)
             _min=${_line#*.}
-            _min=${_min%%[^0-9]*}
+            _min=${_min%%[!0-9]*}
             ;;
         *)
             return 1
@@ -2793,6 +2794,16 @@ tn5250_payload_base() {
     printf '%s\n' "${_base}"
 }
 
+# mktemp scratch only. PATH rm on this host is safe-rm and spends many
+# seconds on each file, so setup looks hung. /bin/rm is the system rm.
+tn5250_rm_temp() {
+    if [ -x /bin/rm ]; then
+        /bin/rm -f "$@"
+        return $?
+    fi
+    rm -f "$@"
+}
+
 tn5250_http_get() {
     local _url=$1
     local _dest=$2
@@ -2931,25 +2942,25 @@ tn5250_payload_setup() {
     _base=$(tn5250_payload_base)
     _index=$(mktemp) || out_die "Cannot create a temporary file."
     if ! tn5250_http_get "${_base}/index.txt" "${_index}"; then
-        rm -f "${_index}"
+        tn5250_rm_temp "${_index}"
         out_die "Cannot read the payload index. Next: ${APP_NAME} build"
     fi
     _pick=$(tn5250_payload_choose "${_index}" "${_arch}" "${_clib}" "${_ver}" "${_mode}") || _pick=""
-    rm -f "${_index}"
+    tn5250_rm_temp "${_index}"
     if [ -z "${_pick}" ]; then
         out_die "No published payload fits ${_arch} ${_clib}-${_ver}. Next: ${APP_NAME} build"
     fi
     _body=$(mktemp) || out_die "Cannot create a temporary file."
     _sum=$(mktemp) || {
-        rm -f "${_body}"
+        tn5250_rm_temp "${_body}"
         out_die "Cannot create a temporary file."
     }
     if ! tn5250_http_get "${_base}/${_pick}" "${_body}"; then
-        rm -f "${_body}" "${_sum}"
+        tn5250_rm_temp "${_body}" "${_sum}"
         out_die "Cannot download ${_pick}. Next: ${APP_NAME} build"
     fi
     if ! tn5250_http_get "${_base}/${_pick}.sha256" "${_sum}"; then
-        rm -f "${_body}" "${_sum}"
+        tn5250_rm_temp "${_body}" "${_sum}"
         out_die "Missing digest for ${_pick}. The download stopped."
     fi
     _got=$(util_sha256_file "${_body}") || _got=""
@@ -2957,13 +2968,13 @@ tn5250_payload_setup() {
     _got=$(printf '%s' "${_got}" | tr 'A-F' 'a-f')
     _exp=$(printf '%s' "${_exp}" | tr 'A-F' 'a-f')
     if [ -z "${_got}" ] || [ -z "${_exp}" ] || [ "${_got}" != "${_exp}" ]; then
-        rm -f "${_body}" "${_sum}"
+        tn5250_rm_temp "${_body}" "${_sum}"
         out_die "Digest mismatch for ${_pick}. The download stopped."
     fi
-    rm -f "${_sum}"
+    tn5250_rm_temp "${_sum}"
     _dest_dir="${TN5250_PREFIX:-${HOME}/.local}/bin"
     mkdir -p "${_dest_dir}" || {
-        rm -f "${_body}"
+        tn5250_rm_temp "${_body}"
         out_die "Cannot create ${_dest_dir}."
     }
     _saved=$(tn5250_payload_saved_name)
@@ -3003,8 +3014,16 @@ tn5250_about_human() {
 
 tn5250_setup_help() {
     out_info "${APP_NAME} build — build the upstream TN5250 client"
-    out_plain "  ${APP_NAME} build [options]"
+    out_plain "  ${APP_NAME} build [local|global|clean] [options]"
+    out_plain "  ${APP_NAME} build install local"
+    out_plain "  ${APP_NAME} build install global"
     out_plain "  ${APP_NAME} HOST [arguments]"
+    out_empty_line
+    out_plain "On a terminal, build with no scope opens clean, local, and global."
+    out_plain "local installs under the login prefix (default: ${HOME}/.local)."
+    out_plain "global installs under /usr/local. A prefix this login cannot write is copied with sudo after the compile."
+    out_plain "clean removes the built client under the prefix and the compile tree. It does not remove download/."
+    out_plain "local and global copy the client into download/ as tn5250-<arch>-<clib>-<clib-version>.<app-version>."
     out_empty_line
     out_plain "Git Bash builds the Windows programs."
     out_plain "Debian 12 and 13, Ubuntu 22.04, 24.04, and 26.04, other Linux, Alpine, Fedora, Red Hat Enterprise Linux, Termux, and macOS build the curses program."
@@ -3026,7 +3045,9 @@ tn5250_setup_help() {
     out_plain "  -h, --help         Show this text and do not check the platform"
     out_empty_line
     out_plain "Examples:"
-    out_plain "  ${APP_NAME} build"
+    out_plain "  ${APP_NAME} build local"
+    out_plain "  ${APP_NAME} build global"
+    out_plain "  ${APP_NAME} build clean"
     out_plain "  ${APP_NAME} myibmi.example.com"
 }
 
@@ -3049,6 +3070,241 @@ tn5250_cache_root() {
     printf '%s\n' "${XDG_CACHE_HOME:-${HOME}/.cache}/tn5250"
 }
 
+# A directory this login can create or replace. Parent counts when the path is absent.
+tn5250_can_write_dir() {
+    local _dir=$1
+    if [ -d "${_dir}" ]; then
+        [ -w "${_dir}" ]
+        return $?
+    fi
+    _dir=$(dirname "${_dir}")
+    [ -d "${_dir}" ] && [ -w "${_dir}" ]
+}
+
+tn5250_remove_path() {
+    local _path=$1
+    [ -e "${_path}" ] || return 0
+    if tn5250_can_write_dir "$(dirname "${_path}")"; then
+        if [ -x /bin/rm ]; then
+            /bin/rm -rf "${_path}"
+        else
+            rm -rf "${_path}"
+        fi
+        return $?
+    fi
+    util_sudo /bin/rm -rf "${_path}"
+}
+
+tn5250_place_file() {
+    local _src=$1 _dest=$2 _dir
+    _dir=$(dirname "${_dest}")
+    if tn5250_can_write_dir "${_dir}"; then
+        mkdir -p "${_dir}" || return 1
+        cp -f "${_src}" "${_dest}" || return 1
+        if [ -x "${_src}" ]; then
+            chmod 755 "${_dest}" || return 1
+        fi
+        return 0
+    fi
+    util_sudo mkdir -p "${_dir}" || return 1
+    util_sudo cp -f "${_src}" "${_dest}" || return 1
+    if [ -x "${_src}" ]; then
+        util_sudo chmod 755 "${_dest}" || return 1
+    fi
+}
+
+tn5250_place_tree() {
+    local _src=$1 _dest=$2 _name _base
+    if tn5250_can_write_dir "${_dest}" || tn5250_can_write_dir "$(dirname "${_dest}")"; then
+        mkdir -p "${_dest}" || return 1
+        for _name in "${_src}"/*; do
+            [ -e "${_name}" ] || continue
+            _base=$(basename "${_name}")
+            cp -f "${_name}" "${_dest}/${_base}" || return 1
+            if [ -x "${_name}" ]; then
+                chmod 755 "${_dest}/${_base}" || return 1
+            fi
+        done
+        return 0
+    fi
+    util_sudo mkdir -p "${_dest}" || return 1
+    for _name in "${_src}"/*; do
+        [ -e "${_name}" ] || continue
+        _base=$(basename "${_name}")
+        util_sudo cp -f "${_name}" "${_dest}/${_base}" || return 1
+        if [ -x "${_name}" ]; then
+            util_sudo chmod 755 "${_dest}/${_base}" || return 1
+        fi
+    done
+}
+
+# Prints the checkout download/ directory. TN5250_DOWNLOAD_DIR wins.
+# The script at src/tn5250-cli selects that checkout. Otherwise the current
+# directory selects it when it contains src/tn5250-cli.
+tn5250_download_dir() {
+    local _self="" _dir="" _pwd=""
+    if [ -n "${TN5250_DOWNLOAD_DIR:-}" ]; then
+        printf '%s\n' "${TN5250_DOWNLOAD_DIR}"
+        return 0
+    fi
+    _self=$(tn5250_self_path)
+    _dir=$(dirname "${_self}")
+    if [ "$(basename "${_dir}")" = "src" ] && [ -f "${_dir}/${APP_NAME}" ]; then
+        printf '%s\n' "$(dirname "${_dir}")/download"
+        return 0
+    fi
+    _pwd=$(pwd)
+    if [ -f "${_pwd}/src/${APP_NAME}" ]; then
+        printf '%s\n' "${_pwd}/download"
+        return 0
+    fi
+    return 1
+}
+
+# Highest GLIBC_x.y symbol recorded in the file. Not the host ldd version.
+tn5250_binary_glibc_floor() {
+    local _bin=$1 _text="" _sym="" _ver="" _best=""
+    if command -v objdump >/dev/null 2>&1; then
+        _text=$(objdump -T "${_bin}" 2>/dev/null | grep -oE 'GLIBC_[0-9]+\.[0-9]+' || true)
+    fi
+    if [ -z "${_text}" ] && command -v readelf >/dev/null 2>&1; then
+        _text=$(readelf -V "${_bin}" 2>/dev/null | grep -oE 'GLIBC_[0-9]+\.[0-9]+' || true)
+    fi
+    [ -n "${_text}" ] || return 1
+    _text=$(printf '%s\n' "${_text}" | sort -u)
+    while IFS= read -r _sym || [ -n "${_sym}" ]; do
+        [ -n "${_sym}" ] || continue
+        _ver=${_sym#GLIBC_}
+        if [ -z "${_best}" ] || ver_gt "${_ver}" "${_best}"; then
+            _best=${_ver}
+        fi
+    done <<EOF
+${_text}
+EOF
+    [ -n "${_best}" ] || return 1
+    printf '%s\n' "${_best}"
+}
+
+# Prints tn5250-<arch>-<clib>-<clib-version>.<app-version>[.exe]
+tn5250_published_filename() {
+    local _bin=$1
+    local _arch="" _clib="" _ver="" _exe=0 _interp=""
+    : "${VERSION:=1.2.0}"
+    _arch=$(tn5250_payload_arch) || return 1
+    case "${_bin}" in
+        *.exe)
+            _exe=1
+            _clib=ucrt
+            _ver=10
+            ;;
+    esac
+    if [ "${_exe}" -eq 0 ]; then
+        if command -v readelf >/dev/null 2>&1; then
+            _interp=$(readelf -l "${_bin}" 2>/dev/null | grep -F 'Requesting program interpreter' || true)
+        fi
+        case "${_interp}" in
+            *ld-musl*)
+                _clib=musl
+                _ver=$(tn5250_musl_or_uclibc_version) || return 1
+                ;;
+            *android*|*bionic*)
+                _clib=bionic
+                _ver=$(tn5250_bionic_compiler_floor) || return 1
+                ;;
+            *)
+                _clib=glibc
+                _ver=$(tn5250_binary_glibc_floor "${_bin}") || return 1
+                ;;
+        esac
+    fi
+    if [ "${_exe}" -eq 1 ]; then
+        printf '%s\n' "tn5250-${_arch}-${_clib}-${_ver}.${VERSION}.exe"
+    else
+        printf '%s\n' "tn5250-${_arch}-${_clib}-${_ver}.${VERSION}"
+    fi
+}
+
+tn5250_index_ensure() {
+    local _idx=$1 _name=$2 _tmp="" _line="" _found=0
+    _tmp=$(mktemp) || return 1
+    if [ -f "${_idx}" ]; then
+        while IFS= read -r _line || [ -n "${_line}" ]; do
+            _line=$(printf '%s' "${_line}" | tr -d '\r')
+            case "${_line}" in
+                ""|\#*)
+                    printf '%s\n' "${_line}" >> "${_tmp}"
+                    continue
+                    ;;
+            esac
+            if [ "${_line}" = "${_name}" ]; then
+                _found=1
+            fi
+            printf '%s\n' "${_line}" >> "${_tmp}"
+        done < "${_idx}"
+    fi
+    if [ "${_found}" -eq 0 ]; then
+        printf '%s\n' "${_name}" >> "${_tmp}"
+    fi
+    mv -f "${_tmp}" "${_idx}"
+}
+
+# Copy the installed client into download/ under the published name.
+# _final is the opt/tn5250 directory that holds the client.
+tn5250_publish_installed_client() {
+    local _final=$1
+    local _leaf="" _src="" _dir="" _pub="" _dest="" _new="" _old="" _plat=""
+    : "${APP_NAME:=tn5250-cli}"
+    : "${JSON:=0}"
+    _leaf=$(tn5250_payload_saved_name)
+    _src="${_final}/${_leaf}"
+    [ -f "${_src}" ] || out_die "The built client is missing, so it was not copied into download/. Next: ${APP_NAME} build local"
+    _plat=$(tn5250_detect_platform)
+    _pub=$(tn5250_published_filename "${_src}") || _pub=""
+    if [ -z "${_pub}" ]; then
+        if [ "${_plat}" = "macos" ]; then
+            out_info "macOS has no published payload name. The client is installed. download/ was not changed."
+            return 0
+        fi
+        out_die "This build has no published payload name. The client is installed. Next: read the GLIBC_ symbols with objdump or readelf."
+    fi
+    _dir=$(tn5250_download_dir) || out_die "Cannot find the download folder. Next: run ${APP_NAME} build local from the tn5250-cli checkout."
+    mkdir -p "${_dir}" || out_die "Cannot create ${_dir}."
+    _dest="${_dir}/${_pub}"
+    _new=$(util_sha256_file "${_src}") || out_die "Cannot digest ${_src}."
+    _old=""
+    if [ -f "${_dest}" ]; then
+        _old=$(util_sha256_file "${_dest}") || _old=""
+    fi
+    if [ "${_new}" != "${_old}" ]; then
+        cp -f "${_src}" "${_dest}" || out_die "Cannot copy ${_pub} into ${_dir}."
+    fi
+    chmod 755 "${_dest}" || out_die "Cannot mark ${_dest} executable."
+    printf '%s\n' "${_new}" > "${_dest}.sha256" || out_die "Cannot write ${_dest}.sha256."
+    tn5250_index_ensure "${_dir}/index.txt" "${_pub}" || out_die "Cannot update ${_dir}/index.txt."
+    if [ "${JSON}" -eq 1 ]; then
+        out_json "success" "Published ${_pub}" "path" "${_dest}" "payload" "${_pub}"
+        return 0
+    fi
+    out_success "Published ${_pub} as ${_dest}"
+}
+
+tn5250_build_clean() {
+    local _app="${TN5250_PREFIX}/opt/tn5250"
+    local _cache=$(tn5250_cache_root)
+    : "${APP_NAME:=tn5250-cli}"
+    out_info "Cleaning ${_app}"
+    if [ -e "${_app}" ]; then
+        tn5250_remove_path "${_app}" || out_die "Cannot remove ${_app}."
+    else
+        out_info "Already clean: ${_app}"
+    fi
+    out_info "Cleaning ${_cache}/build"
+    if [ -e "${_cache}/build" ]; then
+        tn5250_remove_path "${_cache}/build" || out_die "Cannot remove ${_cache}/build."
+    fi
+    out_success "Cleaned the built client under ${TN5250_PREFIX}"
+}
+
 tn5250_fetch_source() {
     local _src=$1
     mkdir -p "$(dirname "${_src}")" || out_die "Cannot create the source cache."
@@ -3064,7 +3320,6 @@ tn5250_fetch_source() {
 
 tn5250_install_cli() {
     local _dest_dir="${TN5250_PREFIX}/bin"
-    mkdir -p "${_dest_dir}" || out_die "Cannot create ${_dest_dir}."
     local _src=$(tn5250_self_path)
     local _dest="${_dest_dir}/${APP_NAME}"
     local _current=""
@@ -3072,9 +3327,8 @@ tn5250_install_cli() {
         _current=$(readlink -f "${_dest}" 2>/dev/null || printf '%s' "")
     fi
     if [ "${_src}" != "${_current}" ]; then
-        cp -f "${_src}" "${_dest}" || out_die "Cannot copy ${APP_NAME} into the prefix."
+        tn5250_place_file "${_src}" "${_dest}" || out_die "Cannot copy ${APP_NAME} into the prefix."
     fi
-    chmod +x "${_dest}" || out_die "Cannot mark ${APP_NAME} executable."
     local _app=$(tn5250_app_dir)
     case ":${PATH}:" in
         *":${_dest_dir}:"*":${_app}:"*| *":${_app}:"*":${_dest_dir}:"*) ;;
@@ -3542,6 +3796,12 @@ tn5250_setup_windows() {
     local _build="${_cache}/build"
     out_info "Installing tn5250 ${TN5250_REF} for Git Bash"
     out_info "Prefix: ${TN5250_PREFIX}"
+    local _stage=""
+    local _work="${TN5250_APP_DIR}"
+    if ! tn5250_can_write_dir "${TN5250_APP_DIR}"; then
+        _stage="${_cache}/stage"
+        _work="${_stage}"
+    fi
     tn5250_ensure_toolchain
     tn5250_fetch_source "${_src}"
     out_info "Applying the connect fix"
@@ -3555,13 +3815,18 @@ tn5250_setup_windows() {
         if [ "${_have_ref}" = "${TN5250_REF}" ] && [ "${_have_rev}" = "${_sha}" ]; then
             out_info "tn5250 ${TN5250_REF} (${_sha}) is already installed"
             tn5250_install_cli
+            tn5250_publish_installed_client "${TN5250_APP_DIR}"
             out_info "Run: tn5250 HOST"
             return 0
         fi
     fi
     rm -rf "${_build}"
-    tn5250_build_windows "${_src}" "${_build}" "${TN5250_APP_DIR}"
+    tn5250_build_windows "${_src}" "${_build}" "${_work}"
+    if [ -n "${_stage}" ]; then
+        tn5250_place_tree "${_stage}" "${TN5250_APP_DIR}" || out_die "Cannot install the client into ${TN5250_APP_DIR}."
+    fi
     tn5250_install_cli
+    tn5250_publish_installed_client "${TN5250_APP_DIR}"
     out_info "Installed $(tn5250_payload_ref) ($(tn5250_payload_rev))"
     out_info "Programs: ${TN5250_APP_DIR}"
     out_info "Commands: tn5250, lp5250d, dftmap"
@@ -3621,14 +3886,16 @@ util_sudo() {
 # - Caution: a missing sudo or a closed terminal does not hang.
 # - Intentional: the message names the packages.
 # - Anti-fragile: the compile is not started after a failed install.
-# - Over-protect: this helper is the only caller of util_sudo.
+# - Over-protect: git, cmake, make, and ninja are not passed to util_sudo.
+#   An unwritable prefix may use util_sudo for mkdir, cp, chmod, and rm
+#   of the finished tree. A writable prefix does not. download/ does not.
 #
 # ALIGNMENT (live requirements only):
 # - docs/requirements/requirement-shell-sudo-command.md
 #
 # !!! DO NOT MODIFY OR SIMPLIFY THIS FUNCTION !!!
 #
-# Last updated: 2026-10-07
+# Last updated: 2026-10-14
 # =============================================================================
 tn5250_run_elevated() {
     : "${APP_NAME:=tn5250-cli}"
@@ -4146,9 +4413,11 @@ tn5250_unix_ensure_packages() {
 # =============================================================================
 #
 # GENERAL PURPOSE:
-# Mixed elevated sudo model. A normal user stays as that user. sudo inside
-# build is only the missing-package install. When build is already root
-# because sudo started it, return to that person before git and the compile.
+# Mixed elevated sudo model. A normal user stays as that user. The wrap
+# installs missing packages, and it may place a finished tree into a prefix
+# this login cannot write. When build is already root because sudo started
+# it, return to that person before git and the compile. The re-exec keeps
+# the scope token (local or global) so the prefix choice survives.
 # That return is recovery. Help does not tell the person to start that way.
 # A root login with no such person stops before git.
 #
@@ -4163,7 +4432,7 @@ tn5250_unix_ensure_packages() {
 #
 # !!! DO NOT MODIFY OR SIMPLIFY THIS FUNCTION !!!
 #
-# Last updated: 2026-10-07
+# Last updated: 2026-10-14
 # =============================================================================
 tn5250_continue_as_login() {
     : "${TN5250_AS_LOGIN:=0}"
@@ -4193,7 +4462,11 @@ tn5250_continue_as_login() {
         out_die "build is running as root, so git and the compile would belong to root. Next: run ${APP_NAME} build as the person who should own the build."
     fi
     out_info "Continuing git and the compile as the user who started build"
-    set -- build --prefix "${TN5250_PREFIX}" --ref "${TN5250_REF}"
+    if [ -n "${TN5250_BUILD_SCOPE:-}" ]; then
+        set -- build "${TN5250_BUILD_SCOPE}" --prefix "${TN5250_PREFIX}" --ref "${TN5250_REF}"
+    else
+        set -- build --prefix "${TN5250_PREFIX}" --ref "${TN5250_REF}"
+    fi
     if [ -n "${TN5250_JOBS:-}" ]; then
         set -- "$@" --jobs "${TN5250_JOBS}"
     fi
@@ -4319,6 +4592,12 @@ tn5250_setup_unix() {
     local _build="${_cache}/build"
     out_info "Installing tn5250 ${TN5250_REF} for ${_label}"
     out_info "Prefix: ${TN5250_PREFIX}"
+    local _stage=""
+    local _work="${TN5250_APP_DIR}"
+    if ! tn5250_can_write_dir "${TN5250_APP_DIR}"; then
+        _stage="${_cache}/stage"
+        _work="${_stage}"
+    fi
     tn5250_fetch_source "${_src}"
     out_info "Applying the connect fix"
     tn5250_apply_connect_fix "${_src}"
@@ -4329,13 +4608,18 @@ tn5250_setup_unix() {
         if [ "${_have_ref}" = "${TN5250_REF}" ] && [ "${_have_rev}" = "${_sha}" ]; then
             out_info "tn5250 ${TN5250_REF} (${_sha}) is already installed"
             tn5250_install_cli
+            tn5250_publish_installed_client "${TN5250_APP_DIR}"
             out_info "Run: tn5250 HOST"
             return 0
         fi
     fi
     rm -rf "${_build}"
-    tn5250_build_debian "${_src}" "${_build}" "${TN5250_APP_DIR}"
+    tn5250_build_debian "${_src}" "${_build}" "${_work}"
+    if [ -n "${_stage}" ]; then
+        tn5250_place_tree "${_stage}" "${TN5250_APP_DIR}" || out_die "Cannot install the client into ${TN5250_APP_DIR}."
+    fi
     tn5250_install_cli
+    tn5250_publish_installed_client "${TN5250_APP_DIR}"
     out_info "Installed $(tn5250_payload_ref) ($(tn5250_payload_rev))"
     out_info "Programs: ${TN5250_APP_DIR}"
     out_info "Installer remains: ${APP_NAME}"
@@ -4347,9 +4631,15 @@ tn5250_setup() {
     : "${JSON:=0}"
     : "${QUIET:=0}"
     : "${DEBUG:=0}"
+    : "${TTY:=0}"
+    : "${APP_NAME:=tn5250-cli}"
     local _prefix_set=0
+    local _scope=""
+    local _clean=0
+    local _saw_flag=0
     if [ -n "${TN5250_PREFIX:-}" ]; then
         _prefix_set=1
+        _saw_flag=1
     fi
     TN5250_REF=${TN5250_REF:-${TN5250_REF_DEFAULT}}
     while [ $# -gt 0 ]; do
@@ -4358,59 +4648,99 @@ tn5250_setup() {
                 tn5250_setup_help
                 return 0
                 ;;
+            clean)
+                _clean=1
+                shift
+                ;;
+            local)
+                _scope=local
+                shift
+                ;;
+            global)
+                _scope=global
+                shift
+                ;;
+            install)
+                shift
+                case "${1-}" in
+                    local)
+                        _scope=local
+                        shift
+                        ;;
+                    global)
+                        _scope=global
+                        shift
+                        ;;
+                    *)
+                        out_die "build install needs local or global. Next: ${APP_NAME} build --help"
+                        ;;
+                esac
+                ;;
             --prefix)
                 [ $# -ge 2 ] || out_die "--prefix needs a directory"
                 TN5250_PREFIX=$2
                 _prefix_set=1
+                _saw_flag=1
                 shift 2
                 ;;
             --prefix=*)
                 TN5250_PREFIX=${1#*=}
                 _prefix_set=1
+                _saw_flag=1
                 shift
                 ;;
             --ref)
                 [ $# -ge 2 ] || out_die "--ref needs a tag or branch"
                 TN5250_REF=$2
+                _saw_flag=1
                 shift 2
                 ;;
             --ref=*)
                 TN5250_REF=${1#*=}
+                _saw_flag=1
                 shift
                 ;;
             --msys2-root)
                 [ $# -ge 2 ] || out_die "--msys2-root needs a directory"
                 TN5250_MSYS2_ROOT=$2
+                _saw_flag=1
                 shift 2
                 ;;
             --msys2-root=*)
                 TN5250_MSYS2_ROOT=${1#*=}
+                _saw_flag=1
                 shift
                 ;;
             --jobs)
                 [ $# -ge 2 ] || out_die "--jobs needs a number"
                 TN5250_JOBS=$2
+                _saw_flag=1
                 shift 2
                 ;;
             --jobs=*)
                 TN5250_JOBS=${1#*=}
+                _saw_flag=1
                 shift
                 ;;
             --force)
                 FORCE=1
+                _saw_flag=1
                 shift
                 ;;
             --quiet|-q)
                 QUIET=1
+                _saw_flag=1
                 shift
                 ;;
             --json)
                 JSON=1
                 QUIET=1
+                _saw_flag=1
                 shift
                 ;;
             --debug)
                 DEBUG=1
+                _saw_flag=1
                 shift
                 ;;
             *)
@@ -4418,10 +4748,26 @@ tn5250_setup() {
                 ;;
         esac
     done
+    if [ "${_clean}" -eq 0 ] && [ -z "${_scope}" ] && [ "${_saw_flag}" -eq 0 ] && [ "${TTY}" -eq 1 ] && [ "${JSON}" -eq 0 ] && [ "${QUIET}" -eq 0 ]; then
+        app_cmd_menu_build
+        return 0
+    fi
+    if [ "${_clean}" -eq 1 ] && [ -z "${_scope}" ]; then
+        _scope=local
+    fi
+    if [ -z "${_scope}" ]; then
+        _scope=local
+    fi
     if [ "${FORCE:-0}" -eq 1 ]; then
         TN5250_FORCE=1
     else
         TN5250_FORCE=0
+    fi
+    if [ "${_prefix_set}" -eq 0 ]; then
+        if [ "${_scope}" = "global" ]; then
+            TN5250_PREFIX="/usr/local"
+            _prefix_set=1
+        fi
     fi
     if [ "${_prefix_set}" -eq 0 ]; then
         local _prefix_home="${HOME}"
@@ -4434,6 +4780,12 @@ tn5250_setup() {
         fi
         TN5250_PREFIX="${_prefix_home}/.local"
     fi
+    if [ "${_clean}" -eq 1 ]; then
+        tn5250_build_clean
+        return 0
+    fi
+    TN5250_BUILD_SCOPE="${_scope}"
+    out_info "Scope: ${_scope}"
     local _plat=$(tn5250_detect_platform)
     case "${_plat}" in
         windows)
@@ -4523,7 +4875,7 @@ app_about() {
     : "${QUIET:=0}"
     : "${APP_NAME:=tn5250-cli}"
     # Version comes from global SSOT (VERSION="…" hard-assign near top); default only if unset
-    : "${VERSION:=1.1.0}"
+    : "${VERSION:=1.2.0}"
     : "${GLOBAL_BIN:=/usr/local/bin}"
     : "${USER_BIN:=${HOME}/.local/bin}"
     : "${SCRIPT_URL:=}"
@@ -4672,7 +5024,7 @@ app_about() {
 
 app_version() {
     : "${APP_NAME:=tn5250-cli}"
-    : "${VERSION:=1.1.0}"
+    : "${VERSION:=1.2.0}"
     : "${JSON:=0}"
     if [ "${JSON}" -eq 1 ]; then
         # Same machine contract as historical app_main inline path
@@ -4740,14 +5092,17 @@ app_help() {
     out_info "Domain (TN5250 client):"
     out_plain "  setup                Download the newest published tn5250 for this machine into ~/.local/bin"
     out_plain "  setup -h             Show that download and do not fetch"
-    out_plain "  build                Build the upstream client for Git Bash, Debian, Ubuntu, other Linux, Alpine, Fedora, Red Hat Enterprise Linux, Termux, or macOS"
+    out_plain "  build                On a terminal, open clean, local install, and global install. Otherwise install locally"
+    out_plain "  build local          Build and install for this login, and copy the named client into download/"
+    out_plain "  build global         Build and install under /usr/local, and copy the named client into download/"
+    out_plain "  build clean          Remove the built client and the compile tree. download/ stays"
     out_plain "  build -h             Show build flags before any platform check"
     out_plain "  HOST                 Any other non-flag word launches the built tn5250"
     out_plain "  --version, -V        Same as version (CLI version and payload ref)"
     out_plain "  -h, --help           Same as help"
     out_empty_line
     out_plain "  The installed program is the upstream client. This installer remains ${APP_NAME}."
-    out_plain "setup downloads a published client. build compiles one. They are different."
+    out_plain "setup downloads a published client. build local and build global compile one and copy it into download/ with the published name."
     out_empty_line
     # --- end DOMAIN_HELP_ROWS ---
 
@@ -4819,7 +5174,7 @@ app_menu_draw_front() {
     out_info "$(util_app_ident) — numbered list of live commands"
     out_plain "This program has no server commands."
     out_plain "Open a host on the command line: ${APP_NAME} HOST."
-    out_menu_choice "1" "build" "Build the upstream TN5250 client"
+    out_menu_choice "1" "build" "Clean, or install the client for this login or for every login"
     out_menu_choice "2" "setup" "Download the newest published tn5250 for this machine"
     out_menu_choice "7" "languages" "Choose the language of this list"
     out_menu_choice "8" "self-management" "Place, check, update, or remove this CLI"
@@ -4941,6 +5296,62 @@ app_cmd_menu_language() {
 }
 
 # =============================================================================
+# app_menu_draw_build() - Build board under row 1
+# =============================================================================
+
+app_menu_draw_build() {
+    : "${APP_NAME:=tn5250-cli}"
+    out_info "$(util_app_ident) — build"
+    out_plain "Local uses the login prefix. Global uses /usr/local."
+    out_plain "Local and global copy the named client into download/."
+    out_menu_choice "11" "clean" "Remove the built client and the compile tree"
+    out_menu_choice "12" "local" "Build install (local)"
+    out_menu_choice "13" "global" "Build install (global)"
+    out_plain "0. Back"
+}
+
+# =============================================================================
+# app_cmd_menu_build() - Build menu layer
+# =============================================================================
+#
+# A leaf returns so the front board is shown again. Back and EOF return
+# without compiling. A wrong pick reprints this list.
+#
+# WARNING — do-not-capture-read: the choice is PROMPT_ASK_VALUE.
+# =============================================================================
+
+app_cmd_menu_build() {
+    local _choice=""
+    while true; do
+        app_menu_draw_build
+        if ! app_menu_read_choice; then
+            return 0
+        fi
+        _choice="${PROMPT_ASK_VALUE}"
+        case "${_choice}" in
+            ""|0|q|back|exit|quit)
+                return 0
+                ;;
+            11|clean)
+                tn5250_setup clean
+                return 0
+                ;;
+            12|local)
+                tn5250_setup local
+                return 0
+                ;;
+            13|global)
+                tn5250_setup global
+                return 0
+                ;;
+            *)
+                out_error "${_choice} is not on this list."
+                ;;
+        esac
+    done
+}
+
+# =============================================================================
 # app_cmd_menu() - Front board of the numbered list
 # =============================================================================
 #
@@ -4981,7 +5392,7 @@ app_cmd_menu() {
                 return 0
                 ;;
             1|build)
-                tn5250_setup
+                app_cmd_menu_build
                 ;;
             2|setup)
                 tn5250_payload_setup

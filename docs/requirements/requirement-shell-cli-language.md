@@ -1,6 +1,6 @@
 **file**: docs/requirements/requirement-shell-cli-language.md
 **ID**: RQ-SHELL-CLI-LANGUAGE
-**Status**: Active (Version 1.0.0)
+**Status**: Active (Version 1.1.0)
 **Project**: tn5250-cli
 **Philosophy**: CIAO **v2.10.2** / CIAO-Lite (Caution • Intentional • Anti-fragile • Over-engineered / Over-protect)
 
@@ -35,13 +35,13 @@ This file owns the language of the numbered list. English is the only language. 
 4. The choose prompt **MUST** be `Choose a number, or type the command name: ` including the trailing space.
 5. This file **MUST NOT** invent a line the ship unit does not print. Leaf verb tokens, JSON `about` field names, and the version one-liner stay in English.
 
-### 2.1 Worked sample (English, version 1.1.0)
+### 2.1 Worked sample (English, version 1.2.0)
 
 ```text
-[INFO] **tn5250-cli**(*1.1.0*) — numbered list of live commands
+[INFO] **tn5250-cli**(*1.2.0*) — numbered list of live commands
 This program has no server commands.
 Open a host on the command line: tn5250-cli HOST.
-1. **build**: *Build the upstream TN5250 client*
+1. **build**: *Clean, or install the client for this login or for every login*
 2. **setup**: *Download the newest published tn5250 for this machine*
 7. **languages**: *Choose the language of this list*
 8. **self-management**: *Place, check, update, or remove this CLI*
@@ -49,14 +49,24 @@ Open a host on the command line: tn5250-cli HOST.
 ```
 
 ```text
-[INFO] **tn5250-cli**(*1.1.0*) — languages
+[INFO] **tn5250-cli**(*1.2.0*) — build
+Local uses the login prefix. Global uses /usr/local.
+Local and global copy the named client into download/.
+11. **clean**: *Remove the built client and the compile tree*
+12. **local**: *Build install (local)*
+13. **global**: *Build install (global)*
+0. Back
+```
+
+```text
+[INFO] **tn5250-cli**(*1.2.0*) — languages
 The list is English. That is the only language.
 71. **en**: *English*
 0. Back
 ```
 
 ```text
-[INFO] **tn5250-cli**(*1.1.0*) — self-management
+[INFO] **tn5250-cli**(*1.2.0*) — self-management
 This list does not place a payload. Next: tn5250-cli setup.
 82. **version**: *Show current version*
 83. **about**: *Show detailed diagnostics*
@@ -76,7 +86,13 @@ Only English exists. The version token in a sample is the live `VERSION`.
 | Front title | numbered list of live commands |
 | No server | This program has no server commands. |
 | Host hint | Open a host on the command line: tn5250-cli HOST. |
-| build long | Build the upstream TN5250 client |
+| build long | Clean, or install the client for this login or for every login |
+| Build title | build |
+| Build local line | Local uses the login prefix. Global uses /usr/local. |
+| Build copy line | Local and global copy the named client into download/. |
+| clean long | Remove the built client and the compile tree |
+| local long | Build install (local) |
+| global long | Build install (global) |
 | setup long | Download the newest published tn5250 for this machine |
 | languages long | Choose the language of this list |
 | self-management long | Place, check, update, or remove this CLI |
@@ -97,7 +113,7 @@ Only English exists. The version token in a sample is the live `VERSION`.
 | self-uninstall long | Remove tn5250-cli (safe PATH cleanup) |
 | self-install long | Place this CLI the same way as install |
 
-Leaf tokens that stay English: `build`, `setup`, `languages`, `self-management`, `en`, `version`, `about`, `version-check`, `self-update`, `self-uninstall`, `self-install`. JSON `about` fields stay English, including `payload_arch`, `payload_clib`, and `termux_version`.
+Leaf tokens that stay English: `build`, `clean`, `local`, `global`, `setup`, `languages`, `self-management`, `en`, `version`, `about`, `version-check`, `self-update`, `self-uninstall`, `self-install`. JSON `about` fields stay English, including `payload_arch`, `payload_clib`, and `termux_version`.
 
 ## Under command line for normal user only
 
@@ -153,7 +169,8 @@ Proof home: `docs/reviews/test-plan.md`.
 | Date | Status | Notes |
 |------|--------|-------|
 | 2026-10-13 | Active 1.0.0 | English only. Front row 7 is languages. Row 71 confirms English. Worked samples and the translation table live here. |
+| 2026-10-14 | Active 1.1.0 | Samples use product version 1.2.0. The build board sentences are in the sample and in the translation table. |
 
-**Last Updated**: 2026-10-13
+**Last Updated**: 2026-10-14
 **Owner**: unassigned
 **Alignment**: Registry `docs/requirements/index.md`; **CIAO** (https://github.com/cloudgen/ciao); CIAO-Lite (https://github.com/cloudgen/ciao-lite).

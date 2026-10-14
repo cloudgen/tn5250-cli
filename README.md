@@ -1,11 +1,11 @@
 # tn5250-cli
 
-[![Version](https://img.shields.io/badge/Version-1.1.0-blue?style=flat-square)](https://github.com/cloudgen/tn5250-cli)
+[![Version](https://img.shields.io/badge/Version-1.2.0-blue?style=flat-square)](https://github.com/cloudgen/tn5250-cli)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](./LICENSE.md)
 [![CIAO](https://img.shields.io/badge/Philosophy-CIAO%20(Caution%20%E2%80%A2%20Intentional%20%E2%80%A2%20Anti--fragile%20%E2%80%A2%20Over--engineered)-purple.svg)](https://github.com/cloudgen/ciao)
 [![Stars](https://img.shields.io/github/stars/cloudgen/tn5250-cli?style=flat-square)](https://github.com/cloudgen/tn5250-cli)
 
-`tn5250-cli` builds and opens tn5250, a free 5250 terminal client for IBM i. You type `tn5250-cli build`, or you choose **1** on the numbered list. On Debian, Ubuntu, other Linux, Alpine, Fedora, and Red Hat Enterprise Linux, missing compiler packages are installed with sudo from inside that command. On Alpine that install is `apk`. On Fedora and Red Hat Enterprise Linux that install is `dnf`. On Termux, the same command installs missing compiler packages with `pkg` as your user and does not call sudo. On macOS, the same command installs a missing formula with `brew` as your user and does not call sudo. Git and the compile stay with you, including when build was started with sudo on Linux.
+`tn5250-cli` builds and opens tn5250, a free 5250 terminal client for IBM i. You type `tn5250-cli build local`, or you choose **1** on the numbered list and then **12**. On Debian, Ubuntu, other Linux, Alpine, Fedora, and Red Hat Enterprise Linux, missing compiler packages are installed with sudo from inside that command. On Alpine that install is `apk`. On Fedora and Red Hat Enterprise Linux that install is `dnf`. On Termux, the same command installs missing compiler packages with `pkg` as your user and does not call sudo. On macOS, the same command installs a missing formula with `brew` as your user and does not call sudo. Git and the compile stay with you, including when build was started with sudo on Linux.
 
 ## What tn5250 is
 
@@ -20,7 +20,8 @@ This repository is the installer. Its command name stays `tn5250-cli`, so the `t
 - One build command for your user and for a sudo launch.
 - Windows Git Bash builds the Windows programs.
 - Debian 12 and 13, Ubuntu 22.04, 24.04, and 26.04, other Linux, Alpine, Fedora, Red Hat Enterprise Linux, Termux, and macOS build the curses program.
-- The built client is copied under the install prefix, default `~/.local`.
+- The built client is copied under the install prefix. Local defaults to `~/.local`. Global defaults to `/usr/local`.
+- Local and global also copy that client into `download/` under the published name.
 - `help` and `version` print text and do not compile.
 
 Build clones [tn5250/tn5250](https://github.com/tn5250/tn5250) tag `v0.18.0` at commit `cd5980177b9468763bcaa669bf5cacbe7de5ec63`.
@@ -68,10 +69,10 @@ Build asks for the administrator password only when compiler packages are missin
 At a terminal, `tn5250-cli` with no command opens the numbered list. A pipe, `--quiet`, or `--json` places this CLI instead and does not wait.
 
 ```text
-[INFO] **tn5250-cli**(*1.1.0*) — numbered list of live commands
+[INFO] **tn5250-cli**(*1.2.0*) — numbered list of live commands
 This program has no server commands.
 Open a host on the command line: tn5250-cli HOST.
-1. **build**: *Build the upstream TN5250 client*
+1. **build**: *Clean, or install the client for this login or for every login*
 2. **setup**: *Download the newest published tn5250 for this machine*
 7. **languages**: *Choose the language of this list*
 8. **self-management**: *Place, check, update, or remove this CLI*
@@ -79,14 +80,24 @@ Open a host on the command line: tn5250-cli HOST.
 ```
 
 ```text
-[INFO] **tn5250-cli**(*1.1.0*) — languages
+[INFO] **tn5250-cli**(*1.2.0*) — build
+Local uses the login prefix. Global uses /usr/local.
+Local and global copy the named client into download/.
+11. **clean**: *Remove the built client and the compile tree*
+12. **local**: *Build install (local)*
+13. **global**: *Build install (global)*
+0. Back
+```
+
+```text
+[INFO] **tn5250-cli**(*1.2.0*) — languages
 The list is English. That is the only language.
 71. **en**: *English*
 0. Back
 ```
 
 ```text
-[INFO] **tn5250-cli**(*1.1.0*) — self-management
+[INFO] **tn5250-cli**(*1.2.0*) — self-management
 This list does not place a payload. Next: tn5250-cli setup.
 82. **version**: *Show current version*
 83. **about**: *Show detailed diagnostics*
@@ -97,11 +108,24 @@ This list does not place a payload. Next: tn5250-cli setup.
 0. Back
 ```
 
+The same boards on a terminal:
+
+![Front board](images/menu-front.png)
+
+![Build board](images/menu-build.png)
+
+![Languages](images/menu-languages.png)
+
+![Self-management](images/menu-self.png)
+
 ## Usage
 
 ```sh
 tn5250-cli setup
 tn5250-cli build
+tn5250-cli build local
+tn5250-cli build global
+tn5250-cli build clean
 tn5250-cli build --prefix ~/.local --ref v0.18.0
 tn5250-cli help
 tn5250-cli version
@@ -110,17 +134,17 @@ tn5250-cli myibmi.example.com
 tn5250-cli menu
 ```
 
-`setup` downloads the newest published client for this machine's architecture and C library and saves it as `~/.local/bin/tn5250`. `build` still compiles. They are different.
+`setup` downloads the newest published client for this machine's architecture and C library and saves it as `~/.local/bin/tn5250`. `build local` and `build global` compile, then copy that client into `download/` under the published name. They do not save the long name onto `PATH`. `build clean` removes the built client and the compile tree.
 
-`menu` and `main` open the numbered list. Row **1** runs `build`. Row **2** runs `setup`. Row **7** is languages. They are not host names. A host name that does not resolve prints the client's session error. It does not end in a segmentation fault.
+`menu` and `main` open the numbered list. Row **1** opens the build board. Row **12** is local. Row **13** is global. Row **2** runs `setup`. Row **7** is languages. They are not host names. A host name that does not resolve prints the client's session error. It does not end in a segmentation fault.
 
 `tn5250-cli setup -h` prints the download channel and does not fetch. `tn5250-cli build -h` prints the build options and does not compile.
 
-After a successful build, the installer is copied to `~/.local/bin/tn5250-cli` unless you passed `--prefix`.
+After a successful local build, the installer is copied to `~/.local/bin/tn5250-cli` unless you passed `--prefix`. The published client for this release is `download/tn5250-amd64-glibc-2.34.1.2.0`.
 
 ## Version
 
-Product version **1.1.0** is the `VERSION` line in `src/tn5250-cli`.
+Product version **1.2.0** is the `VERSION` line in `src/tn5250-cli`.
 
 ## License
 

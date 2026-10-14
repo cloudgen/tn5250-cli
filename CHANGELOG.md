@@ -5,6 +5,27 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+## [1.2.0] - 2026-10-14
+
+### Added
+
+- The front row `build` opens a build board: **11** clean, **12** local, **13** global. A leaf returns to the front board.
+- `tn5250-cli build local` and `tn5250-cli build global` compile the client and copy it into `download/` under `tn5250-<arch>-<clib>-<clib-version>.<app-version>`. The copy keeps the client's dynamic libraries. The glibc number is the highest `GLIBC_` symbol in the file.
+- `tn5250-cli build clean` removes the built client under the prefix and the compile tree. It does not remove `download/` or this CLI.
+- The committed client for this release is `download/tn5250-amd64-glibc-2.34.1.2.0`.
+
+### Changed
+
+- On a terminal, `tn5250-cli build` with no scope opens the build board. Off a terminal, the same command installs local.
+- A global install into a prefix this login cannot write compiles in the user cache, then places the finished tree with the sudo wrap. Git, cmake, make, and ninja stay with the person who started the build.
+
+### Fixed
+
+- `/bin/sh` digit parsing uses `[!0-9]`. On dash, `^` inside `[]` is a literal, so the host C library was reported as missing and `setup` stopped.
+- `tn5250-cli setup` removes its temporary files with `/bin/rm`. On this phone `rm` is `safe-rm`, which takes about twenty seconds per file and made a digest check look hung.
+
 ## [1.1.0] - 2026-10-13
 
 ### Added

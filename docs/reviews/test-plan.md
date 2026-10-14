@@ -12,7 +12,7 @@ On 2026-10-07, version 1.0.2 setup on this Ubuntu host applied the connect fix, 
 
 Rows that say “prior smoke” were shown in the specialize run that copied the binary under a temporary home and printed about, help, and an already-installed empty argv. This alignment repeated the rows that say “repeated”.
 
-The compile command is `build`. Choosing 1 on the numbered list, or typing `build`, runs it. As of product version 1.1.0, `setup` downloads a published client and does not compile. Choosing 2 runs that download. Choosing 7 opens languages. Dated paragraphs above keep the command that was typed on that day.
+The compile command is `build local` or `build global`. Choosing 1 on the numbered list, or typing `build` on a terminal, opens the build board (11 clean, 12 local, 13 global). It does not compile on that open. Off a terminal, bare `build` installs local. As of product version 1.1.0, `setup` downloads a published client and does not compile. Choosing 2 runs that download. Choosing 7 opens languages. As of product version 1.2.0, local and global also copy the installed client into `download/` under the published name. The committed file is `tn5250-amd64-glibc-2.34.1.2.0`. Its glibc number is the highest `GLIBC_` symbol in the file. The host ceiling from `about` is a different number. A live install into `/usr/local` was not run. The sudo place branch was not executed. A writable prefix uses the direct copy. Dated paragraphs above keep the command that was typed on that day.
 
 | TP-ID | Requirement | What would prove it | Status |
 |-------|-------------|---------------------|--------|
@@ -86,7 +86,7 @@ The compile command is `build`. Choosing 1 on the numbered list, or typing `buil
 | TP-CLI-04 | RQ-SHELL-CLI-INTERFACE | An unknown build option exits non-zero and mentions `tn5250-cli build --help` | ran, repeated. `build --bogus` exits 1 on this Termux host |
 | TP-SH-01 | RQ-SHELL-SCRIPT-CODING | Ship unit shebang is `#!/bin/sh`. The script sets `-u` and does not set `-e` globally | ran. `sh -n` and `dash -n` exit 0. That is a syntax check, not a dash runtime run |
 | TP-SH-02 | RQ-SHELL-SCRIPT-CODING | Executed sudo is only `util_sudo`, and only for the package install | ran as a source read after the sudo edit. The only executed `sudo "$@"` is inside `util_sudo`. An earlier source read, before that edit, found no executed sudo. The Ubuntu setup on 2026-10-07 did not call it |
-| TP-SUDO-01 | RQ-SHELL-SUDO-COMMAND | The only executed sudo in the ship unit is inside `util_sudo`, and the package ensure is the caller | ran as a source read. `tn5250_run_elevated` is the caller |
+| TP-SUDO-01 | RQ-SHELL-SUDO-COMMAND | The only executed sudo in the ship unit is inside `util_sudo`. Callers are the package ensure, and place or remove when the directory is unwritable | ran as a source read on 2026-10-14. `tn5250_run_elevated` is the package caller. Place and remove call the wrap only when the directory is unwritable. That branch was not executed |
 | TP-SUDO-02 | RQ-SHELL-SUDO-COMMAND | When the compiler packages are already present, build does not call sudo | ran on the authoring host. Ubuntu 24.04 setup exited 0 and did not print `Installing missing compiler packages` |
 | TP-SUDO-03 | RQ-SHELL-SUDO-COMMAND | Git, cmake, and make are not arguments of `util_sudo` | ran as a source read. The elevated argv is apt-get, apk, dnf, pacman, or zypper |
 | TP-SUDO-04 | RQ-SHELL-SUDO-COMMAND | `--json` or a closed terminal does not wait for a sudo password | todo |
@@ -113,6 +113,8 @@ The compile command is `build`. Choosing 1 on the numbered list, or typing `buil
 | TP-MENU-03 | RQ-SHELL-CLI-DEFAULT-INTERACTION | Row 8 opens self-management, 0 returns to the front, and 9 exits 0 | ran on the authoring host. A pty sent `8`, `0`, `9`. Exit 0. Front title twice. Self-management title once |
 | TP-MENU-04 | RQ-SHELL-CLI-DEFAULT-INTERACTION | Row 82 runs about, then the front list is shown again | ran on the authoring host. A pty sent `8`, `82`, `9`. Exit 0. About text appeared. Front title twice |
 | TP-MENU-05 | RQ-SHELL-CLI-DEFAULT-INTERACTION | `menu --json` on a terminal still draws the list | ran on the authoring host. A pty sent `9`. Exit 0. The list was shown. JSON help was not printed |
+| TP-MENU-06 | RQ-SHELL-CLI-DEFAULT-INTERACTION | Row 1 opens the build board. An invalid token reprints that board. 0 returns to the front. A leaf is not started by Back | ran on 2026-10-14. `tests/build-menu.sh` drives a pty: `1`, `nosuch`, `0`, `9`. Exit 0. Rows 11, 12, and 13 are drawn. The invalid line reprints the build board. The front board returns |
+| TP-PAY-06 | RQ-PAYLOAD-FILENAME | The committed file is `tn5250-amd64-glibc-2.34.1.2.0`, executable, one bare sha256 line, listed in `download/index.txt`. The name's glibc number is the highest `GLIBC_` symbol | ran on 2026-10-14. `tests/build-menu.sh`. `about` reports host `glibc-2.39`. The file's highest symbol is `GLIBC_2.34` |
 | TP-INT-02 | RQ-SHELL-INTERACTIVE-VS-NONINTERACTIVE | `build -h` prints flags and does not prompt | ran, repeated |
 | TP-DOM-01 | RQ-DOMAIN-TN5250 | Help lists build and host launch after the Type 0 rows | ran, prior smoke |
 | TP-DOM-02 | RQ-DOMAIN-TN5250 | `build -h` exits 0 on a machine that is not Git Bash and not Debian 12 or 13 | ran, repeated |

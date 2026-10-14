@@ -1,18 +1,18 @@
 **file**: docs/requirements/requirement-payload-filename.md
 **ID**: RQ-PAYLOAD-FILENAME
-**Status**: Active (Version 1.1.0)
+**Status**: Active (Version 1.2.0)
 **Project**: tn5250-cli
 **Philosophy**: CIAO **v2.10.2** / CIAO-Lite (Caution • Intentional • Anti-fragile • Over-engineered / Over-protect)
 
 ## 1. Purpose
 
-This file owns the published payload filename under `download/` and the `setup` verb that downloads one of those files. A published file is a prebuilt `tn5250` client fetched from the GitHub raw usercontent channel. The name has four parts: app name, architecture, C library, and C-library version, then the product version after a dot. A Windows file ends in `.exe`.
+This file owns the published payload filename under `download/`, the copy that `build local` and `build global` write there, and the `setup` verb that downloads one of those files. A published file is the installed `tn5250` client, stored under the published name. The name has four parts: app name, architecture, C library, and C-library version, then the product version after a dot. A Windows file ends in `.exe`.
 
-Compile, link, package names, and the copy into `${PREFIX}/opt/tn5250` stay on the platform payload requirements. `build` still compiles. `setup` does not.
+Compile, link, package names, and the copy into `${PREFIX}/opt/tn5250` stay on the platform payload requirements. `build` still compiles. `setup` does not. After a successful local or global install, this file's copy step writes the installed client into `download/`.
 
 ### 1.1 Human-facing
 
-**In one sentence:** `tn5250-cli setup` downloads `tn5250-<arch>-<clib>-<clib-version>.<app-version>` for this machine and saves it as `~/.local/bin/tn5250`.
+**In one sentence:** `tn5250-cli build local` and `tn5250-cli build global` copy the installed client into `download/` as `tn5250-<arch>-<clib>-<clib-version>.<app-version>`, and `tn5250-cli setup` downloads that file and saves it as `~/.local/bin/tn5250`.
 
 | Box | Meaning | Example |
 |-----|---------|---------|
@@ -22,7 +22,7 @@ Compile, link, package names, and the copy into `${PREFIX}/opt/tn5250` stay on t
 
 | Includes | Excludes |
 |----------|----------|
-| The filename grammar, how each part is collected, the C-library floor, the Windows `.exe`, the digest sibling, `download/index.txt`, and the `setup` save | The CMake invocation, the package table, and `TERMUX_VERSION` as a filename field |
+| The filename grammar, how each part is collected, the C-library floor, the Windows `.exe`, the digest sibling, `download/index.txt`, the copy from a local or global build, and the `setup` save | The CMake invocation, the package table, and `TERMUX_VERSION` as a filename field |
 
 | Surface | What you open | What for |
 |---------|---------------|----------|
@@ -34,11 +34,12 @@ Compile, link, package names, and the copy into `${PREFIX}/opt/tn5250` stay on t
 | You do… | What it means | What you type |
 |---------|---------------|---------------|
 | Take a published client | Download the newest fitting file and save it under `~/.local/bin` | `tn5250-cli setup` |
+| Publish the client you just built | Copy the installed client into `download/` under the published name | `tn5250-cli build local` |
 | See what this machine is | Arch and C library, without downloading | `tn5250-cli about` |
 
 ## 2. Core Rules / Requirements (Mandatory)
 
-1. This file is the only owner of the published payload filename and of the `setup` download. Another requirement **MUST NOT** keep a second copy of the grammar. Platform payload requirements own compilation, link, and the copy into `${PREFIX}/opt/tn5250`. This file **MUST NOT** restate those. `build` **MUST NOT** be replaced by a download. `build` **MUST NOT** copy a published file into `~/.local/bin`.
+1. This file is the only owner of the published payload filename, of the copy into `download/`, and of the `setup` download. Another requirement **MUST NOT** keep a second copy of the grammar. Platform payload requirements own compilation, link, and the copy into `${PREFIX}/opt/tn5250`. This file **MUST NOT** restate those. `build` **MUST NOT** be replaced by a download. `build` **MUST NOT** copy a published file into `~/.local/bin`. After a successful `build local` or `build global`, including when that client is already installed, `build` **MUST** copy the installed client into `download/` under the published name, write the sibling digest, and list the name in `download/index.txt`. The long name **MUST NOT** be saved onto `PATH`. `setup` remains the download. `build clean` **MUST NOT** remove `download/`.
 2. A published payload file **MUST** live in `download/` at the repository root. `download/` **MUST NOT** be listed in `.gitignore`. These files **MUST NOT** be placed in `bin/`, `dist/`, `build/`, or `out/`.
 3. `.gitignore` ignores `*.exe`. It **MUST** also contain `!download/*.exe` and `!download/*.exe.sha256`, or a Windows payload would stay untracked. A Linux or other non-Windows payload **MUST NOT** use a `.exe` suffix.
 4. A non-Windows payload filename **MUST** be `tn5250-<arch>-<clib>-<clib-version>.<app-version>`. A Windows payload filename **MUST** be that name plus `.exe`. The app name, arch, and clib are separated by `-`. The clib-version and the app-version are dotted numbers joined by one extra dot. No field may add `.bin`, a compression suffix, a date, the upstream tag, the upstream commit, or `TERMUX_VERSION`.
@@ -65,7 +66,7 @@ Compile, link, package names, and the copy into `${PREFIX}/opt/tn5250` stay on t
 14. Each payload file **MUST** have a sibling `<filename>.sha256`. The Windows sibling ends in `.exe.sha256`. The file **MUST** be one line whose first field is 64 hex digits, compared case-folded, and **MUST NOT** require the filename on that line, the same shape as `src/tn5250-cli.sha256`. A mismatch **MUST** stop with `Digest mismatch for <filename>. The download stopped.` A missing digest **MUST** stop with `Missing digest for <filename>. The download stopped.` This rule does not change the script companion in `docs/requirements/requirement-shell-automatic-checksum.md`. A missing script companion still warns. A missing payload digest stops.
 15. `setup` **MUST** save a non-Windows file as `${TN5250_PREFIX:-${HOME}/.local}/bin/tn5250` and a Windows file as `${TN5250_PREFIX:-${HOME}/.local}/bin/tn5250.exe`. The long filename **MUST NOT** be left on `PATH`. The mode **MUST** be `0755`. The save **MUST** chmod, because a raw download does not keep the executable bit. The committed blob **MUST** be git mode `100755`. The save **MUST NOT** call sudo, `pkg`, `apt`, `apk`, `brew`, or `dnf`. It **MUST** create the `bin` directory as this user when that directory is missing. The saved program **MUST NOT** be named `tn5250-cli`. Human success **MUST** say `Saved <filename> as <path>`. JSON success **MUST** include `path`, `payload`, `payload_arch`, and `payload_clib` (`<clib>-<clib-version>`).
 16. `setup -h` and `setup --help` **MUST** exit 0, print the channel, and **MUST NOT** fetch or compile. Any other token after `setup` **MUST** fail and name `tn5250-cli setup -h`. A machine with no payload key (macOS, an unmapped arch, a Termux phone whose SDK is missing, or a compiler floor newer than that SDK) **MUST** stop with `This machine has no published payload name. Next: tn5250-cli build`.
-17. A published Linux or bionic file **MUST** keep the named C library, and that library's dynamic linker, as its only dynamic dependencies. ncurses and OpenSSL **MUST** be linked statically into that file. A published `bionic` file **MUST NOT** require a Termux `libncurses`, `libssl`, or `libcrypto` beside it. A published Windows `.exe` **MUST** load only Windows system DLLs, including `ucrtbase.dll`. It **MUST NOT** require `libgcc`, `libwinpthread`, `libssl`, or `libcrypto` beside it. The programs `build` copies under `opt/tn5250` are not these files. Those copies stay dynamically linked.
+17. A published file **MUST** be a copy of the client `build` installed under `opt/tn5250` (`tn5250`, or `tn5250.exe` on Windows). It **MUST** keep that client's dynamic libraries. This law does not require a second, statically linked build. The glibc number in the name **MUST** still be the highest `GLIBC_` symbol in that copied file, as rule 8 says. The programs under `opt/tn5250` stay the install. The `download/` file is that same client under the published name. macOS has no name in this grammar: the install may succeed, and `download/` **MUST** stay unchanged. A machine other than macOS that has no published name **MUST** stop after the install and **MUST NOT** invent a filename.
 18. macOS (libSystem) **MUST NOT** be given a name in this grammar. `setup` on macOS **MUST** stop and name `tn5250-cli build`. This file does not define a `libsystem` token. Termux **MUST** use `bionic`. It **MUST NOT** be given a `glibc`, `musl`, or `uclibc` file.
 19. When a project includes a payload, `about` **MUST** show the arch and `<clib>-<clib-version>`. Human lines are `Payload arch:` and `Payload C library:`. JSON keys are `payload_arch` and `payload_clib`. On a host with no payload key, `payload_clib` is `unsupported` and `payload_arch` is the mapped token or `unknown`. `about` **MUST NOT** exit because the key failed. Human `about` **MUST** print `Termux version:` only when `TERMUX_VERSION` is set and not empty. JSON `about` **MUST** always include `termux_version`. When the variable is unset that value is an empty string.
 20. Launch **MUST** prefer the saved file from rule 15 when it exists, then the program `build` copied under the payload directory. That preference is also named by `docs/requirements/requirement-domain-tn5250.md`. This file owns the save. It does not own the compile.
@@ -98,7 +99,7 @@ Host key, printed as `arch clib clibver mode`:
 | Directory | `download/` |
 | Linux shape | `tn5250-<arch>-<clib>-<clib-version>.<app-version>` |
 | Windows shape | that name plus `.exe` |
-| App version now | `1.1.0` |
+| App version now | `1.2.0` |
 | Channel | `https://raw.githubusercontent.com/cloudgen/tn5250-cli/main/download/<filename>` |
 | Override | `TN5250_PAYLOAD_BASE` |
 | Index | `download/index.txt` |
@@ -107,16 +108,34 @@ Host key, printed as `arch clib clibver mode`:
 | Windows save | `${TN5250_PREFIX:-${HOME}/.local}/bin/tn5250.exe` |
 | Not this path | `${TN5250_PREFIX:-${HOME}/.local}/opt/tn5250` remains the `build` copy |
 | This Termux name | `tn5250-arm64-bionic-30.1.1.0` |
-| Command | `setup`. `build` still compiles |
+| Command | `setup` downloads. `build local` and `build global` compile, then copy into `download/` |
 
 | File | When it is the one to save |
 |------|----------------------------|
-| `tn5250-amd64-glibc-2.35.1.1.0` | Host arch `amd64`, glibc 2.35 or newer, and no higher fitting `glibc` line is listed. Refused on glibc 2.34. A later app-version of the same clib-version wins |
+| `tn5250-amd64-glibc-2.34.1.2.0` | The file committed with product version 1.2.0. Highest `GLIBC_` symbol in that copy is 2.34. Host glibc may be newer. `setup` on a glibc ceiling at or above 2.34 may select it |
+| `tn5250-amd64-glibc-2.35.1.1.0` | Grammar example. Host arch `amd64`, glibc 2.35 or newer, and no higher fitting `glibc` line is listed. Refused on glibc 2.34. Not committed |
 | `tn5250-amd64-musl-1.2.5.1.1.0` | Host arch `amd64` and musl 1.2.5 or newer. Not a glibc substitute |
 | `tn5250-arm64-bionic-30.1.1.0` | Termux, arch `arm64`, compiler floor 30. Exact match. Not the phone SDK 35. Not a glibc file |
 | `tn5250-amd64-ucrt-10.1.1.0.exe` | Git Bash on `x86_64`, Windows 10 or the release called Windows 11 |
 
-No payload file is committed with this version of the law. The names above are the grammar, not a claim that those bytes exist.
+The committed payload with this version of the law is `download/tn5250-amd64-glibc-2.34.1.2.0`, its sibling `.sha256`, and the matching line in `download/index.txt`. The other names in the table are the grammar. They are not a claim that those bytes exist.
+
+### 2.3 Example (name parts in `/bin/sh`)
+
+```sh
+# dash treats ^ inside [] as a literal. [!0-9] means not a digit.
+tn5250_glibc_version() {
+    _maj=${_line%%.*}
+    _maj=${_maj##*[!0-9]}
+    _min=${_line#*.}
+    _min=${_min%%[!0-9]*}
+    printf '%s\n' "${_maj}.${_min}"
+}
+
+# Published glibc number: highest GLIBC_x.y in the file, not the host ceiling.
+# App version is the ship unit VERSION line.
+# printf 'tn5250-%s-glibc-%s.%s\n' "${arch}" "${floor}" "${VERSION}"
+```
 
 ## Under command line for normal user only
 
@@ -148,6 +167,10 @@ Saving a published payload does not raise privilege.
 - Name a Termux file with the phone's SDK, or with the Android release, instead of the compiler's API floor.
 - Read that floor with `clang -dM -E`.
 - Give a Termux host a `glibc`, `musl`, or `uclibc` file.
+- Leave the named file out of `download/` after a successful local or global build when the checkout is known.
+- Treat `[^0-9]` as not-a-digit in `/bin/sh`. Inside `[]`, dash treats `^` as a literal. The negation is `[!0-9]`.
+- Invent a macOS filename.
+- Build a second, statically linked client when this law says to copy the installed client.
 
 ## 5. Related artifacts (versioned surface only)
 
@@ -166,7 +189,7 @@ Saving a published payload does not raise privilege.
 
 ## Design-time verification
 
-No payload file is in `download/` yet. The save proof uses a `file://` index. It does not compile.
+`download/tn5250-amd64-glibc-2.34.1.2.0` is committed. The save proof uses a `file://` index. It does not compile.
 
 | TP-ID | Proves | Status |
 |-------|--------|--------|
@@ -175,6 +198,7 @@ No payload file is in `download/` yet. The save proof uses a `file://` index. It
 | TP-PAY-05 | `setup` with a `file://` index saves the newest app-version for this arch and C library, skips a newer clib-version, mode 0755, and a bad digest stops | ran on 2026-10-13. `tests/payload-setup.sh`. The index listed `bionic-99`. Setup saved `bionic-30` at app-version 1.1.0. No network. No compile |
 | TP-PAY-02 | A host older than every listed file of its arch and clib is not given a newer file | exact `bionic` covered by TP-PAY-05: `bionic-99` was listed and was not saved. A glibc ceiling host was not run |
 | TP-PAY-03 | `.gitignore` does not ignore `download/` and re-includes `download/*.exe` | ran as a source read on 2026-10-13 |
+| TP-PAY-06 | The committed Ubuntu file is `tn5250-amd64-glibc-2.34.1.2.0`, mode `0755`, one bare sha256 line, and a matching `index.txt` line. The glibc number is the highest `GLIBC_` symbol, not the host ceiling | ran on 2026-10-14. `about` reports the host ceiling `glibc-2.39`. The copied file's highest symbol is `GLIBC_2.34` |
 
 Proof home: `docs/reviews/test-plan.md`.
 
@@ -186,7 +210,7 @@ Proof home: `docs/reviews/test-plan.md`.
 
 **Human daily-life explanation:** The payload filename is the label on the box. The last dotted number is which edition of the tool. The library number is which shelf it fits. A newer shelf can hold an older box. An older shelf cannot hold a newer box.
 
-**Daily-life example:** `tn5250-amd64-glibc-2.35.1.1.0` fits a machine whose glibc is 2.35 or newer. `tn5250-arm64-bionic-30.1.1.0` fits this Termux phone because the file was built for API 30. `tn5250-amd64-ucrt-10.1.1.0.exe` is the Windows box.
+**Daily-life example:** `tn5250-amd64-glibc-2.34.1.2.0` is the committed box. It fits a machine whose glibc is 2.34 or newer. `tn5250-arm64-bionic-30.1.1.0` is the grammar for this Termux phone because the file would be built for API 30. `tn5250-amd64-ucrt-10.1.1.0.exe` is the Windows grammar.
 
 ## 6. Status history
 
@@ -195,7 +219,8 @@ Proof home: `docs/reviews/test-plan.md`.
 | 2026-10-13 | Active 1.0.0 | Filename law for `download/`. glibc versions compare as a floor. Windows ends in `.exe`. No save command. No payload bytes committed. |
 | 2026-10-13 | Active 1.0.1 | Termux is `bionic`. This host's name is `tn5250-arm64-bionic-30`: arch `arm64`, API floor 30 from clang, not the phone SDK 35. macOS still has no token. |
 | 2026-10-13 | Active 1.1.0 | The name gains `.<app-version>`. `setup` downloads the newest fitting file from the raw usercontent channel and saves `~/.local/bin/tn5250`. `about` shows arch and `<clib>-<clib-version>`. `TERMUX_VERSION` is shown and is not part of the name. |
+| 2026-10-14 | Active 1.2.0 | `build local` and `build global` copy the installed client into `download/` under the published name, with a sibling digest and an index line. The copy keeps the client's dynamic libraries. The glibc number stays the highest `GLIBC_` symbol. `/bin/sh` digit negation is `[!0-9]`. The committed file is `tn5250-amd64-glibc-2.34.1.2.0`. |
 
-**Last Updated**: 2026-10-13
+**Last Updated**: 2026-10-14
 **Owner**: unassigned
 **Alignment**: Registry `docs/requirements/index.md`; **CIAO** (https://github.com/cloudgen/ciao); CIAO-Lite (https://github.com/cloudgen/ciao-lite).

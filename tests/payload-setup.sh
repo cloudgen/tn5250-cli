@@ -32,7 +32,8 @@ esac
 
 TMP=$(mktemp -d) || exit 1
 HOME_DIR=$(mktemp -d) || exit 1
-trap 'rm -rf "${TMP}" "${HOME_DIR}"' EXIT
+# PATH rm is safe-rm on this host and spends many seconds on each directory.
+trap '/bin/rm -rf "${TMP}" "${HOME_DIR}"' EXIT
 
 CLIB_NAME=${CLIB%%-*}
 CLIB_VER=${CLIB#*-}
